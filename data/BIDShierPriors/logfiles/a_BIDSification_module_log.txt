@@ -1,0 +1,177 @@
+Sat May 09 11:44:48  2026 a_BIDSification_module.py: START:  BIDSification
+Sat May 09 11:44:48  2026 a_BIDSification_module.py: 
+______________ Processing Subject-040______________
+Sat May 09 11:44:49  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-040_RDKdeutsch_lowleft.csv...
+Sat May 09 11:44:49  2026 a_BIDSification_module.py: 	data of sub-040 is converted to BIDS with #480 total trials
+Sat May 09 11:44:51  2026 a_BIDSification_module.py: 
+______________ Processing Subject-017______________
+Sat May 09 11:44:51  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-017_RDKdeutsch_lowleft.csv...
+Sat May 09 11:44:51  2026 a_BIDSification_module.py: 	data of sub-017 is converted to BIDS with #480 total trials
+Sat May 09 11:44:53  2026 a_BIDSification_module.py: 
+______________ Processing Subject-001______________
+Sat May 09 11:44:53  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-001_RDKdeutsch_highleft.csv...
+Sat May 09 11:44:53  2026 a_BIDSification_module.py: 	data of sub-001 is converted to BIDS with #480 total trials
+Sat May 09 11:44:55  2026 a_BIDSification_module.py: 
+______________ Processing Subject-021______________
+Sat May 09 11:44:55  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-021_RDKdeutsch_lowleft.csv...
+Sat May 09 11:44:56  2026 a_BIDSification_module.py: 	data of sub-021 is converted to BIDS with #480 total trials
+Sat May 09 11:44:58  2026 a_BIDSification_module.py: 
+______________ Processing Subject-037______________
+Sat May 09 11:44:58  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-037_RDKdeutsch_highleft.csv...
+Sat May 09 11:44:58  2026 a_BIDSification_module.py: 	data of sub-037 is converted to BIDS with #480 total trials
+Sat May 09 11:45:00  2026 a_BIDSification_module.py: 
+______________ Processing Subject-036______________
+Sat May 09 11:45:00  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-036_RDKdeutsch_highleft.csv...
+Sat May 09 11:45:01  2026 a_BIDSification_module.py: 	data of sub-036 is converted to BIDS with #480 total trials
+Sat May 09 11:45:03  2026 a_BIDSification_module.py: 
+______________ Processing Subject-020______________
+Sat May 09 11:45:03  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-020_RDKdeutsch_highleft.csv...
+Sat May 09 11:45:03  2026 a_BIDSification_module.py: 	data of sub-020 is converted to BIDS with #480 total trials
+Sat May 09 11:45:06  2026 a_BIDSification_module.py: 
+______________ Processing Subject-022______________
+Sat May 09 11:45:06  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-022_RDKdeutsch_lowleft.csv...
+Sat May 09 11:45:06  2026 a_BIDSification_module.py: 	data of sub-022 is converted to BIDS with #480 total trials
+Sat May 09 11:45:07  2026 a_BIDSification_module.py: 
+______________ Processing Subject-016______________
+Sat May 09 11:45:07  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-016_RDKdeutsch_lowleft.csv...
+Sat May 09 11:45:08  2026 a_BIDSification_module.py: 	data of sub-016 is converted to BIDS with #480 total trials
+Sat May 09 11:45:10  2026 a_BIDSification_module.py: 
+______________ Processing Subject-041______________
+Sat May 09 11:45:10  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-041_RDKdeutsch_lowleft.csv...
+Sat May 09 11:45:10  2026 a_BIDSification_module.py: 	data of sub-041 is converted to BIDS with #480 total trials
+Sat May 09 11:45:11  2026 a_BIDSification_module.py: 
+______________ Processing Subject-027______________
+Sat May 09 11:45:11  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-027_RDKdeutsch_lowleft.csv...
+Sat May 09 11:45:12  2026 a_BIDSification_module.py: 	data of sub-027 is converted to BIDS with #480 total trials
+Sat May 09 11:45:13  2026 a_BIDSification_module.py: 
+______________ Processing Subject-031______________
+Sat May 09 11:45:13  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-031_RDKdeutsch_highleft.csv...
+Sat May 09 11:45:14  2026 a_BIDSification_module.py: 	data of sub-031 is converted to BIDS with #480 total trials
+Sat May 09 11:45:16  2026 a_BIDSification_module.py: 
+______________ Processing Subject-011______________
+Sat May 09 11:45:16  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-011_RDKdeutsch_lowleft.csv...
+Sat May 09 11:45:16  2026 a_BIDSification_module.py: 	data of sub-011 is converted to BIDS with #480 total trials
+Sat May 09 11:45:19  2026 a_BIDSification_module.py: 
+______________ Processing Subject-007______________
+Sat May 09 11:45:19  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-007_RDKdeutsch_highleft.csv...
+Sat May 09 11:45:20  2026 a_BIDSification_module.py: 	data of sub-007 is converted to BIDS with #480 total trials
+Sat May 09 11:45:22  2026 a_BIDSification_module.py: 
+______________ Processing Subject-006______________
+Sat May 09 11:45:22  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-006_RDKdeutsch_highleft.csv...
+Sat May 09 11:45:23  2026 a_BIDSification_module.py: 	data of sub-006 is converted to BIDS with #480 total trials
+Sat May 09 11:45:24  2026 a_BIDSification_module.py: 
+______________ Processing Subject-010______________
+Sat May 09 11:45:24  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-010_RDKdeutsch_lowleft.csv...
+Sat May 09 11:45:25  2026 a_BIDSification_module.py: 	data of sub-010 is converted to BIDS with #480 total trials
+Sat May 09 11:45:26  2026 a_BIDSification_module.py: 
+______________ Processing Subject-030______________
+Sat May 09 11:45:26  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-030_RDKdeutsch_highleft.csv...
+Sat May 09 11:45:27  2026 a_BIDSification_module.py: 	data of sub-030 is converted to BIDS with #480 total trials
+Sat May 09 11:45:29  2026 a_BIDSification_module.py: 
+______________ Processing Subject-026______________
+Sat May 09 11:45:29  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-026_RDKdeutsch_highleft.csv...
+Sat May 09 11:45:29  2026 a_BIDSification_module.py: 	data of sub-026 is converted to BIDS with #480 total trials
+Sat May 09 11:45:31  2026 a_BIDSification_module.py: 
+______________ Processing Subject-033______________
+Sat May 09 11:45:31  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-033_RDKdeutsch_lowleft.csv...
+Sat May 09 11:45:32  2026 a_BIDSification_module.py: 	data of sub-033 is converted to BIDS with #480 total trials
+Sat May 09 11:45:33  2026 a_BIDSification_module.py: 
+______________ Processing Subject-025______________
+Sat May 09 11:45:33  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-025_RDKdeutsch_highleft.csv...
+Sat May 09 11:45:34  2026 a_BIDSification_module.py: 	data of sub-025 is converted to BIDS with #480 total trials
+Sat May 09 11:45:35  2026 a_BIDSification_module.py: 
+______________ Processing Subject-009______________
+Sat May 09 11:45:35  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-009_RDKdeutsch_lowleft.csv...
+Sat May 09 11:45:36  2026 a_BIDSification_module.py: 	data of sub-009 is converted to BIDS with #480 total trials
+Sat May 09 11:45:38  2026 a_BIDSification_module.py: 
+______________ Processing Subject-029______________
+Sat May 09 11:45:39  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-029_RDKdeutsch_lowleft.csv...
+Sat May 09 11:45:39  2026 a_BIDSification_module.py: 	data of sub-029 is converted to BIDS with #480 total trials
+Sat May 09 11:45:41  2026 a_BIDSification_module.py: 
+______________ Processing Subject-005______________
+Sat May 09 11:45:41  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-005_RDKdeutsch_lowleft.csv...
+Sat May 09 11:45:42  2026 a_BIDSification_module.py: 	data of sub-005 is converted to BIDS with #480 total trials
+Sat May 09 11:45:44  2026 a_BIDSification_module.py: 
+______________ Processing Subject-013______________
+Sat May 09 11:45:44  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-013_RDKdeutsch_highleft.csv...
+Sat May 09 11:45:45  2026 a_BIDSification_module.py: 	data of sub-013 is converted to BIDS with #480 total trials
+Sat May 09 11:45:46  2026 a_BIDSification_module.py: 
+______________ Processing Subject-012______________
+Sat May 09 11:45:46  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-012_RDKdeutsch_highleft.csv...
+Sat May 09 11:45:47  2026 a_BIDSification_module.py: 	data of sub-012 is converted to BIDS with #480 total trials
+Sat May 09 11:45:49  2026 a_BIDSification_module.py: 
+______________ Processing Subject-004______________
+Sat May 09 11:45:49  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-004_RDKdeutsch_lowleft.csv...
+Sat May 09 11:45:50  2026 a_BIDSification_module.py: 	data of sub-004 is converted to BIDS with #480 total trials
+Sat May 09 11:45:51  2026 a_BIDSification_module.py: 
+______________ Processing Subject-028______________
+Sat May 09 11:45:51  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-028_RDKdeutsch_lowleft.csv...
+Sat May 09 11:45:52  2026 a_BIDSification_module.py: 	data of sub-028 is converted to BIDS with #480 total trials
+Sat May 09 11:45:53  2026 a_BIDSification_module.py: 
+______________ Processing Subject-008______________
+Sat May 09 11:45:53  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-008_RDKdeutsch_highleft.csv...
+Sat May 09 11:45:54  2026 a_BIDSification_module.py: 	data of sub-008 is converted to BIDS with #480 total trials
+Sat May 09 11:45:55  2026 a_BIDSification_module.py: 
+______________ Processing Subject-024______________
+Sat May 09 11:45:55  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-024_RDKdeutsch_highleft.csv...
+Sat May 09 11:45:56  2026 a_BIDSification_module.py: 	data of sub-024 is converted to BIDS with #480 total trials
+Sat May 09 11:45:58  2026 a_BIDSification_module.py: 
+______________ Processing Subject-032______________
+Sat May 09 11:45:58  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-032_RDKdeutsch_highleft.csv...
+Sat May 09 11:45:58  2026 a_BIDSification_module.py: 	data of sub-032 is converted to BIDS with #480 total trials
+Sat May 09 11:46:00  2026 a_BIDSification_module.py: 
+______________ Processing Subject-039______________
+Sat May 09 11:46:00  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-039_RDKdeutsch_lowleft.csv...
+Sat May 09 11:46:01  2026 a_BIDSification_module.py: 	data of sub-039 is converted to BIDS with #480 total trials
+Sat May 09 11:46:03  2026 a_BIDSification_module.py: 
+______________ Processing Subject-003______________
+Sat May 09 11:46:03  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-003_RDKdeutsch_lowleft.csv...
+Sat May 09 11:46:04  2026 a_BIDSification_module.py: 	data of sub-003 is converted to BIDS with #460 total trials
+Sat May 09 11:46:05  2026 a_BIDSification_module.py: 
+______________ Processing Subject-015______________
+Sat May 09 11:46:05  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-015_RDKdeutsch_lowleft.csv...
+Sat May 09 11:46:05  2026 a_BIDSification_module.py: 	data of sub-015 is converted to BIDS with #480 total trials
+Sat May 09 11:46:08  2026 a_BIDSification_module.py: 
+______________ Processing Subject-042______________
+Sat May 09 11:46:08  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-042_RDKdeutsch_highleft.csv...
+Sat May 09 11:46:08  2026 a_BIDSification_module.py: 	data of sub-042 is converted to BIDS with #480 total trials
+Sat May 09 11:46:09  2026 a_BIDSification_module.py: 
+______________ Processing Subject-035______________
+Sat May 09 11:46:09  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-035_RDKdeutsch_lowleft.csv...
+Sat May 09 11:46:10  2026 a_BIDSification_module.py: 	data of sub-035 is converted to BIDS with #480 total trials
+Sat May 09 11:46:11  2026 a_BIDSification_module.py: 
+______________ Processing Subject-023______________
+Sat May 09 11:46:11  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-023_RDKdeutsch_lowleft.csv...
+Sat May 09 11:46:11  2026 a_BIDSification_module.py: 	data of sub-023 is converted to BIDS with #480 total trials
+Sat May 09 11:46:13  2026 a_BIDSification_module.py: 
+______________ Processing Subject-019______________
+Sat May 09 11:46:13  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-019_RDKdeutsch_highleft.csv...
+Sat May 09 11:46:14  2026 a_BIDSification_module.py: 	data of sub-019 is converted to BIDS with #480 total trials
+Sat May 09 11:46:16  2026 a_BIDSification_module.py: 
+______________ Processing Subject-018______________
+Sat May 09 11:46:16  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-018_RDKdeutsch_highleft.csv...
+Sat May 09 11:46:17  2026 a_BIDSification_module.py: 	data of sub-018 is converted to BIDS with #480 total trials
+Sat May 09 11:46:19  2026 a_BIDSification_module.py: 
+______________ Processing Subject-034______________
+Sat May 09 11:46:19  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-034_RDKdeutsch_lowleft.csv...
+Sat May 09 11:46:20  2026 a_BIDSification_module.py: 	data of sub-034 is converted to BIDS with #480 total trials
+Sat May 09 11:46:21  2026 a_BIDSification_module.py: 
+______________ Processing Subject-043______________
+Sat May 09 11:46:21  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-043_RDKdeutsch_highleft.csv...
+Sat May 09 11:46:22  2026 a_BIDSification_module.py: 	data of sub-043 is converted to BIDS with #480 total trials
+Sat May 09 11:46:24  2026 a_BIDSification_module.py: 
+______________ Processing Subject-014______________
+Sat May 09 11:46:24  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-014_RDKdeutsch_highleft.csv...
+Sat May 09 11:46:24  2026 a_BIDSification_module.py: 	data of sub-014 is converted to BIDS with #480 total trials
+Sat May 09 11:46:27  2026 a_BIDSification_module.py: 
+______________ Processing Subject-002______________
+Sat May 09 11:46:27  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-002_RDKdeutsch_highleft.csv...
+Sat May 09 11:46:27  2026 a_BIDSification_module.py: 	data of sub-002 is converted to BIDS with #480 total trials
+Sat May 09 11:46:29  2026 a_BIDSification_module.py: 
+______________ Processing Subject-038______________
+Sat May 09 11:46:29  2026 a_BIDSification_module.py: 	Extending raw.annotation for precise response times from sub-038_RDKdeutsch_highleft.csv...
+Sat May 09 11:46:30  2026 a_BIDSification_module.py: 	data of sub-038 is converted to BIDS with #480 total trials
+Sat May 09 11:46:31  2026 a_BIDSification_module.py: DONE: BIDSIfication
+Sat May 09 11:46:31  2026 a_BIDSification_module.py: 	Time elapsed: 0:01:42.883098
+
+

@@ -1,0 +1,28 @@
+{
+    "onset": {
+        "Description": "Onset (in seconds) of the event from the beginning of the first datapoint. Negative onsets account for events before the first stored data point.",
+        "Units": "s"
+    },
+    "duration": {
+        "Description": "Duration of the event in seconds from onset. Must be zero, positive, or 'n/a' if unavailable. A zero (i.e. 0.001s) value indicates an impulse event. ",
+        "Units": "s"
+    },
+    "sample": {
+        "Description": "The event onset time in number of sampling points.First sample is 0."
+    },
+    "value": {
+        "Description": "The event code (also known as trigger code or event ID) associated with the event.",
+        "Levels": {
+            "1": "S_1: tone cue onset (neutral, 750 Hz) onset (Baseline & high-level prior condition)",
+            "2": "S_2: tone cue onset (right, 600/900 Hz) onset (low-level prior condition)",
+            "4": "S_4: tone cue onset (left, 600/900 Hz) onset (low-level prior condition)",
+            "8": "S_8: RDK stimulus onset (leftward motion)",
+            "16": "S_16: RDK stimulus onset (rightward motion)",
+            "101": "R_1: correct response",
+            "102": "R_2: incorrect response"
+          }
+    },
+    "trial_type": {
+        "Description": "The type, category, or name of the event."
+    }
+}

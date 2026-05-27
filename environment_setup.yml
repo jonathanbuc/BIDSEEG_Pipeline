@@ -1,0 +1,13 @@
+name: mne-env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - pip
+  - mne=1.9.0
+  - mne-bids=0.16.0
+  - autoreject=0.4.3
+  - mne-icalabel=0.7.0
+  - fooof=1.1.1
+  - pip:
+      - pyddm==0.9.0

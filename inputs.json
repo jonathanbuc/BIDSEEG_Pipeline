@@ -1,0 +1,191 @@
+{
+    "basic": {
+        "sourcedata": "./data/sourcedata",
+        "subject_ID": "043",
+        "session": "01",
+        "task": "HierPrior",
+        "current_step": "04epochsCorr",
+        "bids_root_in": "./data/BIDShierPriors",
+        "bids_root_out": "./data/BIDShierPriors/derivatives",
+        "get_chan_stats": true,
+        "event_dict": {
+            "": 0,
+            "S_1": 1,
+            "S_2": 2,
+            "S_4": 4,
+            "S_8": 8,
+            "S_16": 16,
+            "R_1": 101,
+            "R_2": 102,
+            "R_16": 103
+        },
+        "target_events": {
+            "S_8": 8,
+            "S_16": 16
+        },
+        "analyzed_blocks": [
+            "base",
+            "test"
+        ],
+        "response_rt": "keyMotionResp_2.rt"
+    },
+    "perform": {
+        "artificial_eogs": true,
+        "downsampling": true,
+        "rereferencing": true,
+        "linenoise_filtering": false,
+        "filtering": true,
+        "baseline": false,
+        "ICA": true,
+        "mask_ICA": false,
+        "channel_interpolation": true,
+        "epoch_removal": true,
+        "compute_erp": false,
+        "average_stim_trigger": true,
+        "perform_tfr": true,
+        "perform_cbpt": false,
+        "perform_cbpt_group": false,
+        "compute_sdt": true,
+        "compute_ddm": true,
+        "compute_fooof": true
+    },
+    "preprocessing": {
+        "samplingrate_down": 250,
+        "rereference": "average",
+        "baseline_correction": [
+            -0.6,
+            -0.1
+        ],
+        "notch": 50,
+        "notch_width": 2,
+        "line_method": "band_stop",
+        "filter_method": "fir",
+        "low_cutoff_freq": 0.1,
+        "high_cutoff_freq": 40,
+        "epoch_min": -0.6,
+        "epoch_max": 1.5,
+        "epoch_dict": {
+            "S_1": 1,
+            "S_2": 2,
+            "S_4": 4
+        }
+    },
+    "datarejection": {
+        "rejection_method": "autoreject"
+    },
+    "ArtifactCorrection": {
+        "mask_ICA": true,
+        "masking_method": "autoreject",
+        "ICA_method": "infomax",
+        "classifier_method": "EOGs",
+        "max_iter": 200,
+        "random_state_seed": 1943,
+        "reject_labels": [
+            "muscle artifact",
+            "eye blink",
+            "heart beat",
+            "line noise",
+            "channel noise"
+        ],
+        "keep_labels": [
+            "brain",
+            "other"
+        ],
+        "rej_threshold": 0.9,
+        "ic_labeling": "automatic",
+        "n_components": 20,
+        "epoch_rejection_type": "auto"
+    },
+    "Analysis": {
+        "ROI": [
+            "O1",
+            "Oz",
+            "O2"
+        ],
+        "conditions": {
+            "exp": [
+                "base",
+                "lowlevel",
+                "highlevel"
+            ]
+        },
+        "eeg_contrasts": {
+            "contrast_column": "prior_dic",
+            "contrast1": "prior",
+            "contrast2": "noprior"
+        },
+        "fmin": 5,
+        "fmax": 40,
+        "alpha_freq_range": [
+            7,
+            14
+        ],
+        "tfr_method": "multitaper",
+        "time_res": 2,
+        "freq_res": 65,
+        "stat_model": "ANOVA",
+        "metric": "Peak_Amplitude",
+        "plot_roi": true,
+        "times": [
+            0.2,
+            0.5,
+            0.8
+        ],
+        "cbpt": {
+            "threshold": null,
+            "n_permutations": 10000,
+            "alpha": 0.05,
+            "seed": 42
+        },
+        "fooof": {
+            "fooof_f_range": [
+                5,
+                40
+            ],
+            "fooof_peak_threshold": 2
+        },
+        "comparisons": [
+            [
+                "lowlevel",
+                "base"
+            ],
+            [
+                "highlevel",
+                "base"
+            ],
+            [
+                "lowlevel",
+                "highlevel"
+            ]
+        ],
+        "ddm": {
+            "rt_column": "rt",
+            "choice_column": "response_prior",
+            "choices": [
+                "prior congruent",
+                "prior incongruent"
+            ],
+            "noise": 1,
+            "t_dur": 3,
+            "nondecision": 0.2
+        },
+        "parameters_to_plot": [
+            "accuracy",
+            "mean_rt",
+            "c",
+            "dprime",
+            "drift",
+            "B",
+            "x0"
+        ],
+        "brain_parameters_to_plot": [
+            "relative_alpha_dB",
+            "total_alpha_dB",
+            "CF_Hz",
+            "mean_alpha_cf",
+            "PW_dB",
+            "PW_dB_sum",
+            "Aperiodic_Exponent"
+        ]
+    }
+}
