@@ -9,6 +9,9 @@ dependencies:
   - mne-bids=0.16.0
   - autoreject=0.4.3
   - mne-icalabel=0.7.0
+  # Force the CPU build of onnxruntime (ICLabel backend). Without this, the
+  # solver pulls the CUDA build and ~1.3 GB of unused GPU libraries.
+  - onnxruntime=*=*cpu*
   - fooof=1.1.1
   - pingouin
   - pytest

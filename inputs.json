@@ -8,6 +8,8 @@
         "bids_root_in": "./data/BIDShierPriors",
         "bids_root_out": "./data/BIDShierPriors/derivatives",
         "get_chan_stats": true,
+        "n_jobs": -1,
+        "diagnostic_dpi": 150,
         "event_dict": {
             "": 0,
             "S_1": 1,

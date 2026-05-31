@@ -604,6 +604,7 @@ def subject_tfr(epochs_clean, baseline, tmin, tmax, fmin, fmax, time_res, freq_r
                 return_itc = False,
                 average=True,
                 decim=3,
+                n_jobs=n_jobs,
                 verbose = False
                 )
 
@@ -925,7 +926,8 @@ def CBPT(tfr_dict, datatype, comparisons, roi, bidspath_out, log_df, epochs_min,
                 threshold=threshold, 
                 stat_fun = None, #F-statistic mne.stats.f_oneway, #t-statistic: utils.ttest_rel_wrapper, # paired (repeated measures) t-test - returns t-statistic array
                 tail=1, # 0 = two-tailed (undirected) test, 1 = right-tailed test, -1 = left-tailed test
-                seed=seed 
+                seed=seed,
+                n_jobs=n_jobs
             )
             # Save raw cluster data for external plotting
             np.savez_compressed(
@@ -1003,7 +1005,7 @@ def run_fooof_analysis(epochs_clean, condition_dict, subject, roi, bidspath_out_
         epochs_cond = epochs_cond.crop(tmin=0, tmax=tmax) #prediction window: tmin=0, tmax=tmax
 
         # Compute PSD
-        psd = epochs_cond.compute_psd(method='welch', verbose=False)# whole epoch: n_fft=326, prestim interval: n_fft=251  fmin=f_range[0], fmax=f_range[1],
+        psd = epochs_cond.compute_psd(method='welch', n_jobs=n_jobs, verbose=False)# whole epoch: n_fft=326, prestim interval: n_fft=251  fmin=f_range[0], fmax=f_range[1],
 
         # Get PSD data and freqs
         psd_roi = psd.pick(roi)
@@ -1101,6 +1103,7 @@ inputs = utils.read_inputs(sys.argv[1])
 
 # assign path variables
 bidspath = utils.get_bidspath(inputs, 'bids_proc')
+n_jobs = inputs['basic']['n_jobs']
 
 # make results directories
 result_dir = os.path.join(bidspath.root, 'results')
@@ -1358,7 +1361,7 @@ def subject_psd(epochs_clean, fmin, fmax, condition_dict, channel, bidspath_out,
         epochs_cond = epochs_cond.pick(channel)
 
         # Compute PSD
-        psd = epochs_cond.compute_psd(method='welch', fmin=fmin, fmax=fmax, n_fft=326, verbose=False)
+        psd = epochs_cond.compute_psd(method='welch', fmin=fmin, fmax=fmax, n_fft=326, n_jobs=n_jobs, verbose=False)
 
         # Get PSD data and freqs
         data = psd.get_data().squeeze()  # shape: (n_epochs, n_freqs)

@@ -16,6 +16,7 @@ import utils_module as utils
 #from meegkit import dss
 import mne
 import numpy as np
+import matplotlib.pyplot as plt
 # _______________________________________________________________________________
 
 
@@ -242,7 +243,7 @@ def filtering(raw, filter_method, low_cutoff, high_cutoff, log_df):
                 h_freq = high_cutoff, 
                 l_trans_bandwidth = 'auto', # 'auto' = min(max(l_freq * .25, 2), l_freq)
                 h_trans_bandwidth = 'auto', # 'auto' = min(max(h_freq * .25, 2), info['sfreq']/2 - h_freq)
-                n_jobs=4, 
+                n_jobs=n_jobs,
                 fir_design = 'firwin', 
                 phase = 'zero', # compensate for phase shift
                 verbose = False
@@ -255,7 +256,7 @@ def filtering(raw, filter_method, low_cutoff, high_cutoff, log_df):
                 h_freq = high_cutoff, 
                 l_trans_bandwidth = 'auto', # 'auto' = min(max(l_freq * .25, 2), l_freq)
                 h_trans_bandwidth = 'auto', # 'auto' = min(max(h_freq * .25, 2), info['sfreq']/2 - h_freq)
-                n_jobs=4, 
+                n_jobs=n_jobs,
                 method = 'iir',
                 iir_params = None,
                 phase = 'zero', # compensate for phase shift
@@ -312,8 +313,8 @@ def diagnostic_plots(data, bidspath_processing_subject):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             psd = data.compute_psd(verbose=False).plot(show=False)
-            psd.savefig(f"{diag_dir}/PSD_{data.info['description']}.png", format = "png", dpi=300)
-            psd.clf()
+            psd.savefig(f"{diag_dir}/PSD_{data.info['description']}.png", format = "png", dpi=diag_dpi)
+            plt.close(psd)
 
 
 
@@ -338,6 +339,8 @@ perform_rereferencing = inputs['perform']['rereferencing']
 perform_linenoise_filtering = inputs['perform']['linenoise_filtering']
 perform_filtering = inputs['perform']['filtering']
 event_dict = inputs['basic']['event_dict']
+n_jobs = inputs['basic']['n_jobs']
+diag_dpi = inputs['basic']['diagnostic_dpi']
 
 samplingrate_down = inputs['preprocessing']['samplingrate_down']
 rereference = inputs['preprocessing']['rereference']
