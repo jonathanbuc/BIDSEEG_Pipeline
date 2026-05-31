@@ -1,6 +1,7 @@
 name: mne-env
 channels:
   - conda-forge
+  - nodefaults
 dependencies:
   - python=3.10
   - pip
@@ -9,5 +10,7 @@ dependencies:
   - autoreject=0.4.3
   - mne-icalabel=0.7.0
   - fooof=1.1.1
+  - pingouin
+  - pytest
   - pip:
       - pyddm==0.9.0

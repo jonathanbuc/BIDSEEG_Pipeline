@@ -1,6 +1,6 @@
 # _____________________________ArtifactCorrection_______________________________________
 # run with
-# python c_ArtifactCorrection_module.py inputs.json
+# python b_ArtifactCorrection_module.py inputs.json
 #
 # * Allgemeine und Biologische Psychologie - AG Hesselman
 # * Psychologische Hochschule
@@ -190,7 +190,7 @@ def ICA_mne(epochs, n_components, max_iter, rd_state, method, log_df):
     if not epochs.info['bads']:
         utils.log_msg(f'        No channels have been marked as bad therefore excluded for ICA.')
     else:
-        utils.log_msg(f'        The following channels were excluded before computing ICA: {epochs_ICA.info['bads']}')
+        utils.log_msg(f'        The following channels were excluded before computing ICA: {epochs_ICA.info["bads"]}')
 
     # fit ICA    
     utils.log_msg(f"        Fitting ICA ({n_components} components) using {method} method and {len(epochs_ICA.info['ch_names'])} channels")

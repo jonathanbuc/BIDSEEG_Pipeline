@@ -1,6 +1,6 @@
-# _____________________________Module_name_______________________________________
+# _____________________________EEGAnalysis_module________________________________
 # run with
-# python d_EEGAnalysis_module.py inputs.json
+# python c_EEGAnalysis_module.py inputs.json
 #
 #
 # * Allgemeine und Biologische Psychologie - AG Hesselman

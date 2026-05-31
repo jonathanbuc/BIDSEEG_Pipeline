@@ -82,6 +82,8 @@ conda deactivate
 
 The `data/BIDShierPriors` contains 3 subjects from *Buchholz & Hesselmann (in review) - Hierarchical Priors Shape Dynamic Evidence Accumulation and Aperiodic EEG Activity* as testing data for an initial run (steps 2.1-2.4). 
 
+> **Note on the demo data.** The shipped EEG is a **250 Hz downsampled** version of the 3-subject demo (the rate the preprocessing module downsamples to anyway), kept small enough for Git LFS. It is sufficient to run the whole pipeline end-to-end from a clean clone. The exact provenance — raw BrainVision → `z_BIDSification_module.py` → resample to 250 Hz — is documented in `scripts/make_demo_data.py`. The small per-subject behavioral logs and trait questionnaire live under `data/sourcedata/`; the large raw EEG is not tracked.
+
 **IMPORTANT**: Consider the [ExperimentGuide_HierarchicalPriors.md](ExperimentGuide_HierarchicalPriors.md), which provides a thorough linkage of the experiment and this pipeline. We recommend using this file as guideline when proceeding with steps `2.1-2.3` This file can also be used for a replication of the respective study.
 
 ### 2.1 - Module 1: Preprocessing

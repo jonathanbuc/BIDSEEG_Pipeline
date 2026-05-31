@@ -1,6 +1,6 @@
-# _____________________________f_plotting_module.py_______________________________________
-# Run this script with:
-# python f_plotting_module.py inputs.json
+# _____________________________plotting_module.py________________________________________
+# Helper module imported by c_EEGAnalysis_module.py and d_BehavAnalysis_module.py
+# (not run directly)
 #
 # * Allgemeine und Biologische Psychologie - AG Hesselman
 # * Psychologische Hochschule

@@ -1,6 +1,6 @@
-# _____________________________Data_preparation_module___________________________
+# _____________________________BIDSification_module______________________________
 # run with
-# python a_preparation_module.py raw_.fif inputs.json
+# python z_BIDSification_module.py inputs.json
 #
 # * Allgemeine und Biologische Psychologie - AG Hesselman
 # * Psychologische Hochschule
