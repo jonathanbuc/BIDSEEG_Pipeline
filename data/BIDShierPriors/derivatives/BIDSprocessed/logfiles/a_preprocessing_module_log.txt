@@ -1,0 +1,80 @@
+Wed June 03 11:00:44  2026 a_preprocessing_module.py: START:  Data preprocessing
+Wed June 03 11:00:44  2026 a_preprocessing_module.py: 
+_______ Processing Subject-001_______
+Wed June 03 11:00:44  2026 a_preprocessing_module.py:         Loading raw data (BIDSified) from sub-001_ses-01_task-HierPrior
+Wed June 03 11:06:52  2026 a_preprocessing_module.py: START:  Data preprocessing
+Wed June 03 11:06:52  2026 a_preprocessing_module.py: 
+_______ Processing Subject-001_______
+Wed June 03 11:06:52  2026 a_preprocessing_module.py:         Loading raw data (BIDSified) from sub-001_ses-01_task-HierPrior
+Wed June 03 11:06:58  2026 a_preprocessing_module.py:         Downsampling from 1000.0 to 250
+Wed June 03 11:07:02  2026 a_preprocessing_module.py:      -- Line noise filtering not performed
+Wed June 03 11:07:04  2026 a_preprocessing_module.py:         Signal band pass filtered, using fir - (low_cutoff = 0.1, high_cutoff = 40)
+Wed June 03 11:07:05  2026 a_preprocessing_module.py:         Saving continuous data (rawfilter) in BIDS format to data/BIDShierPriors/derivatives/BIDSprocessed/sub-001/ses-01/eeg
+Wed June 03 11:07:05  2026 a_preprocessing_module.py: 
+_______ Processing Subject-002_______
+Wed June 03 11:07:05  2026 a_preprocessing_module.py:         Loading raw data (BIDSified) from sub-002_ses-01_task-HierPrior
+Wed June 03 11:07:11  2026 a_preprocessing_module.py:         Downsampling from 1000.0 to 250
+Wed June 03 11:07:15  2026 a_preprocessing_module.py:      -- Line noise filtering not performed
+Wed June 03 11:07:16  2026 a_preprocessing_module.py:         Signal band pass filtered, using fir - (low_cutoff = 0.1, high_cutoff = 40)
+Wed June 03 11:07:17  2026 a_preprocessing_module.py:         Saving continuous data (rawfilter) in BIDS format to data/BIDShierPriors/derivatives/BIDSprocessed/sub-002/ses-01/eeg
+Wed June 03 11:07:17  2026 a_preprocessing_module.py: 
+_______ Processing Subject-003_______
+Wed June 03 11:07:17  2026 a_preprocessing_module.py:         Loading raw data (BIDSified) from sub-003_ses-01_task-HierPrior
+Wed June 03 11:07:21  2026 a_preprocessing_module.py:         Downsampling from 1000.0 to 250
+Wed June 03 11:07:25  2026 a_preprocessing_module.py:      -- Line noise filtering not performed
+Wed June 03 11:07:25  2026 a_preprocessing_module.py:         Signal band pass filtered, using fir - (low_cutoff = 0.1, high_cutoff = 40)
+Wed June 03 11:07:26  2026 a_preprocessing_module.py:         Saving continuous data (rawfilter) in BIDS format to data/BIDShierPriors/derivatives/BIDSprocessed/sub-003/ses-01/eeg
+Wed June 03 11:07:27  2026 a_preprocessing_module.py: 
+_______ Processing Subject-004_______
+Wed June 03 11:07:27  2026 a_preprocessing_module.py:         Loading raw data (BIDSified) from sub-004_ses-01_task-HierPrior
+Wed June 03 11:08:40  2026 a_preprocessing_module.py: START:  Data preprocessing
+Wed June 03 11:08:40  2026 a_preprocessing_module.py: 
+_______ Processing Subject-001_______
+Wed June 03 11:08:40  2026 a_preprocessing_module.py:         Loading raw data (BIDSified) from sub-001_ses-01_task-HierPrior
+Wed June 03 11:08:45  2026 a_preprocessing_module.py:         Downsampling from 1000.0 to 250
+Wed June 03 11:08:48  2026 a_preprocessing_module.py:      -- Line noise filtering not performed
+Wed June 03 11:08:50  2026 a_preprocessing_module.py:         Signal band pass filtered, using fir - (low_cutoff = 0.1, high_cutoff = 40)
+Wed June 03 11:08:51  2026 a_preprocessing_module.py:         Saving continuous data (rawfilter) in BIDS format to data/BIDShierPriors/derivatives/BIDSprocessed/sub-001/ses-01/eeg
+Wed June 03 11:08:52  2026 a_preprocessing_module.py: 
+_______ Processing Subject-002_______
+Wed June 03 11:08:52  2026 a_preprocessing_module.py:         Loading raw data (BIDSified) from sub-002_ses-01_task-HierPrior
+Wed June 03 11:08:58  2026 a_preprocessing_module.py:         Downsampling from 1000.0 to 250
+Wed June 03 11:09:01  2026 a_preprocessing_module.py:      -- Line noise filtering not performed
+Wed June 03 11:09:02  2026 a_preprocessing_module.py:         Signal band pass filtered, using fir - (low_cutoff = 0.1, high_cutoff = 40)
+Wed June 03 11:09:03  2026 a_preprocessing_module.py:         Saving continuous data (rawfilter) in BIDS format to data/BIDShierPriors/derivatives/BIDSprocessed/sub-002/ses-01/eeg
+Wed June 03 11:09:04  2026 a_preprocessing_module.py: 
+_______ Processing Subject-003_______
+Wed June 03 11:09:04  2026 a_preprocessing_module.py:         Loading raw data (BIDSified) from sub-003_ses-01_task-HierPrior
+Wed June 03 11:09:07  2026 a_preprocessing_module.py:         Downsampling from 1000.0 to 250
+Wed June 03 11:09:10  2026 a_preprocessing_module.py:      -- Line noise filtering not performed
+Wed June 03 11:09:11  2026 a_preprocessing_module.py:         Signal band pass filtered, using fir - (low_cutoff = 0.1, high_cutoff = 40)
+Wed June 03 11:09:11  2026 a_preprocessing_module.py:         Saving continuous data (rawfilter) in BIDS format to data/BIDShierPriors/derivatives/BIDSprocessed/sub-003/ses-01/eeg
+Wed June 03 11:09:12  2026 a_preprocessing_module.py: 
+_______ Processing Subject-004_______
+Wed June 03 11:09:12  2026 a_preprocessing_module.py:         Loading raw data (BIDSified) from sub-004_ses-01_task-HierPrior
+Wed June 03 11:10:10  2026 a_preprocessing_module.py: START:  Data preprocessing
+Wed June 03 11:10:10  2026 a_preprocessing_module.py: 
+_______ Processing Subject-001_______
+Wed June 03 11:10:10  2026 a_preprocessing_module.py:         Loading raw data (BIDSified) from sub-001_ses-01_task-HierPrior
+Wed June 03 11:10:13  2026 a_preprocessing_module.py:         Downsampling from 1000.0 to 250
+Wed June 03 11:10:17  2026 a_preprocessing_module.py:      -- Line noise filtering not performed
+Wed June 03 11:10:19  2026 a_preprocessing_module.py:         Signal band pass filtered, using fir - (low_cutoff = 0.1, high_cutoff = 40)
+Wed June 03 11:10:19  2026 a_preprocessing_module.py:         Saving continuous data (rawfilter) in BIDS format to data/BIDShierPriors/derivatives/BIDSprocessed/sub-001/ses-01/eeg
+Wed June 03 11:10:20  2026 a_preprocessing_module.py: 
+_______ Processing Subject-002_______
+Wed June 03 11:10:20  2026 a_preprocessing_module.py:         Loading raw data (BIDSified) from sub-002_ses-01_task-HierPrior
+Wed June 03 11:10:26  2026 a_preprocessing_module.py:         Downsampling from 1000.0 to 250
+Wed June 03 11:10:29  2026 a_preprocessing_module.py:      -- Line noise filtering not performed
+Wed June 03 11:10:30  2026 a_preprocessing_module.py:         Signal band pass filtered, using fir - (low_cutoff = 0.1, high_cutoff = 40)
+Wed June 03 11:10:31  2026 a_preprocessing_module.py:         Saving continuous data (rawfilter) in BIDS format to data/BIDShierPriors/derivatives/BIDSprocessed/sub-002/ses-01/eeg
+Wed June 03 11:10:31  2026 a_preprocessing_module.py: 
+_______ Processing Subject-003_______
+Wed June 03 11:10:31  2026 a_preprocessing_module.py:         Loading raw data (BIDSified) from sub-003_ses-01_task-HierPrior
+Wed June 03 11:10:35  2026 a_preprocessing_module.py:         Downsampling from 1000.0 to 250
+Wed June 03 11:10:39  2026 a_preprocessing_module.py:      -- Line noise filtering not performed
+Wed June 03 11:10:39  2026 a_preprocessing_module.py:         Signal band pass filtered, using fir - (low_cutoff = 0.1, high_cutoff = 40)
+Wed June 03 11:10:40  2026 a_preprocessing_module.py:         Saving continuous data (rawfilter) in BIDS format to data/BIDShierPriors/derivatives/BIDSprocessed/sub-003/ses-01/eeg
+Wed June 03 11:10:41  2026 a_preprocessing_module.py: Done:   Data preprocessing
+Wed June 03 11:10:41  2026 a_preprocessing_module.py:         Time elapsed: 0:00:30.888863
+
+
