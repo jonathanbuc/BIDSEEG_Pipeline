@@ -17,3 +17,4 @@ dependencies:
   - pytest
   - pip:
       - pyddm==0.9.0
+      - hssm
