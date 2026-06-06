@@ -35,3 +35,5 @@ data/BIDShierPriors/logfiles/
 _env_probe.py
 # Stray Windows "/dev/null" path artifact (LFS hooks land here by accident)
 dev/
+# Generated doc exports only — the .md sources (ARCHITECTURE, learning notes) stay tracked
+docs/*.html

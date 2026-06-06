@@ -2,6 +2,30 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Working conventions (read this first)
+
+**After finishing any task, write a teaching note.** Drop a Markdown file in `docs/learning/`
+(named `NN-short-topic.md`, numbered in order) that explains the work to me as if teaching it. The
+PI quizzes me on specifics, so each note must cover:
+- **What I changed** — the concrete edit, in plain terms.
+- **The CS concept** — the computer-science idea behind it (e.g. parallelism, caching,
+  idempotency, dependency pinning) and why it applies here.
+- **The psych/neuro concept** — the EEG / signal-processing / experimental idea it touches (e.g.
+  why line-noise filtering matters, what ICA separates, what a drift-diffusion parameter means).
+- **Why it helped / what improved** — the before→after, ideally with the measurable effect
+  (faster, smaller, correct, reproducible).
+
+Keep these notes tight and readable — they're for learning, not a changelog dump.
+
+**Comment sparingly and naturally.** Don't blanket the code with explanatory comments. Add a
+comment only where the *why* isn't obvious from the code; match the surrounding style; sound like a
+human wrote it, not a tutorial. No narrating what the next line plainly does.
+
+**Reproducibility of the *old* results is no longer a constraint.** The PI confirmed he does not
+need previously published numbers to reproduce bit-for-bit, so we're free to fix correctness bugs
+and change behavior to make the pipeline better. Still note any behavior-changing fix in its
+teaching note so the change is traceable.
+
 ## What this is
 
 A semi-automated EEG processing pipeline (Buchholz & Hesselmann) that takes BIDS-formatted EEG
