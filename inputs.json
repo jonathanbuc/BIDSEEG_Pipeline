@@ -123,6 +123,7 @@
             14
         ],
         "tfr_method": "multitaper",
+        "time_bandwidth": 4.0,
         "time_res": 2,
         "freq_res": 65,
         "stat_model": "ANOVA",

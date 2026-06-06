@@ -393,6 +393,7 @@ if __name__ == '__main__':
             diagnostic_plots(raw_step, bidspath_processing_subject)
             #utils.save_preprocessing_step(raw_step, '03rawdownsample')
         else:
+            raw_step = raw
             utils.log_msg(f"     -- Downsampling not performed, sampling rate remains at {raw_step.info['sfreq']}")
 
 

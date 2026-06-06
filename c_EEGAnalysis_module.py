@@ -597,16 +597,16 @@ def subject_tfr(epochs_clean, baseline, tmin, tmax, fmin, fmax, time_res, freq_r
         # compute TFR
         utils.log_msg(f'        Computing TFR over electrode cluster: {roi}... Dimensions - spectral ({fmin}-{fmax}Hz); temporal ({tmin}-{tmax}s)')
         condition_query = f"{cond_col} == '{condition}'"
-        tfr_cond_avg = epochs_clean[condition_query].compute_tfr(
-                method="morlet",
-                freqs=freqs,
-                n_cycles=n_cycles,
-                return_itc = False,
-                average=True,
-                decim=3,
-                n_jobs=n_jobs,
-                verbose = False
-                )
+        # honor the configured TFR method (Analysis.tfr_method) instead of hardcoding morlet
+        tfr_kwargs = dict(freqs=freqs, n_cycles=n_cycles, return_itc=False,
+                          average=True, decim=3, n_jobs=n_jobs, verbose=False)
+        match tfr_method:
+            case "multitaper":
+                tfr_cond_avg = epochs_clean[condition_query].compute_tfr(
+                        method="multitaper", time_bandwidth=time_bandwidth, **tfr_kwargs)
+            case _:  # morlet (default)
+                tfr_cond_avg = epochs_clean[condition_query].compute_tfr(
+                        method="morlet", **tfr_kwargs)
 
         ### DECIBEL CONVERSION
         tfr_db = tfr_cond_avg.copy()
@@ -664,7 +664,7 @@ def subject_tfr(epochs_clean, baseline, tmin, tmax, fmin, fmax, time_res, freq_r
         power_df_list.append(power_df)
     
     # logging
-    utils.log_update(log_df, 'tfr_method', 'morlet')
+    utils.log_update(log_df, 'tfr_method', tfr_method)
     utils.log_update(log_df, 'frequency_range', [fmin, fmax])
     utils.log_update(log_df, 'temporal_range', [tmin, tmax])
     utils.log_update(log_df, 'cycles_denominator', time_res)
@@ -1124,6 +1124,8 @@ fmin = inputs['Analysis']['fmin']
 fmax = inputs['Analysis']['fmax']
 time_res = inputs['Analysis']['time_res'] 
 freq_res = inputs['Analysis']['freq_res'] 
+tfr_method = inputs['Analysis']['tfr_method']
+time_bandwidth = inputs['Analysis'].get('time_bandwidth', 4.0)
 alpha_freq_range = inputs['Analysis']['alpha_freq_range']
 roi = inputs['Analysis']['ROI']
 condition_dict = inputs['Analysis']['conditions']
@@ -1227,10 +1229,11 @@ if __name__ == '__main__':
     # ____________________ PSD & FOOOF Analysis ______________________
         if compute_fooof:
             utils.log_msg(f'        Computing FOOOF')
-        # psd_dict = subject_psd(epochs, fmin, fmax, condition_dict, 'Oz', bidspath_processing_subject, subject)
-        fm, df_fooofsum, df_fooofalpha  = run_fooof_analysis(epochs, condition_dict, subject=subject, roi=roi, bidspath_out_subject=bidspath_processing_subject, tmax=tmax, alpha_freq_range=alpha_freq_range, baseline=baseline, f_range=fooof_f_range, peak_threshold=fooof_peak_threshold)
-        global_fooof_dfs.append(df_fooofsum)
-        fooof_alpha_dfs.append(df_fooofalpha)
+            fm, df_fooofsum, df_fooofalpha = run_fooof_analysis(epochs, condition_dict, subject=subject, roi=roi, bidspath_out_subject=bidspath_processing_subject, tmax=tmax, alpha_freq_range=alpha_freq_range, baseline=baseline, f_range=fooof_f_range, peak_threshold=fooof_peak_threshold)
+            global_fooof_dfs.append(df_fooofsum)
+            fooof_alpha_dfs.append(df_fooofalpha)
+        else:
+            utils.log_msg(f'     -- FOOOF not performed')
 
         timepoint_end = utils.log_msg(f'DONE:   EEG Analysis Module - Subject Level')
         utils.log_msg(f'        Time elapsed: {str(timepoint_end-timepoint_start)}\n\n')
@@ -1238,22 +1241,27 @@ if __name__ == '__main__':
     # ________________________Saving & Plotting - Subject Level ________________________
     # concatenating Wavelet (TFR) and FOOOF Alpha Frequency measures
     tfr_alpha = pd.concat(tfr_alpha_dfs, ignore_index=True)
-    fooof_alpha = pd.concat(fooof_alpha_dfs, ignore_index=True)
-    power_df = pd.merge(tfr_alpha, fooof_alpha, on=['participant', 'exp'], how='left')
+    if fooof_alpha_dfs:
+        fooof_alpha = pd.concat(fooof_alpha_dfs, ignore_index=True)
+        power_df = pd.merge(tfr_alpha, fooof_alpha, on=['participant', 'exp'], how='left')
+    else:
+        power_df = tfr_alpha
     power_file = f'{result_dir}/EEG_alphapower_hierprior.csv'
     power_df.to_csv(power_file, index=False)
 
+    # only plot parameters present in the data (FOOOF columns are absent when FOOOF is off)
+    plot_parameters = [p for p in eeg_parameters if p in power_df.columns]
+
     # Plot results
-    raincloud_plot(power_df,condition_dict, eeg_parameters, eeg_dir)
-    paired_plot(power_df, condition_dict, eeg_parameters, eeg_dir)
+    raincloud_plot(power_df, condition_dict, plot_parameters, eeg_dir)
+    paired_plot(power_df, condition_dict, plot_parameters, eeg_dir)
     tfr_plots_subjects(tfr_dict_sub, condition_dict, fmin, fmax, tmin, tmax, eeg_dir)
 
-
-    # Saving FOOF summary
-    global_df = pd.concat(global_fooof_dfs, ignore_index=True)
-    global_df.to_csv(global_master_csv, index=False)
-    
-    utils.log_msg(f"        Global FOOOF summary written to: {global_master_csv}")
+    # Saving FOOOF summary
+    if global_fooof_dfs:
+        global_df = pd.concat(global_fooof_dfs, ignore_index=True)
+        global_df.to_csv(global_master_csv, index=False)
+        utils.log_msg(f"        Global FOOOF summary written to: {global_master_csv}")
 
     # Logging
     timepoint_end = utils.log_msg(f'DONE:   EEG Analysis Module - Subject Level')

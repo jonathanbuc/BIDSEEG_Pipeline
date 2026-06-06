@@ -114,8 +114,8 @@ def epoching(raw, df, epoch_dict, tmin, tmax, log_df, baseline=None):
         utils.log_update(log_df, 'epoch_max', tmax)
         return epochs, log_df
 
-    return None
-    
+    return None, log_df
+
 ## Compute interpolation_mask for bad channels
 def badChannels(epochs, rd_state, log_df):
     """
@@ -610,11 +610,12 @@ if __name__ == '__main__':
 
         # # perform epoching
         epochs, log_df = epoching(raw_filt, df, epoch_dict, tmin, tmax, log_df)# >>> IMPORTANT: currently no baseline correction performed here <<<
-        diagnostic_plots(epochs, bidspath_processing_subject)
-        
-        if epochs is None or not bool(epochs):  # If none, events for epoching do not exist in raw.annotations
+
+        if epochs is None or not bool(epochs):  # events for epoching are absent from raw.annotations
             utils.log_msg(f'      X ERROR: None of the following events were found in raw.annotations: {list(epoch_dict.keys())}. Continuing with Subject {int(subject) + 1}')
             continue  # Skip to the next subject
+
+        diagnostic_plots(epochs, bidspath_processing_subject)
 
         # identify bad channels to mask before ICA
         if mask_ICA:
@@ -655,9 +656,8 @@ if __name__ == '__main__':
 
         ## rereference data
         if perform_rereferencing:
-            raw_step, log_df = rereferencing(epochs, rereference, log_df)
-            diagnostic_plots(raw_step, bidspath_processing_subject)
-            # utils.save_preprocessing_step(raw_step, '04rawreref')
+            epochs, log_df = rereferencing(epochs, rereference, log_df)
+            diagnostic_plots(epochs, bidspath_processing_subject)
         else:
             utils.log_msg(f'     -- Rereferencing not performed')
 
