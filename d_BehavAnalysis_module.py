@@ -1,6 +1,6 @@
 # _____________________________Behavioral Analysis_______________________________________
 # run with
-# python c_ArtifactCorrection_module.py inputs.json
+# python b_ArtifactCorrection_module.py inputs.json
 #
 # * Allgemeine und Biologische Psychologie - AG Hesselman
 # * Psychologische Hochschule

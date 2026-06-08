@@ -1,6 +1,6 @@
 # _____________________________Module_name_______________________________________
 # run with
-# python d_EEGAnalysis_module.py inputs.json
+# python c_EEGAnalysis_module.py inputs.json
 #
 #
 # * Allgemeine und Biologische Psychologie - AG Hesselman
@@ -23,7 +23,7 @@
 
 # _____________________________Imports___________________________________________
 # basic packages
-from configparser import NoSectionError
+from configparser import NoSectionError #QUESTION: is this used again? 
 import sys
 import io
 import utils_module as utils
