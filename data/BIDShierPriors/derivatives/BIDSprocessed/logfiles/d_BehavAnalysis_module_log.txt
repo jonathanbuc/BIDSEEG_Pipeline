@@ -310,3 +310,84 @@ Wed June 03 13:25:05  2026 d_BehavAnalysis_module.py: DONE:   Behavioral Analysi
 Wed June 03 13:25:05  2026 d_BehavAnalysis_module.py:         Time elapsed: 0:00:02.863100
 
 
+Mon June 08 11:53:10  2026 d_BehavAnalysis_module.py: START:  Behavioral Analysis Module
+Mon June 08 11:53:10  2026 d_BehavAnalysis_module.py: _______ Processing Subject-001_______
+Mon June 08 11:53:10  2026 d_BehavAnalysis_module.py:         *** Behavioral Data Preprocessing ***
+Mon June 08 11:53:10  2026 d_BehavAnalysis_module.py:         Reaction time outlier correction:
+Mon June 08 11:53:10  2026 d_BehavAnalysis_module.py:           - 29 are outside of range |2 * sd|
+Mon June 08 11:53:10  2026 d_BehavAnalysis_module.py:           - 0 RTs are < 100 ms
+Mon June 08 11:53:10  2026 d_BehavAnalysis_module.py:           - 1 missing responses
+Mon June 08 11:53:10  2026 d_BehavAnalysis_module.py:           - 4.84% of trials flagged as outliers/missings
+Mon June 08 11:53:10  2026 d_BehavAnalysis_module.py:         Detection rate according to motion coherence level: low 0.59, medium: 0.68, high: 0.925)
+Mon June 08 11:53:11  2026 d_BehavAnalysis_module.py:         *** Signal Detection Theory (SDT) ***
+Mon June 08 11:53:11  2026 d_BehavAnalysis_module.py:         base: c-criterion: 0.20, d prime: 0.84; accuracy: 0.660, mean RT: 0.657
+Mon June 08 11:53:11  2026 d_BehavAnalysis_module.py:         lowlevel: c-criterion: -0.03, d prime: 0.68; accuracy: 0.638, mean RT: 0.587
+Mon June 08 11:53:11  2026 d_BehavAnalysis_module.py:         highlevel: c-criterion: 0.10, d prime: 0.58; accuracy: 0.611, mean RT: 0.601
+Mon June 08 11:53:11  2026 d_BehavAnalysis_module.py:         *** Drift Diffusion Modelling (DDM) ***
+Mon June 08 11:53:11  2026 d_BehavAnalysis_module.py:         Computing DDM on base trials...
+Mon June 08 11:53:12  2026 d_BehavAnalysis_module.py:         Fitted    Parameters: {'drift': -4.9, 'noise': 1.0, 'B': 0.75, 'x0': 0.07, 'nondectime': 0.2}
+Mon June 08 11:53:13  2026 d_BehavAnalysis_module.py:         Recovered Parameters: {'drift_rec': -5.96, 'noise_rec': 1.0, 'B_rec': 0.73, 'x0_rec': 0.05, 'nondectime_rec': 0.2}
+Mon June 08 11:53:13  2026 d_BehavAnalysis_module.py:         Computing DDM on lowlevel trials...
+Mon June 08 11:53:14  2026 d_BehavAnalysis_module.py:         Fitted    Parameters: {'drift': 4.43, 'noise': 1.0, 'B': 0.68, 'x0': -0.04, 'nondectime': 0.2}
+Mon June 08 11:53:16  2026 d_BehavAnalysis_module.py:         Recovered Parameters: {'drift_rec': 7.63, 'noise_rec': 1.0, 'B_rec': 0.7, 'x0_rec': -0.17, 'nondectime_rec': 0.2}
+Mon June 08 11:53:16  2026 d_BehavAnalysis_module.py:         Computing DDM on highlevel trials...
+Mon June 08 11:53:17  2026 d_BehavAnalysis_module.py:         Fitted    Parameters: {'drift': -2.36, 'noise': 1.0, 'B': 0.7, 'x0': 0.06, 'nondectime': 0.2}
+Mon June 08 11:53:18  2026 d_BehavAnalysis_module.py:         Recovered Parameters: {'drift_rec': -2.32, 'noise_rec': 1.0, 'B_rec': 0.77, 'x0_rec': 0.02, 'nondectime_rec': 0.2}
+Mon June 08 11:53:18  2026 d_BehavAnalysis_module.py: _______ Processing Subject-002_______
+Mon June 08 11:53:18  2026 d_BehavAnalysis_module.py:         *** Behavioral Data Preprocessing ***
+Mon June 08 11:53:18  2026 d_BehavAnalysis_module.py:         Reaction time outlier correction:
+Mon June 08 11:53:18  2026 d_BehavAnalysis_module.py:           - 24 are outside of range |2 * sd|
+Mon June 08 11:53:18  2026 d_BehavAnalysis_module.py:           - 0 RTs are < 100 ms
+Mon June 08 11:53:18  2026 d_BehavAnalysis_module.py:           - 16 missing responses
+Mon June 08 11:53:18  2026 d_BehavAnalysis_module.py:           - 6.45% of trials flagged as outliers/missings
+Mon June 08 11:53:18  2026 d_BehavAnalysis_module.py:         Detection rate according to motion coherence level: low 0.635, medium: 0.688, high: 0.775)
+Mon June 08 11:53:18  2026 d_BehavAnalysis_module.py:         *** Signal Detection Theory (SDT) ***
+Mon June 08 11:53:19  2026 d_BehavAnalysis_module.py:         base: c-criterion: 0.10, d prime: 0.74; accuracy: 0.643, mean RT: 1.394
+Mon June 08 11:53:19  2026 d_BehavAnalysis_module.py:         lowlevel: c-criterion: 0.18, d prime: 0.75; accuracy: 0.612, mean RT: 1.434
+Mon June 08 11:53:19  2026 d_BehavAnalysis_module.py:         highlevel: c-criterion: -0.09, d prime: 1.08; accuracy: 0.705, mean RT: 0.975
+Mon June 08 11:53:19  2026 d_BehavAnalysis_module.py:         *** Drift Diffusion Modelling (DDM) ***
+Mon June 08 11:53:19  2026 d_BehavAnalysis_module.py:         Computing DDM on base trials...
+Mon June 08 11:53:20  2026 d_BehavAnalysis_module.py:         Fitted    Parameters: {'drift': -1.19, 'noise': 1.0, 'B': 1.18, 'x0': 0.05, 'nondectime': 0.2}
+Mon June 08 11:53:21  2026 d_BehavAnalysis_module.py:         Recovered Parameters: {'drift_rec': -0.39, 'noise_rec': 1.0, 'B_rec': 1.19, 'x0_rec': 0.06, 'nondectime_rec': 0.2}
+Mon June 08 11:53:21  2026 d_BehavAnalysis_module.py:         Computing DDM on lowlevel trials...
+Mon June 08 11:53:22  2026 d_BehavAnalysis_module.py:         Fitted    Parameters: {'drift': -0.04, 'noise': 1.0, 'B': 1.2, 'x0': 0.0, 'nondectime': 0.2}
+Mon June 08 11:53:22  2026 d_BehavAnalysis_module.py:         Recovered Parameters: {'drift_rec': -1.17, 'noise_rec': 1.0, 'B_rec': 1.17, 'x0_rec': 0.1, 'nondectime_rec': 0.2}
+Mon June 08 11:53:22  2026 d_BehavAnalysis_module.py:         Computing DDM on highlevel trials...
+Mon June 08 11:53:23  2026 d_BehavAnalysis_module.py:         Fitted    Parameters: {'drift': 0.88, 'noise': 1.0, 'B': 0.92, 'x0': -0.02, 'nondectime': 0.2}
+Mon June 08 11:53:24  2026 d_BehavAnalysis_module.py:         Recovered Parameters: {'drift_rec': -0.29, 'noise_rec': 1.0, 'B_rec': 0.9, 'x0_rec': -0.0, 'nondectime_rec': 0.2}
+Mon June 08 11:53:24  2026 d_BehavAnalysis_module.py: _______ Processing Subject-003_______
+Mon June 08 11:53:24  2026 d_BehavAnalysis_module.py:         *** Behavioral Data Preprocessing ***
+Mon June 08 11:53:24  2026 d_BehavAnalysis_module.py:         Reaction time outlier correction:
+Mon June 08 11:53:24  2026 d_BehavAnalysis_module.py:           - 30 are outside of range |2 * sd|
+Mon June 08 11:53:24  2026 d_BehavAnalysis_module.py:           - 0 RTs are < 100 ms
+Mon June 08 11:53:24  2026 d_BehavAnalysis_module.py:           - 0 missing responses
+Mon June 08 11:53:24  2026 d_BehavAnalysis_module.py:           - 5.0% of trials flagged as outliers/missings
+Mon June 08 11:53:24  2026 d_BehavAnalysis_module.py:         Detection rate according to motion coherence level: low 0.756, medium: 0.897, high: 1.0)
+Mon June 08 11:53:25  2026 d_BehavAnalysis_module.py:         *** Signal Detection Theory (SDT) ***
+Mon June 08 11:53:25  2026 d_BehavAnalysis_module.py:         base: c-criterion: 0.89, d prime: 2.58; accuracy: 0.819, mean RT: 0.606
+Mon June 08 11:53:25  2026 d_BehavAnalysis_module.py:         lowlevel: c-criterion: -0.04, d prime: 1.65; accuracy: 0.800, mean RT: 0.714
+Mon June 08 11:53:25  2026 d_BehavAnalysis_module.py:         highlevel: c-criterion: -0.01, d prime: 1.87; accuracy: 0.825, mean RT: 0.706
+Mon June 08 11:53:25  2026 d_BehavAnalysis_module.py:         *** Drift Diffusion Modelling (DDM) ***
+Mon June 08 11:53:25  2026 d_BehavAnalysis_module.py:         Computing DDM on base trials...
+Mon June 08 11:53:27  2026 d_BehavAnalysis_module.py:         Fitted    Parameters: {'drift': -2.36, 'noise': 1.0, 'B': 0.71, 'x0': 0.01, 'nondectime': 0.2}
+Mon June 08 11:53:28  2026 d_BehavAnalysis_module.py:         Recovered Parameters: {'drift_rec': -0.75, 'noise_rec': 1.0, 'B_rec': 0.71, 'x0_rec': 0.03, 'nondectime_rec': 0.2}
+Mon June 08 11:53:28  2026 d_BehavAnalysis_module.py:         Computing DDM on lowlevel trials...
+Mon June 08 11:53:29  2026 d_BehavAnalysis_module.py:         Fitted    Parameters: {'drift': 4.27, 'noise': 1.0, 'B': 0.81, 'x0': -0.13, 'nondectime': 0.2}
+Mon June 08 11:53:31  2026 d_BehavAnalysis_module.py:         Recovered Parameters: {'drift_rec': 3.44, 'noise_rec': 1.0, 'B_rec': 0.78, 'x0_rec': -0.13, 'nondectime_rec': 0.2}
+Mon June 08 11:53:31  2026 d_BehavAnalysis_module.py:         Computing DDM on highlevel trials...
+Mon June 08 11:53:32  2026 d_BehavAnalysis_module.py:         Fitted    Parameters: {'drift': 0.01, 'noise': 1.0, 'B': 0.78, 'x0': -0.0, 'nondectime': 0.2}
+Mon June 08 11:53:33  2026 d_BehavAnalysis_module.py:         Recovered Parameters: {'drift_rec': 0.85, 'noise_rec': 1.0, 'B_rec': 0.77, 'x0_rec': -0.01, 'nondectime_rec': 0.2}
+Mon June 08 11:53:33  2026 d_BehavAnalysis_module.py: DONE:   Behavioral Analysis Module - Subject Level
+Mon June 08 11:53:33  2026 d_BehavAnalysis_module.py:         Time elapsed: 0:00:22.508323
+
+
+Mon June 08 11:53:33  2026 d_BehavAnalysis_module.py: START:  Behavioral Analysis Module - Group Level
+Mon June 08 11:53:33  2026 d_BehavAnalysis_module.py: _______ Analysis of subjects: ['001', '002', '003']_______
+Mon June 08 11:53:33  2026 d_BehavAnalysis_module.py:         *** SDT and DDM Analysis ***
+Mon June 08 11:53:35  2026 d_BehavAnalysis_module.py:         Raincloud-plots saved to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupBehavioral/groupDDM_SDT/raincloud
+Mon June 08 11:53:36  2026 d_BehavAnalysis_module.py:         Pair-plots saved to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupBehavioral/groupDDM_SDT/paired
+Mon June 08 11:53:36  2026 d_BehavAnalysis_module.py:         *** Trait Variables - Psychosis Proneness and Psychological Flexibility ***
+Mon June 08 11:53:36  2026 d_BehavAnalysis_module.py: DONE:   Behavioral Analysis Module - Group Level
+Mon June 08 11:53:36  2026 d_BehavAnalysis_module.py:         Time elapsed: 0:00:03.242151
+
+

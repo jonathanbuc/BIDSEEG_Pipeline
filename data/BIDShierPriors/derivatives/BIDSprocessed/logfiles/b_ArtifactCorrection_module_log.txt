@@ -90,3 +90,95 @@ Wed June 03 11:15:38  2026 b_ArtifactCorrection_module.py: DONE:   Artifact Corr
 Wed June 03 11:15:38  2026 b_ArtifactCorrection_module.py:         Time elapsed: 0:03:50.457880
 
 
+Mon June 08 11:39:10  2026 b_ArtifactCorrection_module.py: START:  Artifact Correction Module
+Mon June 08 11:39:10  2026 b_ArtifactCorrection_module.py: _______ Processing Subject-001_______
+Mon June 08 11:39:10  2026 b_ArtifactCorrection_module.py:         Loading raw data (rawfilter) from sub-001_ses-01_task-HierPrior_proc-01rawfilter
+Mon June 08 11:39:11  2026 b_ArtifactCorrection_module.py:         Reaction time outlier correction:
+Mon June 08 11:39:11  2026 b_ArtifactCorrection_module.py:           - 29 are outside of range |2 * sd|
+Mon June 08 11:39:11  2026 b_ArtifactCorrection_module.py:           - 0 RTs are < 100 ms
+Mon June 08 11:39:11  2026 b_ArtifactCorrection_module.py:           - 1 missing responses
+Mon June 08 11:39:11  2026 b_ArtifactCorrection_module.py:           - 4.84% of trials flagged as outliers/missings
+Mon June 08 11:39:11  2026 b_ArtifactCorrection_module.py:         Detection rate according to motion coherence level: low 0.59, medium: 0.68, high: 0.925)
+Mon June 08 11:39:11  2026 b_ArtifactCorrection_module.py:         epochs computed for the following events: ['S_1', 'S_2', 'S_4'] with window = [-0.6, 1.5] and baseline correction: None
+Mon June 08 11:39:11  2026 b_ArtifactCorrection_module.py:         Behavioral data is included as metadata for each epoch. Including: ['trigger', 'participant', 'exp', 'block_cond', 'block_order', 'thisN', 'cueAss', 'cueHz']
+Mon June 08 11:39:15  2026 b_ArtifactCorrection_module.py:      -- No channels masked before ICA
+Mon June 08 11:39:15  2026 b_ArtifactCorrection_module.py:         *** Independent Component Analysis ***
+Mon June 08 11:39:15  2026 b_ArtifactCorrection_module.py:         No channels have been marked as bad therefore excluded for ICA.
+Mon June 08 11:39:15  2026 b_ArtifactCorrection_module.py:         Fitting ICA (20 components) using infomax method and 31 channels
+Mon June 08 11:39:57  2026 b_ArtifactCorrection_module.py:         3 ICs exceed artifact threshold (0.9) and are removed before back-projection:
+Mon June 08 11:39:57  2026 b_ArtifactCorrection_module.py:             {0: 'eye-blink', 1: 'eye-blink', 3: 'eye-blink'}
+Mon June 08 11:40:00  2026 b_ArtifactCorrection_module.py:         Saving ICA as .fif to data/BIDShierPriors/derivatives/BIDSprocessed/sub-001/ses-01/eeg
+Mon June 08 11:40:00  2026 b_ArtifactCorrection_module.py:      -- No baseline correction
+Mon June 08 11:40:00  2026 b_ArtifactCorrection_module.py:         Rereferencing data to average
+Mon June 08 11:40:04  2026 b_ArtifactCorrection_module.py:         *** RANSAC - channel interpolation ***
+Mon June 08 11:40:04  2026 b_ArtifactCorrection_module.py:         Fitting RANSAC to epochs...
+Mon June 08 11:40:10  2026 b_ArtifactCorrection_module.py:         2 channels marked as bad: ['Fz', 'T8']
+Mon June 08 11:40:10  2026 b_ArtifactCorrection_module.py:         Following channels will be interpolated: ['Fz', 'T8']
+Mon June 08 11:40:13  2026 b_ArtifactCorrection_module.py:         Saving epochs as fif file to data/BIDShierPriors/derivatives/BIDSprocessed/sub-001/ses-01/eeg
+Mon June 08 11:40:14  2026 b_ArtifactCorrection_module.py:         *** Autoreject - removal of bad epochs ***
+Mon June 08 11:40:29  2026 b_ArtifactCorrection_module.py:         Automated epoch rejection with Autoreject performed.
+Mon June 08 11:40:29  2026 b_ArtifactCorrection_module.py:         144/480 (30.0%) global epochs identified removed from dataset.
+Mon June 08 11:40:29  2026 b_ArtifactCorrection_module.py:         1439/14880 (0.97%) local epochs were interpolated.
+Mon June 08 11:40:31  2026 b_ArtifactCorrection_module.py:         Saving epochs as fif file to data/BIDShierPriors/derivatives/BIDSprocessed/sub-001/ses-01/eeg
+Mon June 08 11:40:32  2026 b_ArtifactCorrection_module.py: _______ Processing Subject-002_______
+Mon June 08 11:40:32  2026 b_ArtifactCorrection_module.py:         Loading raw data (rawfilter) from sub-002_ses-01_task-HierPrior_proc-01rawfilter
+Mon June 08 11:40:32  2026 b_ArtifactCorrection_module.py:         Reaction time outlier correction:
+Mon June 08 11:40:32  2026 b_ArtifactCorrection_module.py:           - 24 are outside of range |2 * sd|
+Mon June 08 11:40:32  2026 b_ArtifactCorrection_module.py:           - 0 RTs are < 100 ms
+Mon June 08 11:40:32  2026 b_ArtifactCorrection_module.py:           - 16 missing responses
+Mon June 08 11:40:32  2026 b_ArtifactCorrection_module.py:           - 6.45% of trials flagged as outliers/missings
+Mon June 08 11:40:32  2026 b_ArtifactCorrection_module.py:         Detection rate according to motion coherence level: low 0.635, medium: 0.688, high: 0.775)
+Mon June 08 11:40:32  2026 b_ArtifactCorrection_module.py:         epochs computed for the following events: ['S_1', 'S_2', 'S_4'] with window = [-0.6, 1.5] and baseline correction: None
+Mon June 08 11:40:32  2026 b_ArtifactCorrection_module.py:         Behavioral data is included as metadata for each epoch. Including: ['trigger', 'participant', 'exp', 'block_cond', 'block_order', 'thisN', 'cueAss', 'cueHz']
+Mon June 08 11:40:35  2026 b_ArtifactCorrection_module.py:      -- No channels masked before ICA
+Mon June 08 11:40:35  2026 b_ArtifactCorrection_module.py:         *** Independent Component Analysis ***
+Mon June 08 11:40:35  2026 b_ArtifactCorrection_module.py:         No channels have been marked as bad therefore excluded for ICA.
+Mon June 08 11:40:35  2026 b_ArtifactCorrection_module.py:         Fitting ICA (20 components) using infomax method and 31 channels
+Mon June 08 11:41:17  2026 b_ArtifactCorrection_module.py:         4 ICs exceed artifact threshold (0.9) and are removed before back-projection:
+Mon June 08 11:41:17  2026 b_ArtifactCorrection_module.py:             {1: 'eye-blink', 12: 'muscle-artifact', 13: 'muscle-artifact', 17: 'muscle-artifact'}
+Mon June 08 11:41:20  2026 b_ArtifactCorrection_module.py:         Saving ICA as .fif to data/BIDShierPriors/derivatives/BIDSprocessed/sub-002/ses-01/eeg
+Mon June 08 11:41:20  2026 b_ArtifactCorrection_module.py:      -- No baseline correction
+Mon June 08 11:41:21  2026 b_ArtifactCorrection_module.py:         Rereferencing data to average
+Mon June 08 11:41:24  2026 b_ArtifactCorrection_module.py:         *** RANSAC - channel interpolation ***
+Mon June 08 11:41:24  2026 b_ArtifactCorrection_module.py:         Fitting RANSAC to epochs...
+Mon June 08 11:41:28  2026 b_ArtifactCorrection_module.py:         3 channels marked as bad: ['Fz', 'F3', 'FC2']
+Mon June 08 11:41:28  2026 b_ArtifactCorrection_module.py:         Following channels will be interpolated: ['Fz', 'F3', 'FC2']
+Mon June 08 11:41:31  2026 b_ArtifactCorrection_module.py:         Saving epochs as fif file to data/BIDShierPriors/derivatives/BIDSprocessed/sub-002/ses-01/eeg
+Mon June 08 11:41:31  2026 b_ArtifactCorrection_module.py:         *** Autoreject - removal of bad epochs ***
+Mon June 08 11:41:46  2026 b_ArtifactCorrection_module.py:         Automated epoch rejection with Autoreject performed.
+Mon June 08 11:41:46  2026 b_ArtifactCorrection_module.py:         3/480 (0.62%) global epochs identified removed from dataset.
+Mon June 08 11:41:46  2026 b_ArtifactCorrection_module.py:         2757/14880 (0.02%) local epochs were interpolated.
+Mon June 08 11:41:49  2026 b_ArtifactCorrection_module.py:         Saving epochs as fif file to data/BIDShierPriors/derivatives/BIDSprocessed/sub-002/ses-01/eeg
+Mon June 08 11:41:49  2026 b_ArtifactCorrection_module.py: _______ Processing Subject-003_______
+Mon June 08 11:41:49  2026 b_ArtifactCorrection_module.py:         Loading raw data (rawfilter) from sub-003_ses-01_task-HierPrior_proc-01rawfilter
+Mon June 08 11:41:50  2026 b_ArtifactCorrection_module.py:         Reaction time outlier correction:
+Mon June 08 11:41:50  2026 b_ArtifactCorrection_module.py:           - 30 are outside of range |2 * sd|
+Mon June 08 11:41:50  2026 b_ArtifactCorrection_module.py:           - 0 RTs are < 100 ms
+Mon June 08 11:41:50  2026 b_ArtifactCorrection_module.py:           - 0 missing responses
+Mon June 08 11:41:50  2026 b_ArtifactCorrection_module.py:           - 5.0% of trials flagged as outliers/missings
+Mon June 08 11:41:50  2026 b_ArtifactCorrection_module.py:         Detection rate according to motion coherence level: low 0.756, medium: 0.897, high: 1.0)
+Mon June 08 11:41:50  2026 b_ArtifactCorrection_module.py:         epochs computed for the following events: ['S_1', 'S_2', 'S_4'] with window = [-0.6, 1.5] and baseline correction: None
+Mon June 08 11:41:50  2026 b_ArtifactCorrection_module.py:         Behavioral data is included as metadata for each epoch. Including: ['trigger', 'participant', 'exp', 'block_cond', 'block_order', 'thisN', 'cueAss', 'cueHz']
+Mon June 08 11:41:53  2026 b_ArtifactCorrection_module.py:      -- No channels masked before ICA
+Mon June 08 11:41:53  2026 b_ArtifactCorrection_module.py:         *** Independent Component Analysis ***
+Mon June 08 11:41:53  2026 b_ArtifactCorrection_module.py:         No channels have been marked as bad therefore excluded for ICA.
+Mon June 08 11:41:53  2026 b_ArtifactCorrection_module.py:         Fitting ICA (20 components) using infomax method and 31 channels
+Mon June 08 11:42:34  2026 b_ArtifactCorrection_module.py:         4 ICs exceed artifact threshold (0.9) and are removed before back-projection:
+Mon June 08 11:42:34  2026 b_ArtifactCorrection_module.py:             {0: 'eye-blink', 9: 'muscle-artifact', 12: 'muscle-artifact', 14: 'muscle-artifact'}
+Mon June 08 11:42:37  2026 b_ArtifactCorrection_module.py:         Saving ICA as .fif to data/BIDShierPriors/derivatives/BIDSprocessed/sub-003/ses-01/eeg
+Mon June 08 11:42:37  2026 b_ArtifactCorrection_module.py:      -- No baseline correction
+Mon June 08 11:42:37  2026 b_ArtifactCorrection_module.py:         Rereferencing data to average
+Mon June 08 11:42:41  2026 b_ArtifactCorrection_module.py:         *** RANSAC - channel interpolation ***
+Mon June 08 11:42:41  2026 b_ArtifactCorrection_module.py:         Fitting RANSAC to epochs...
+Mon June 08 11:42:44  2026 b_ArtifactCorrection_module.py:         3 channels marked as bad: ['Fz', 'FC2', 'Fp2']
+Mon June 08 11:42:44  2026 b_ArtifactCorrection_module.py:         Following channels will be interpolated: ['Fz', 'FC2', 'Fp2']
+Mon June 08 11:42:48  2026 b_ArtifactCorrection_module.py:         Saving epochs as fif file to data/BIDShierPriors/derivatives/BIDSprocessed/sub-003/ses-01/eeg
+Mon June 08 11:42:48  2026 b_ArtifactCorrection_module.py:         *** Autoreject - removal of bad epochs ***
+Mon June 08 11:43:03  2026 b_ArtifactCorrection_module.py:         Automated epoch rejection with Autoreject performed.
+Mon June 08 11:43:03  2026 b_ArtifactCorrection_module.py:         104/460 (22.61%) global epochs identified removed from dataset.
+Mon June 08 11:43:03  2026 b_ArtifactCorrection_module.py:         360/14260 (0.73%) local epochs were interpolated.
+Mon June 08 11:43:06  2026 b_ArtifactCorrection_module.py:         Saving epochs as fif file to data/BIDShierPriors/derivatives/BIDSprocessed/sub-003/ses-01/eeg
+Mon June 08 11:43:06  2026 b_ArtifactCorrection_module.py: DONE:   Artifact Correction
+Mon June 08 11:43:06  2026 b_ArtifactCorrection_module.py:         Time elapsed: 0:03:55.722055
+
+

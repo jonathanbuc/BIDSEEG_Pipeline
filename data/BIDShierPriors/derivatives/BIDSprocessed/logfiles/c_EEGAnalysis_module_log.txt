@@ -81,3 +81,169 @@ Wed June 03 11:17:05  2026 c_EEGAnalysis_module.py: DONE:   EEG Analysis Module 
 Wed June 03 11:17:05  2026 c_EEGAnalysis_module.py:         Time elapsed: 0:00:01.032591
 
 
+Mon June 08 11:33:02  2026 c_EEGAnalysis_module.py: START:  EEG Analysis Module - Subject Level
+Mon June 08 11:33:02  2026 c_EEGAnalysis_module.py: _______ Processing Subject-001_______
+Mon June 08 11:33:02  2026 c_EEGAnalysis_module.py:         Loading epoched data from sub-001_ses-01_task-HierPrior_proc-04epochsCorr
+Mon June 08 11:33:02  2026 c_EEGAnalysis_module.py:         *** Time-Frequency Analysis ***
+Mon June 08 11:33:02  2026 c_EEGAnalysis_module.py:         Computing TFR over electrode cluster: ['O1', 'Oz', 'O2']... Dimensions - spectral (5-40Hz); temporal (-0.6-1.5s)
+Mon June 08 11:33:08  2026 c_EEGAnalysis_module.py:         Computing TFR over electrode cluster: ['O1', 'Oz', 'O2']... Dimensions - spectral (5-40Hz); temporal (-0.6-1.5s)
+Mon June 08 11:33:11  2026 c_EEGAnalysis_module.py:         Computing TFR over electrode cluster: ['O1', 'Oz', 'O2']... Dimensions - spectral (5-40Hz); temporal (-0.6-1.5s)
+Mon June 08 11:33:16  2026 c_EEGAnalysis_module.py:         Saving <class 'mne.time_frequency.tfr.AverageTFR'> as fif file (base) to data/BIDShierPriors/derivatives/BIDSprocessed/sub-001/ses-01/eeg
+Mon June 08 11:33:16  2026 c_EEGAnalysis_module.py:         Saving <class 'mne.time_frequency.tfr.AverageTFR'> as fif file (lowlevel) to data/BIDShierPriors/derivatives/BIDSprocessed/sub-001/ses-01/eeg
+Mon June 08 11:33:16  2026 c_EEGAnalysis_module.py:         Saving <class 'mne.time_frequency.tfr.AverageTFR'> as fif file (highlevel) to data/BIDShierPriors/derivatives/BIDSprocessed/sub-001/ses-01/eeg
+Mon June 08 11:33:16  2026 c_EEGAnalysis_module.py:         Computing FOOOF
+Mon June 08 11:33:16  2026 c_EEGAnalysis_module.py:         fitting SpecParam with the following parameters: peak_threshold=2, max_n_peaks=6, peak_width_limits=(1.5, 4), f_range=[5, 40]
+Mon June 08 11:33:19  2026 c_EEGAnalysis_module.py:             - base: CF: 11.51054763298738, PW_dB 5.306845706361365
+Mon June 08 11:33:21  2026 c_EEGAnalysis_module.py:             - lowlevel: CF: 11.294653087726195, PW_dB 8.120809304349255
+Mon June 08 11:33:23  2026 c_EEGAnalysis_module.py:             - highlevel: CF: 10.568937840841766, PW_dB 5.977858843647397
+Mon June 08 11:33:23  2026 c_EEGAnalysis_module.py: DONE:   EEG Analysis Module - Subject Level
+Mon June 08 11:33:23  2026 c_EEGAnalysis_module.py:         Time elapsed: 0:00:21.072478
+
+
+Mon June 08 11:33:23  2026 c_EEGAnalysis_module.py: _______ Processing Subject-002_______
+Mon June 08 11:33:23  2026 c_EEGAnalysis_module.py:         Loading epoched data from sub-002_ses-01_task-HierPrior_proc-04epochsCorr
+Mon June 08 11:33:23  2026 c_EEGAnalysis_module.py:         *** Time-Frequency Analysis ***
+Mon June 08 11:33:23  2026 c_EEGAnalysis_module.py:         Computing TFR over electrode cluster: ['O1', 'Oz', 'O2']... Dimensions - spectral (5-40Hz); temporal (-0.6-1.5s)
+Mon June 08 11:33:29  2026 c_EEGAnalysis_module.py:         Computing TFR over electrode cluster: ['O1', 'Oz', 'O2']... Dimensions - spectral (5-40Hz); temporal (-0.6-1.5s)
+Mon June 08 11:33:36  2026 c_EEGAnalysis_module.py:         Computing TFR over electrode cluster: ['O1', 'Oz', 'O2']... Dimensions - spectral (5-40Hz); temporal (-0.6-1.5s)
+Mon June 08 11:33:42  2026 c_EEGAnalysis_module.py:         Saving <class 'mne.time_frequency.tfr.AverageTFR'> as fif file (base) to data/BIDShierPriors/derivatives/BIDSprocessed/sub-002/ses-01/eeg
+Mon June 08 11:33:42  2026 c_EEGAnalysis_module.py:         Saving <class 'mne.time_frequency.tfr.AverageTFR'> as fif file (lowlevel) to data/BIDShierPriors/derivatives/BIDSprocessed/sub-002/ses-01/eeg
+Mon June 08 11:33:42  2026 c_EEGAnalysis_module.py:         Saving <class 'mne.time_frequency.tfr.AverageTFR'> as fif file (highlevel) to data/BIDShierPriors/derivatives/BIDSprocessed/sub-002/ses-01/eeg
+Mon June 08 11:33:42  2026 c_EEGAnalysis_module.py:         Computing FOOOF
+Mon June 08 11:33:42  2026 c_EEGAnalysis_module.py:         fitting SpecParam with the following parameters: peak_threshold=2, max_n_peaks=6, peak_width_limits=(1.5, 4), f_range=[5, 40]
+Mon June 08 11:33:45  2026 c_EEGAnalysis_module.py:             - base: CF: 11.60784176135508, PW_dB 8.685950342350601
+Mon June 08 11:33:47  2026 c_EEGAnalysis_module.py:             - lowlevel: CF: 11.41784490595046, PW_dB 10.636755246531706
+Mon June 08 11:33:50  2026 c_EEGAnalysis_module.py:             - highlevel: CF: 11.515908243831174, PW_dB 8.336749752935653
+Mon June 08 11:33:50  2026 c_EEGAnalysis_module.py: DONE:   EEG Analysis Module - Subject Level
+Mon June 08 11:33:50  2026 c_EEGAnalysis_module.py:         Time elapsed: 0:00:27.023473
+
+
+Mon June 08 11:33:50  2026 c_EEGAnalysis_module.py: _______ Processing Subject-003_______
+Mon June 08 11:33:50  2026 c_EEGAnalysis_module.py:         Loading epoched data from sub-003_ses-01_task-HierPrior_proc-04epochsCorr
+Mon June 08 11:33:50  2026 c_EEGAnalysis_module.py:         *** Time-Frequency Analysis ***
+Mon June 08 11:33:50  2026 c_EEGAnalysis_module.py:         Computing TFR over electrode cluster: ['O1', 'Oz', 'O2']... Dimensions - spectral (5-40Hz); temporal (-0.6-1.5s)
+Mon June 08 11:33:54  2026 c_EEGAnalysis_module.py:         Computing TFR over electrode cluster: ['O1', 'Oz', 'O2']... Dimensions - spectral (5-40Hz); temporal (-0.6-1.5s)
+Mon June 08 11:33:59  2026 c_EEGAnalysis_module.py:         Computing TFR over electrode cluster: ['O1', 'Oz', 'O2']... Dimensions - spectral (5-40Hz); temporal (-0.6-1.5s)
+Mon June 08 11:34:05  2026 c_EEGAnalysis_module.py:         Saving <class 'mne.time_frequency.tfr.AverageTFR'> as fif file (base) to data/BIDShierPriors/derivatives/BIDSprocessed/sub-003/ses-01/eeg
+Mon June 08 11:34:05  2026 c_EEGAnalysis_module.py:         Saving <class 'mne.time_frequency.tfr.AverageTFR'> as fif file (lowlevel) to data/BIDShierPriors/derivatives/BIDSprocessed/sub-003/ses-01/eeg
+Mon June 08 11:34:05  2026 c_EEGAnalysis_module.py:         Saving <class 'mne.time_frequency.tfr.AverageTFR'> as fif file (highlevel) to data/BIDShierPriors/derivatives/BIDSprocessed/sub-003/ses-01/eeg
+Mon June 08 11:34:05  2026 c_EEGAnalysis_module.py:         Computing FOOOF
+Mon June 08 11:34:05  2026 c_EEGAnalysis_module.py:         fitting SpecParam with the following parameters: peak_threshold=2, max_n_peaks=6, peak_width_limits=(1.5, 4), f_range=[5, 40]
+Mon June 08 11:34:07  2026 c_EEGAnalysis_module.py:             - base: CF: 8.121675884397625, PW_dB 8.423753576182627
+Mon June 08 11:34:09  2026 c_EEGAnalysis_module.py:             - lowlevel: CF: 8.188308920545527, PW_dB 8.784141280699966
+Mon June 08 11:34:12  2026 c_EEGAnalysis_module.py:             - highlevel: CF: 8.117842963430688, PW_dB 9.160160413180023
+Mon June 08 11:34:12  2026 c_EEGAnalysis_module.py: DONE:   EEG Analysis Module - Subject Level
+Mon June 08 11:34:12  2026 c_EEGAnalysis_module.py:         Time elapsed: 0:00:21.594916
+
+
+Mon June 08 11:34:12  2026 c_EEGAnalysis_module.py:         Raincloud-plots saved to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/groupDDM_SDT/raincloud
+Mon June 08 11:34:13  2026 c_EEGAnalysis_module.py:         Pair-plots saved to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/groupDDM_SDT/paired
+Mon June 08 11:34:14  2026 c_EEGAnalysis_module.py:         Global FOOOF summary written to: data/BIDShierPriors/derivatives/BIDSprocessed/results/master_fooof_summary.csv
+Mon June 08 11:34:14  2026 c_EEGAnalysis_module.py: DONE:   EEG Analysis Module - Subject Level
+Mon June 08 11:34:14  2026 c_EEGAnalysis_module.py:         Time elapsed: 0:00:23.819468
+
+
+Mon June 08 11:34:14  2026 c_EEGAnalysis_module.py: START:  EEG Analysis Module - Group Level
+Mon June 08 11:34:14  2026 c_EEGAnalysis_module.py: _______ Analysis of subjects: ['001', '002', '003']_______
+Mon June 08 11:34:14  2026 c_EEGAnalysis_module.py:         *** TFRs - computing TFRs across all subjects ***
+Mon June 08 11:34:14  2026 c_EEGAnalysis_module.py:      Computing grand average TFR for condition: base
+Mon June 08 11:34:14  2026 c_EEGAnalysis_module.py:      Saved grand average TFR for condition base to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/groupTFR/grand_avg_cond-base_tfr.fif
+Mon June 08 11:34:14  2026 c_EEGAnalysis_module.py:      Computing grand average TFR for condition: lowlevel
+Mon June 08 11:34:14  2026 c_EEGAnalysis_module.py:      Saved grand average TFR for condition lowlevel to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/groupTFR/grand_avg_cond-lowlevel_tfr.fif
+Mon June 08 11:34:14  2026 c_EEGAnalysis_module.py:      Computing grand average TFR for condition: highlevel
+Mon June 08 11:34:14  2026 c_EEGAnalysis_module.py:      Saved grand average TFR for condition highlevel to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/groupTFR/grand_avg_cond-highlevel_tfr.fif
+Mon June 08 11:34:14  2026 c_EEGAnalysis_module.py:         Saving Grand Average TFR plot to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/diagnostic_plots/GrandAvgTFR_base.png
+Mon June 08 11:34:14  2026 c_EEGAnalysis_module.py:         Saving Grand Average TFR plot to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/diagnostic_plots/GrandAvgTFR_lowlevel.png
+Mon June 08 11:34:14  2026 c_EEGAnalysis_module.py:         Saving Grand Average TFR plot to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/diagnostic_plots/GrandAvgTFR_highlevel.png
+Mon June 08 11:34:14  2026 c_EEGAnalysis_module.py:         Saving Grand Average TFR difference plot to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/diagnostic_plots/GrandAvgTFR_diff_lowlevelvsbase.png
+Mon June 08 11:34:15  2026 c_EEGAnalysis_module.py:         Saving Grand Average TFR difference plot to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/diagnostic_plots/GrandAvgTFR_diff_highlevelvsbase.png
+Mon June 08 11:34:15  2026 c_EEGAnalysis_module.py:         Saving Grand Average TFR difference plot to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/diagnostic_plots/GrandAvgTFR_diff_lowlevelvshighlevel.png
+Mon June 08 11:34:15  2026 c_EEGAnalysis_module.py:      -- group-CBPT not performed
+Mon June 08 11:34:15  2026 c_EEGAnalysis_module.py:      -- No ERP features extracted or statistical analysis performed
+Mon June 08 11:34:15  2026 c_EEGAnalysis_module.py: DONE:   EEG Analysis Module - Group Level
+Mon June 08 11:34:15  2026 c_EEGAnalysis_module.py:         Time elapsed: 0:00:01.038580
+
+
+Mon June 08 11:47:28  2026 c_EEGAnalysis_module.py: START:  EEG Analysis Module - Subject Level
+Mon June 08 11:47:28  2026 c_EEGAnalysis_module.py: _______ Processing Subject-001_______
+Mon June 08 11:47:28  2026 c_EEGAnalysis_module.py:         Loading epoched data from sub-001_ses-01_task-HierPrior_proc-04epochsCorr
+Mon June 08 11:47:28  2026 c_EEGAnalysis_module.py:         *** Time-Frequency Analysis ***
+Mon June 08 11:47:28  2026 c_EEGAnalysis_module.py:         Computing TFR over electrode cluster: ['O1', 'Oz', 'O2']... Dimensions - spectral (5-40Hz); temporal (-0.6-1.5s)
+Mon June 08 11:47:34  2026 c_EEGAnalysis_module.py:         Computing TFR over electrode cluster: ['O1', 'Oz', 'O2']... Dimensions - spectral (5-40Hz); temporal (-0.6-1.5s)
+Mon June 08 11:47:38  2026 c_EEGAnalysis_module.py:         Computing TFR over electrode cluster: ['O1', 'Oz', 'O2']... Dimensions - spectral (5-40Hz); temporal (-0.6-1.5s)
+Mon June 08 11:47:43  2026 c_EEGAnalysis_module.py:         Saving <class 'mne.time_frequency.tfr.AverageTFR'> as fif file (base) to data/BIDShierPriors/derivatives/BIDSprocessed/sub-001/ses-01/eeg
+Mon June 08 11:47:43  2026 c_EEGAnalysis_module.py:         Saving <class 'mne.time_frequency.tfr.AverageTFR'> as fif file (lowlevel) to data/BIDShierPriors/derivatives/BIDSprocessed/sub-001/ses-01/eeg
+Mon June 08 11:47:43  2026 c_EEGAnalysis_module.py:         Saving <class 'mne.time_frequency.tfr.AverageTFR'> as fif file (highlevel) to data/BIDShierPriors/derivatives/BIDSprocessed/sub-001/ses-01/eeg
+Mon June 08 11:47:43  2026 c_EEGAnalysis_module.py:         Computing FOOOF
+Mon June 08 11:47:43  2026 c_EEGAnalysis_module.py:         fitting SpecParam with the following parameters: peak_threshold=2, max_n_peaks=6, peak_width_limits=(1.5, 4), f_range=[5, 40]
+Mon June 08 11:47:45  2026 c_EEGAnalysis_module.py:             - base: CF: 11.51054763298738, PW_dB 5.306845706361365
+Mon June 08 11:47:47  2026 c_EEGAnalysis_module.py:             - lowlevel: CF: 11.294653087726195, PW_dB 8.120809304349255
+Mon June 08 11:47:50  2026 c_EEGAnalysis_module.py:             - highlevel: CF: 10.568937840841766, PW_dB 5.977858843647397
+Mon June 08 11:47:50  2026 c_EEGAnalysis_module.py: DONE:   EEG Analysis Module - Subject Level
+Mon June 08 11:47:50  2026 c_EEGAnalysis_module.py:         Time elapsed: 0:00:21.320435
+
+
+Mon June 08 11:47:50  2026 c_EEGAnalysis_module.py: _______ Processing Subject-002_______
+Mon June 08 11:47:50  2026 c_EEGAnalysis_module.py:         Loading epoched data from sub-002_ses-01_task-HierPrior_proc-04epochsCorr
+Mon June 08 11:47:50  2026 c_EEGAnalysis_module.py:         *** Time-Frequency Analysis ***
+Mon June 08 11:47:50  2026 c_EEGAnalysis_module.py:         Computing TFR over electrode cluster: ['O1', 'Oz', 'O2']... Dimensions - spectral (5-40Hz); temporal (-0.6-1.5s)
+Mon June 08 11:47:56  2026 c_EEGAnalysis_module.py:         Computing TFR over electrode cluster: ['O1', 'Oz', 'O2']... Dimensions - spectral (5-40Hz); temporal (-0.6-1.5s)
+Mon June 08 11:48:02  2026 c_EEGAnalysis_module.py:         Computing TFR over electrode cluster: ['O1', 'Oz', 'O2']... Dimensions - spectral (5-40Hz); temporal (-0.6-1.5s)
+Mon June 08 11:48:09  2026 c_EEGAnalysis_module.py:         Saving <class 'mne.time_frequency.tfr.AverageTFR'> as fif file (base) to data/BIDShierPriors/derivatives/BIDSprocessed/sub-002/ses-01/eeg
+Mon June 08 11:48:09  2026 c_EEGAnalysis_module.py:         Saving <class 'mne.time_frequency.tfr.AverageTFR'> as fif file (lowlevel) to data/BIDShierPriors/derivatives/BIDSprocessed/sub-002/ses-01/eeg
+Mon June 08 11:48:09  2026 c_EEGAnalysis_module.py:         Saving <class 'mne.time_frequency.tfr.AverageTFR'> as fif file (highlevel) to data/BIDShierPriors/derivatives/BIDSprocessed/sub-002/ses-01/eeg
+Mon June 08 11:48:09  2026 c_EEGAnalysis_module.py:         Computing FOOOF
+Mon June 08 11:48:09  2026 c_EEGAnalysis_module.py:         fitting SpecParam with the following parameters: peak_threshold=2, max_n_peaks=6, peak_width_limits=(1.5, 4), f_range=[5, 40]
+Mon June 08 11:48:11  2026 c_EEGAnalysis_module.py:             - base: CF: 11.60784176135508, PW_dB 8.685950342350601
+Mon June 08 11:48:14  2026 c_EEGAnalysis_module.py:             - lowlevel: CF: 11.41784490595046, PW_dB 10.636755246531706
+Mon June 08 11:48:16  2026 c_EEGAnalysis_module.py:             - highlevel: CF: 11.515908243831174, PW_dB 8.336749752935653
+Mon June 08 11:48:16  2026 c_EEGAnalysis_module.py: DONE:   EEG Analysis Module - Subject Level
+Mon June 08 11:48:16  2026 c_EEGAnalysis_module.py:         Time elapsed: 0:00:26.708484
+
+
+Mon June 08 11:48:16  2026 c_EEGAnalysis_module.py: _______ Processing Subject-003_______
+Mon June 08 11:48:16  2026 c_EEGAnalysis_module.py:         Loading epoched data from sub-003_ses-01_task-HierPrior_proc-04epochsCorr
+Mon June 08 11:48:16  2026 c_EEGAnalysis_module.py:         *** Time-Frequency Analysis ***
+Mon June 08 11:48:16  2026 c_EEGAnalysis_module.py:         Computing TFR over electrode cluster: ['O1', 'Oz', 'O2']... Dimensions - spectral (5-40Hz); temporal (-0.6-1.5s)
+Mon June 08 11:48:20  2026 c_EEGAnalysis_module.py:         Computing TFR over electrode cluster: ['O1', 'Oz', 'O2']... Dimensions - spectral (5-40Hz); temporal (-0.6-1.5s)
+Mon June 08 11:48:26  2026 c_EEGAnalysis_module.py:         Computing TFR over electrode cluster: ['O1', 'Oz', 'O2']... Dimensions - spectral (5-40Hz); temporal (-0.6-1.5s)
+Mon June 08 11:48:31  2026 c_EEGAnalysis_module.py:         Saving <class 'mne.time_frequency.tfr.AverageTFR'> as fif file (base) to data/BIDShierPriors/derivatives/BIDSprocessed/sub-003/ses-01/eeg
+Mon June 08 11:48:31  2026 c_EEGAnalysis_module.py:         Saving <class 'mne.time_frequency.tfr.AverageTFR'> as fif file (lowlevel) to data/BIDShierPriors/derivatives/BIDSprocessed/sub-003/ses-01/eeg
+Mon June 08 11:48:31  2026 c_EEGAnalysis_module.py:         Saving <class 'mne.time_frequency.tfr.AverageTFR'> as fif file (highlevel) to data/BIDShierPriors/derivatives/BIDSprocessed/sub-003/ses-01/eeg
+Mon June 08 11:48:31  2026 c_EEGAnalysis_module.py:         Computing FOOOF
+Mon June 08 11:48:31  2026 c_EEGAnalysis_module.py:         fitting SpecParam with the following parameters: peak_threshold=2, max_n_peaks=6, peak_width_limits=(1.5, 4), f_range=[5, 40]
+Mon June 08 11:48:33  2026 c_EEGAnalysis_module.py:             - base: CF: 8.121675884397625, PW_dB 8.423753576182627
+Mon June 08 11:48:35  2026 c_EEGAnalysis_module.py:             - lowlevel: CF: 8.188308920545527, PW_dB 8.784141280699966
+Mon June 08 11:48:38  2026 c_EEGAnalysis_module.py:             - highlevel: CF: 8.117842963430688, PW_dB 9.160160413180023
+Mon June 08 11:48:38  2026 c_EEGAnalysis_module.py: DONE:   EEG Analysis Module - Subject Level
+Mon June 08 11:48:38  2026 c_EEGAnalysis_module.py:         Time elapsed: 0:00:21.340068
+
+
+Mon June 08 11:48:39  2026 c_EEGAnalysis_module.py:         Raincloud-plots saved to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/groupDDM_SDT/raincloud
+Mon June 08 11:48:39  2026 c_EEGAnalysis_module.py:         Pair-plots saved to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/groupDDM_SDT/paired
+Mon June 08 11:48:40  2026 c_EEGAnalysis_module.py:         Global FOOOF summary written to: data/BIDShierPriors/derivatives/BIDSprocessed/results/master_fooof_summary.csv
+Mon June 08 11:48:40  2026 c_EEGAnalysis_module.py: DONE:   EEG Analysis Module - Subject Level
+Mon June 08 11:48:40  2026 c_EEGAnalysis_module.py:         Time elapsed: 0:00:23.530865
+
+
+Mon June 08 11:48:40  2026 c_EEGAnalysis_module.py: START:  EEG Analysis Module - Group Level
+Mon June 08 11:48:40  2026 c_EEGAnalysis_module.py: _______ Analysis of subjects: ['001', '002', '003']_______
+Mon June 08 11:48:40  2026 c_EEGAnalysis_module.py:         *** TFRs - computing TFRs across all subjects ***
+Mon June 08 11:48:40  2026 c_EEGAnalysis_module.py:      Computing grand average TFR for condition: base
+Mon June 08 11:48:40  2026 c_EEGAnalysis_module.py:      Saved grand average TFR for condition base to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/groupTFR/grand_avg_cond-base_tfr.fif
+Mon June 08 11:48:40  2026 c_EEGAnalysis_module.py:      Computing grand average TFR for condition: lowlevel
+Mon June 08 11:48:40  2026 c_EEGAnalysis_module.py:      Saved grand average TFR for condition lowlevel to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/groupTFR/grand_avg_cond-lowlevel_tfr.fif
+Mon June 08 11:48:40  2026 c_EEGAnalysis_module.py:      Computing grand average TFR for condition: highlevel
+Mon June 08 11:48:40  2026 c_EEGAnalysis_module.py:      Saved grand average TFR for condition highlevel to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/groupTFR/grand_avg_cond-highlevel_tfr.fif
+Mon June 08 11:48:40  2026 c_EEGAnalysis_module.py:         Saving Grand Average TFR plot to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/diagnostic_plots/GrandAvgTFR_base.png
+Mon June 08 11:48:40  2026 c_EEGAnalysis_module.py:         Saving Grand Average TFR plot to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/diagnostic_plots/GrandAvgTFR_lowlevel.png
+Mon June 08 11:48:40  2026 c_EEGAnalysis_module.py:         Saving Grand Average TFR plot to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/diagnostic_plots/GrandAvgTFR_highlevel.png
+Mon June 08 11:48:41  2026 c_EEGAnalysis_module.py:         Saving Grand Average TFR difference plot to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/diagnostic_plots/GrandAvgTFR_diff_lowlevelvsbase.png
+Mon June 08 11:48:41  2026 c_EEGAnalysis_module.py:         Saving Grand Average TFR difference plot to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/diagnostic_plots/GrandAvgTFR_diff_highlevelvsbase.png
+Mon June 08 11:48:41  2026 c_EEGAnalysis_module.py:         Saving Grand Average TFR difference plot to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/diagnostic_plots/GrandAvgTFR_diff_lowlevelvshighlevel.png
+Mon June 08 11:48:41  2026 c_EEGAnalysis_module.py:      -- group-CBPT not performed
+Mon June 08 11:48:41  2026 c_EEGAnalysis_module.py:      -- No ERP features extracted or statistical analysis performed
+Mon June 08 11:48:41  2026 c_EEGAnalysis_module.py: DONE:   EEG Analysis Module - Group Level
+Mon June 08 11:48:41  2026 c_EEGAnalysis_module.py:         Time elapsed: 0:00:01.100411
+
+
