@@ -651,7 +651,7 @@ if __name__ == '__main__':
 
         ## rereference data
         if perform_rereferencing:
-            raw_step, log_df = rereferencing(epochs, rereference, log_df)
+            epochs, log_df = rereferencing(epochs, rereference, log_df)
             diagnostic_plots(raw_step, bidspath_processing_subject)
             # utils.save_preprocessing_step(raw_step, '04rawreref')
         else:
