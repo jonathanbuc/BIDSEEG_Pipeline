@@ -44,6 +44,12 @@ that way you have access to your conda environments in the terminal within VS Co
 
 **For Mac-Users:** Just open `VS Code` from your applications.
 
+**Clone the Repository**
+After creating and activating the environment, clone the pipeline repository:
+```bash
+git clone https://github.com/jonathanbuc/BIDSEEG_Pipeline.git
+```
+
 -> Now simply open a new terminal `Terminal/New Terminal` and proceed with steps 1.3 and 1.4
 
 ### 1.3 Setup conda in Anaconda Prompt (windows) or terminal (Mac)
