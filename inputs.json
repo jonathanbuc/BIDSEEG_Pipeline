@@ -50,7 +50,7 @@
         "compute_sdt": true,
         "compute_ddm": true,
         "compute_fooof": true,
-        "compute_hssm": false
+        "compute_hssm": true
     },
     "preprocessing": {
         "samplingrate_down": 250,
@@ -193,7 +193,7 @@
         ],
         "hssm": {
             "model_type": "ddm",
-            "sampler": "mcmc",
+            "sampler": "nuts_numpyro",
             "draws": 1000,
             "tune": 1000,
             "chains": 2,
@@ -201,7 +201,7 @@
             "target_accept": 0.9,
             "prior_settings": "safe",
             "link_settings": "log_logit",
-            "formula_v": "v ~ 1 + exp + (1|participant)"
+            "formula_v": "v ~ 1 + exp * coh_level + (1|participant)"
         }
     }
 }

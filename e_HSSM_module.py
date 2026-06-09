@@ -43,7 +43,7 @@ sampler        = hssm_cfg.get('sampler', 'mcmc')
 model_type     = hssm_cfg.get('model_type', 'ddm')
 prior_settings = hssm_cfg.get('prior_settings', 'safe')
 link_settings  = hssm_cfg.get('link_settings', 'log_logit')
-formula_v      = hssm_cfg.get('formula_v', 'v ~ 1 + exp + (1|participant)')
+formula_v      = hssm_cfg.get('formula_v', 'v ~ 1 + exp * coh_level + (1|participant)')
 
 bidspath_processing = utils.get_bidspath(inputs, 'bids_proc')
 result_dir = os.path.join(bidspath_processing.root, 'results', 'groupBehavioral')
@@ -65,6 +65,25 @@ def prep_hssm_data(df, cond_col, conditions):
     df = df[df['rt'] > 0].reset_index(drop=True)
     # HSSM upper/lower boundary encoding
     df['response'] = df['response_prior'].map({1: 1, 0: -1}).astype(int)
+    # Coherence predictors for the drift formula.
+    #   coh       continuous, per-subject coherence (precision of sensory evidence)
+    #   coh_level threshold-relative level; recode low/medium -> 0/1 so it enters
+    #             the formula numerically (slope = medium minus low)
+    if 'coh_level' in df.columns:
+        df['coh_level'] = df['coh_level'].map({'low': 0, 'medium': 1})
+        df = df.dropna(subset=['coh_level']).reset_index(drop=True)
+        df['coh_level'] = df['coh_level'].astype(int)
+    # Centered versions of continuous coherence. QUEST makes `coh` differ between
+    # subjects, so grand-mean centering (coh_gc) blends within- and between-subject
+    # variation, while subject-mean centering (coh_wc) isolates the within-subject
+    # trial-level effect. coh_subjmean carries the between-subject part for an
+    # optional within-between (Mundlak) decomposition.
+    if 'coh' in df.columns:
+        df = df.dropna(subset=['coh']).reset_index(drop=True)
+        df['coh_gc'] = df['coh'] - df['coh'].mean()
+        subj_mean = df.groupby('participant')['coh'].transform('mean')
+        df['coh_wc'] = df['coh'] - subj_mean
+        df['coh_subjmean'] = subj_mean - df['coh'].mean()
     # keep only conditions of interest
     df = df[df[cond_col].isin(conditions)].reset_index(drop=True)
     return df
@@ -101,14 +120,22 @@ def fit_hssm_hierarchical(df, condition_dict, formula_v, model_type,
 
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
-        model.sample(
-            sampler=sampler,
-            draws=draws,
-            tune=tune,
-            chains=chains,
-            cores=cores,
-            target_accept=target_accept,
-        )
+        try:
+            model.sample(
+                sampler=sampler,
+                draws=draws,
+                tune=tune,
+                chains=chains,
+                cores=cores,
+                target_accept=target_accept,
+            )
+        except ValueError as exc:
+            # hssm 0.2.x raises a dimension mismatch when computing log likelihood
+            # after numpyro sampling with random effects — posterior samples are already
+            # stored in model._inference_obj before this happens, so we can proceed.
+            if "different number of dimensions" not in str(exc):
+                raise
+            utils.log_msg("        (skipping log-likelihood: hssm 0.2.x/numpyro compat issue)")
 
     return model
 
@@ -116,7 +143,8 @@ def fit_hssm_hierarchical(df, condition_dict, formula_v, model_type,
 def save_hssm_diagnostics(model, result_dir):
     """Save trace plots (convergence diagnostics) to the results directory."""
     trace_path = os.path.join(result_dir, 'hssm_trace.png')
-    model.plot_trace()
+    import arviz as az
+    az.plot_trace(model._inference_obj)
     plt.savefig(trace_path, dpi=150, bbox_inches='tight')
     plt.close('all')
     utils.log_msg(f'        Trace plot: {trace_path}')
@@ -154,7 +182,10 @@ if __name__ == '__main__':
         )
 
         # Posterior summary -> CSV
-        summary = model.summary()
+        # model.summary() triggers log-likelihood recomputation which has a dimension
+        # mismatch bug in hssm 0.2.x with numpyro + random effects; go direct to ArviZ.
+        import arviz as az
+        summary = az.summary(model._inference_obj)
         summary_path = os.path.join(result_dir, 'hssm_posterior_summary.csv')
         summary.to_csv(summary_path)
         utils.log_msg(f'        Posterior summary: {summary_path}')

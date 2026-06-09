@@ -37,3 +37,8 @@ _env_probe.py
 dev/
 # Generated doc exports only — the .md sources (ARCHITECTURE, learning notes) stay tracked
 docs/*.html
+
+# ── AI assistant rules (agent-specific, not tracked) ──
+AGENTS.md
+CLAUDE.md
+.bob/
