@@ -52,12 +52,16 @@ result_dir = os.path.join(bidspath_processing.root, 'results', 'groupBehavioral'
 
 # _____________________________Functions_________________________________________
 
-def prep_hssm_data(df, cond_col, conditions):
+def prep_hssm_data(df, cond_col, conditions, formula=None):
     """
     Select and recode columns so the dataframe matches HSSM's expected format.
     Returns a copy with:
       - rt:       positive reaction times, RT-flagged outliers removed
       - response: upper boundary = 1 (prior-congruent), lower = -1 (prior-incongruent)
+
+    If `formula` is given, rows missing any per-trial alpha covariate that the
+    formula actually uses are dropped (FOOOF leaves ~7% of trials without an alpha
+    peak; the centre-of-gravity estimate has none missing).
     """
     df = df.copy()
     if 'rt_flag' in df.columns:
@@ -84,8 +88,29 @@ def prep_hssm_data(df, cond_col, conditions):
         subj_mean = df.groupby('participant')['coh'].transform('mean')
         df['coh_wc'] = df['coh'] - subj_mean
         df['coh_subjmean'] = subj_mean - df['coh'].mean()
+    # Per-trial individual alpha frequency (neural marker of expectation/inhibition).
+    # Centered exactly like coherence: alpha differs between subjects (IAF ~9-11 Hz),
+    # so grand-mean centering (_gc) blends within- and between-subject variation,
+    # while subject-mean centering (_wc) isolates the trial-to-trial alpha shift --
+    # the actual "does the alpha clock move evidence accumulation" question.
+    for acol in ('alpha_cf_fooof', 'alpha_cf_cog'):
+        if acol in df.columns:
+            subj_mean = df.groupby('participant')[acol].transform('mean')
+            df[f'{acol}_gc'] = df[acol] - df[acol].mean()
+            df[f'{acol}_wc'] = df[acol] - subj_mean
+            df[f'{acol}_subjmean'] = subj_mean - df[acol].mean()
     # keep only conditions of interest
     df = df[df[cond_col].isin(conditions)].reset_index(drop=True)
+    # drop trials missing an alpha covariate the formula uses (centering means above
+    # are computed first, on all available trials, so they're unaffected by this)
+    if formula is not None:
+        need = [c for c in df.columns if c.startswith('alpha_cf_') and c in formula]
+        if need:
+            before = len(df)
+            df = df.dropna(subset=need).reset_index(drop=True)
+            if before - len(df):
+                utils.log_msg(f'        dropped {before - len(df)} trials missing '
+                              f'alpha covariate(s) {need}')
     return df
 
 
@@ -100,7 +125,7 @@ def fit_hssm_hierarchical(df, condition_dict, formula_v, model_type,
     import hssm  # deferred – PyMC/JAX stack is heavy and only needed when flag is on
 
     cond_col, conditions = list(condition_dict.items())[0]
-    df_hssm = prep_hssm_data(df, cond_col, conditions)
+    df_hssm = prep_hssm_data(df, cond_col, conditions, formula=formula_v)
 
     utils.log_msg(f'        model={model_type}, sampler={sampler}, formula="{formula_v}"')
     utils.log_msg(f'        N={len(df_hssm)} trials, '
@@ -140,6 +165,37 @@ def fit_hssm_hierarchical(df, condition_dict, formula_v, model_type,
     return model
 
 
+def load_group_data(behav_file, formula_v, inputs):
+    """
+    Pick the trial table the drift formula needs.
+
+    If the formula references a per-trial alpha covariate, load the per-trial alpha
+    derivatives written by c_EEGAnalysis_module.py (extract_trial_alpha). Those CSVs
+    are epochs.metadata with alpha columns appended, so they already carry every
+    behavioural field -- no key-merge onto behavioraldata_hierprior.csv is needed
+    (and that merge is unsafe anyway: block_cond/block_order/thisN are not a unique
+    trial key). Otherwise fall back to the group behavioural CSV.
+    """
+    if 'alpha' not in formula_v:
+        return pd.read_csv(behav_file)
+
+    import glob
+    proc = utils.get_bidspath(inputs, 'bids_proc')
+    alpha_dir = os.path.join(proc.root, 'results', 'groupEEG', 'trial_alpha')
+    files = sorted(glob.glob(os.path.join(alpha_dir, 'sub-*_trial_alpha.csv')))
+    if not files:
+        raise FileNotFoundError(
+            f'Formula uses an alpha covariate but no per-trial alpha CSVs were found '
+            f'in {alpha_dir}.\nRun c_EEGAnalysis_module.py with compute_fooof = true first.'
+        )
+    df = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)
+    utils.log_msg(
+        f'        Alpha covariate requested -> using per-trial alpha table '
+        f'({len(df)} trials from {len(files)} subjects)'
+    )
+    return df
+
+
 def save_hssm_diagnostics(model, result_dir):
     """Save trace plots (convergence diagnostics) to the results directory."""
     trace_path = os.path.join(result_dir, 'hssm_trace.png')
@@ -169,7 +225,7 @@ if __name__ == '__main__':
                 f'Run d_BehavAnalysis_module.py first.'
             )
 
-        df_group = pd.read_csv(behav_data_file)
+        df_group = load_group_data(behav_data_file, formula_v, inputs)
         utils.log_msg(
             f'        Loaded {len(df_group)} trials from '
             f'{df_group["participant"].nunique()} subjects'
