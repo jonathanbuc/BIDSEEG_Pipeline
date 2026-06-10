@@ -30,6 +30,9 @@ data/BIDShierPriors/derivatives/
 # DATA and stays tracked — only the BIDS-root logfiles are generated noise)
 data/BIDShierPriors/logfiles/
 
+# ── Private meeting transcripts (named individuals — keep local, never push) ──
+meetings/
+
 # ── Misc local artifacts ──
 *.log
 _env_probe.py
