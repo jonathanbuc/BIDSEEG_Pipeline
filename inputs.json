@@ -120,6 +120,24 @@
             7,
             14
         ],
+        "narrowband_freqs": {
+            "delta": [
+                1,
+                4
+            ],
+            "theta": [
+                4,
+                7
+            ],
+            "beta": [
+                14,
+                30
+            ],
+            "gamma": [
+                30,
+                80
+            ]
+        },
         "tfr_method": "multitaper",
         "time_res": 2,
         "freq_res": 65,
@@ -180,7 +198,13 @@
         ],
         "brain_parameters_to_plot": [
             "relative_alpha_dB",
+            "total_theta_dB",
+            "relative_alpha_dB",
             "total_alpha_dB",
+            "relative_beta_dB",
+            "total_beta_dB",
+            "relative_gamma_dB",
+            "total_gamma_dB",
             "CF_Hz",
             "mean_alpha_cf",
             "PW_dB",
