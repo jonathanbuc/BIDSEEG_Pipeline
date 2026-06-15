@@ -44,6 +44,13 @@ model_type     = hssm_cfg.get('model_type', 'ddm')
 prior_settings = hssm_cfg.get('prior_settings', 'safe')
 link_settings  = hssm_cfg.get('link_settings', 'log_logit')
 formula_v      = hssm_cfg.get('formula_v', 'v ~ 1 + exp * coh_level + (1|participant)')
+# Optional per-parameter formulas (empty string = leave that parameter as a simple
+# group-level estimate). z = starting-point bias, t = non-decision time, a = boundary.
+# Modelling z with a prior term separates a pre-evidence (start-point) bias from the
+# in-evidence drift bias carried by formula_v -- the Franzen-style dissociation.
+formula_z      = hssm_cfg.get('formula_z', '')
+formula_t      = hssm_cfg.get('formula_t', '')
+formula_a      = hssm_cfg.get('formula_a', '')
 
 bidspath_processing = utils.get_bidspath(inputs, 'bids_proc')
 result_dir = os.path.join(bidspath_processing.root, 'results', 'groupBehavioral')
@@ -116,29 +123,39 @@ def prep_hssm_data(df, cond_col, conditions, formula=None):
 
 def fit_hssm_hierarchical(df, condition_dict, formula_v, model_type,
                            prior_settings, link_settings,
-                           draws, tune, chains, cores, target_accept, sampler):
+                           draws, tune, chains, cores, target_accept, sampler,
+                           formula_z='', formula_t='', formula_a=''):
     """
-    Fit a hierarchical DDM: drift rate varies by condition with subject random
-    intercepts; boundary, bias, and non-decision time have group-level priors.
+    Fit a hierarchical DDM. Drift rate (v) always gets a formula; z/t/a get one only
+    if a non-empty formula is passed, otherwise they stay simple group-level
+    parameters. Giving z its own formula (e.g. z ~ 1 + prior_dic) separates a
+    pre-evidence start-point bias from the in-evidence drift bias in formula_v.
     Sampling uses NUTS via PyMC ('mcmc') or the faster JAX backend ('nuts_numpyro').
     """
     import hssm  # deferred – PyMC/JAX stack is heavy and only needed when flag is on
 
     cond_col, conditions = list(condition_dict.items())[0]
-    df_hssm = prep_hssm_data(df, cond_col, conditions, formula=formula_v)
+    # prep must see every covariate any formula uses, so it knows which alpha
+    # columns to keep / drop-NaN on.
+    all_formulas = ' '.join([formula_v, formula_z, formula_t, formula_a])
+    df_hssm = prep_hssm_data(df, cond_col, conditions, formula=all_formulas)
 
-    utils.log_msg(f'        model={model_type}, sampler={sampler}, formula="{formula_v}"')
+    # v keeps the identity link that produced the validated drift results; z/t/a are
+    # left to link_settings (logit for the bounded z, log for the positive t/a).
+    include = [{"name": "v", "formula": formula_v, "link": "identity"}]
+    for name, f in (("z", formula_z), ("t", formula_t), ("a", formula_a)):
+        if f:
+            include.append({"name": name, "formula": f})
+
+    formula_msg = " | ".join(spec["formula"] for spec in include)
+    utils.log_msg(f'        model={model_type}, sampler={sampler}, formulas="{formula_msg}"')
     utils.log_msg(f'        N={len(df_hssm)} trials, '
                   f'{df_hssm["participant"].nunique()} subjects')
 
     model = hssm.HSSM(
         data=df_hssm,
         model=model_type,
-        include=[{
-            "name": "v",
-            "formula": formula_v,
-            "link": "identity",
-        }],
+        include=include,
         prior_settings=prior_settings,
         link_settings=link_settings,
     )
@@ -234,7 +251,8 @@ if __name__ == '__main__':
         utils.log_msg('        *** Hierarchical Bayesian DDM (HSSM) ***')
         model = fit_hssm_hierarchical(
             df_group, condition_dict, formula_v, model_type,
-            prior_settings, link_settings, draws, tune, chains, cores, target_accept, sampler
+            prior_settings, link_settings, draws, tune, chains, cores, target_accept, sampler,
+            formula_z=formula_z, formula_t=formula_t, formula_a=formula_a
         )
 
         # Posterior summary -> CSV
