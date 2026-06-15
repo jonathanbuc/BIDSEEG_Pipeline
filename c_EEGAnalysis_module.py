@@ -1009,22 +1009,15 @@ def run_fooof_analysis(epochs_clean, condition_dict, subject, bidspath_out_subje
         # Compute PSD
         psd = epochs_cond.compute_psd(method='welch', verbose=False)# whole epoch: n_fft=326, prestim interval: n_fft=251  fmin=f_range[0], fmax=f_range[1],
        
-        #CJ CHANGED: No longer getting from roi but all of the electrodes and no longer averaging
-
 
         # Get PSD data and freqs
-        # psd_roi = psd.pick(roi)
-        # spectrum = psd.get_data().squeeze().mean(axis=0) # shape: before averaging: (n_epochs, n_freqs) after averaging: (n_freqs)
-        # spectrum = psd_roi.get_data().squeeze().mean(axis=(0, 1)) # shape: before averaging: (n_epochs, n_channels, n_freqs) after averaging: (n_freqs)
-        # freqs = psd_roi.freqs
         freqs = psd.freqs
         all_channels = psd.ch_names 
 
-        #CJ CHANGED: performing fooof for all channels thru looping 
+       
         for channels in all_channels: 
             psd_channels = psd.copy().pick(channels)
             spectrum = psd_channels.get_data().squeeze().mean(axis=0)  # avg over epochs only 
-
 
             model_path = os.path.join(save_dir, f"sub-{subject}_{condition}_{channels}_fooof_model.json")
             fig_path_basic = os.path.join(save_dir, f"sub-{subject}_{condition}_{channels}_fooof_basic.png")
@@ -1033,10 +1026,6 @@ def run_fooof_analysis(epochs_clean, condition_dict, subject, bidspath_out_subje
             # ----- Fit model -----
             fm = FOOOF(aperiodic_mode='fixed', peak_threshold=peak_threshold,
                     max_n_peaks=6, peak_width_limits=(1.4, 8)) 
-            
-            # ask jonathan if he also wanted fooof0 
-            #fm0 = FOOOF(aperiodic_mode='fixed', peak_threshold=peak_threshold, max_n_peaks=0, peak_width_limits=(1.4, 8))     
-            #fm0.fit(freqs, spectrum, freq_range=[25, 45]) 
             fm.fit(freqs, spectrum, f_range)
 
             # ----- Save model JSON -----
@@ -1073,24 +1062,24 @@ def run_fooof_analysis(epochs_clean, condition_dict, subject, bidspath_out_subje
                     "channels": channels
                 })
             
-
+            #discard negative aperiodic_exponents and r^2 filtering
             for row in rows_fooofsum:
                 if row.get('Aperiodic_Exponent', 1) < 0:  
                     row['Aperiodic_Exponent'] = float('nan') 
                     
                 if row.get('R_squared', 1) < 0.9:
                     row['R_squared'] = float('nan') 
+
+            
             df_fooofsum_cond = pd.DataFrame(rows_fooofsum).round(6)
             df_fooofsum_list.append(df_fooofsum_cond)
 
 
 
 
-            #CJ ADDED FROM SOPHIA'S CODE TO ALSO EXTRACT DELTA THETA BETA AND GAMMA 
+    
             # ----- Extract Delta, Theta, Alpha, Beta and Gamma Peak and save summary -----
-            # extract perioric alpha power
             rows_bandpeaks = []
-
             # initializing single row (dict instead of list) with model params                
             rows_bandpeaks_dict = {
                 "participant": f'sub-{subject}',
@@ -1101,10 +1090,9 @@ def run_fooof_analysis(epochs_clean, condition_dict, subject, bidspath_out_subje
                 "R_squared": fm.r_squared_,
                 "Error": fm.error_
                 }
-            #alpha_peaks = fm.peak_params_[(fm.peak_params_[:, 0] > alpha_freq_range[0]) & (fm.peak_params_[:, 0] < alpha_freq_range[1])]
-
             
-            #Loop thru different bands (theta, beta, gamma, alpha etc)
+            
+            #Loop through all bands 
             for band_name, freq_range in narrowband_freqs.items():
                 band_peaks = fm.peak_params_[(fm.peak_params_[:, 0] > freq_range[0]) & (fm.peak_params_[:, 0] < freq_range[1])]
                 if len(band_peaks) > 0:
@@ -1129,19 +1117,10 @@ def run_fooof_analysis(epochs_clean, condition_dict, subject, bidspath_out_subje
                     f"{band_name}_BW_Hz_sum": sum_band_bw
                     })
                 utils.log_msg(f"            - {condition}{channels}: CF: {band_peak[0]}, PW_dB {10 * band_peak[1]}")
-
-            
-            
-    
-            
-            
             
             df_bandpeaks_list.append(pd.DataFrame([rows_bandpeaks_dict]).round(6))
            
                 
-    
-           #df_alphapeak_list.append(pd.DataFrame([rows_bandpeaks_dict]).round(6))
-        
    
     df_fooofsum = pd.concat(df_fooofsum_list, ignore_index=True)
     df_bandpeaks = pd.concat(df_bandpeaks_list, ignore_index=True)
@@ -1150,20 +1129,13 @@ def run_fooof_analysis(epochs_clean, condition_dict, subject, bidspath_out_subje
     df_bandpeaks.loc[df_bandpeaks['R_squared'] < 0.9, 'Aperiodic_Exponent'] = float('nan')
 
     
-    #CJ ADDED 
-    #topoplot 
-    
+    #topoplot of aperiodic exponents 
     ch_orders = psd.ch_names
-    avg_exponents = [
-        df_bandpeaks[df_bandpeaks['channels'] == ch]['Aperiodic_Exponent'].mean()
-        for ch in ch_orders
-    ] #prevent NaN when no peaks found, so always one row per channel
-    
+    avg_exponents = [df_bandpeaks[df_bandpeaks['channels'] == ch]['Aperiodic_Exponent'].mean() for ch in ch_orders ] #prevent NaN when no peaks found, so always one row per channel
     avg_exponents_plot = [0 if np.isnan(v) else v for v in avg_exponents] #replacing Nan with 0 for plots
     fig, ax = plt.subplots(figsize=(6, 5))
     mask = np.array([not np.isnan(v) for v in avg_exponents]) #grays out the bad channels 
-    im, _ = mne.viz.plot_topomap(avg_exponents_plot, psd.info, cmap='viridis', mask=mask, mask_params=dict(marker='o', markerfacecolor='grey', markersize=8), extrapolate='head', show=False, axes=ax)
-    #im, _ = mne.viz.plot_topomap(avg_exponents_plot, psd.info, cmap='viridis', extrapolate='head', show=False, axes=ax)
+    im, _ = mne.viz.plot_topomap(avg_exponents_plot, psd.info, cmap='viridis', mask=mask, mask_params=dict(marker='o', markerfacecolor='grey', markersize=2), extrapolate='head', show=False, axes=ax)
     colorbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
     colorbar.set_label('Aperiodic Exponent')  
 
@@ -1395,7 +1367,7 @@ if __name__ == '__main__':
     fooof_alpha = pd.concat(fooof_alpha_dfs, ignore_index=True)
     power_df = pd.merge(tfr_alpha, fooof_alpha, on=['participant', 'exp'], how='left')
     
-    # CJ ADDED FROM SOPHIA'S CODE FOR THE DIFFERENT BANDS
+    # added for different band names 
     band_rename = {}
     for band in narrowband_freq_ranges:
         band_rename[f"{band}_PW_dB_sum"] = f"total_{band}_dB"
