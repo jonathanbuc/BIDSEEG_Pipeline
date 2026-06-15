@@ -1078,7 +1078,7 @@ def run_fooof_analysis(epochs_clean, condition_dict, subject, bidspath_out_subje
                 if row.get('Aperiodic_Exponent', 1) < 0:  
                     row['Aperiodic_Exponent'] = float('nan') 
                     
-                if row.get('R_squared', 1) <= 0.9:
+                if row.get('R_squared', 1) < 0.9:
                     row['R_squared'] = float('nan') 
             df_fooofsum_cond = pd.DataFrame(rows_fooofsum).round(6)
             df_fooofsum_list.append(df_fooofsum_cond)
@@ -1158,9 +1158,12 @@ def run_fooof_analysis(epochs_clean, condition_dict, subject, bidspath_out_subje
         df_bandpeaks[df_bandpeaks['channels'] == ch]['Aperiodic_Exponent'].mean()
         for ch in ch_orders
     ] #prevent NaN when no peaks found, so always one row per channel
+    
     avg_exponents_plot = [0 if np.isnan(v) else v for v in avg_exponents] #replacing Nan with 0 for plots
     fig, ax = plt.subplots(figsize=(6, 5))
-    im, _ = mne.viz.plot_topomap(avg_exponents_plot, psd.info, cmap='viridis', extrapolate='head', show=False, axes=ax)
+    mask = np.array([not np.isnan(v) for v in avg_exponents]) #grays out the bad channels 
+    im, _ = mne.viz.plot_topomap(avg_exponents_plot, psd.info, cmap='viridis', mask=mask, mask_params=dict(marker='o', markerfacecolor='grey', markersize=8), extrapolate='head', show=False, axes=ax)
+    #im, _ = mne.viz.plot_topomap(avg_exponents_plot, psd.info, cmap='viridis', extrapolate='head', show=False, axes=ax)
     colorbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
     colorbar.set_label('Aperiodic Exponent')  
 
