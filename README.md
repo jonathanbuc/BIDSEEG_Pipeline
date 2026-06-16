@@ -2,7 +2,7 @@
 
 This pipeline enables easy-use, semi-automated processing of EEG-data from **BIDSraw** up to statistical analysis, including **preprocessing**, **artifact correction/rejection** and **conventional** and **parameterized frequency analysis**. The behavioral module further provides code for **generlized drift diffusion modelling**. All input can be provided via a single .json file, wherefore *no extensive coding expertise is required!*
 
-The pipeline implements 4 modules:
+The pipeline implements 5 modules:
 
 1 *Preprocessing*:
     - Preprocessing BIDSified EEG data including downsampling, rereferencing, linenoise removal and filtering.
@@ -15,7 +15,10 @@ The pipeline implements 4 modules:
 
 4 *Behavioral Analysis*:
     - Signal detection theory analysis and generalized drift diffusion modelling (+ predictive checks and parameter recovery study for parameter validation).
-    
+
+5 *Hierarchical Bayesian Modelling (HSSM)*:
+    - Hierarchical Bayesian drift-diffusion modelling across all subjects at once. Drift rate varies by experimental condition and motion coherence with a per-participant random intercept (partial pooling). Returns full posterior distributions with convergence diagnostics (R-hat, ESS) instead of per-subject point estimates.
+
 0.1 *BIDSification*:
     - If your data is not in BIDS-format yet, using `z_BIDSification_module.py` you can convert data from any output format (e.g. BrainVision) into BIDS (Brain Imaging Data Structure).
 
@@ -88,6 +91,8 @@ conda deactivate
 
 The `data/BIDShierPriors` contains 3 subjects from *Buchholz & Hesselmann (in review) - Hierarchical Priors Shape Dynamic Evidence Accumulation and Aperiodic EEG Activity* as testing data for an initial run (steps 2.1-2.4). 
 
+> **Note on the demo data.** The shipped EEG is a **250 Hz downsampled** version of the 3-subject demo (the rate the preprocessing module downsamples to anyway), kept small enough for Git LFS. It is sufficient to run the whole pipeline end-to-end from a clean clone. The exact provenance — raw BrainVision → `z_BIDSification_module.py` → resample to 250 Hz — is documented in `scripts/make_demo_data.py`. The small per-subject behavioral logs and trait questionnaire live under `data/sourcedata/`; the large raw EEG is not tracked.
+
 **IMPORTANT**: Consider the [ExperimentGuide_HierarchicalPriors.md](ExperimentGuide_HierarchicalPriors.md), which provides a thorough linkage of the experiment and this pipeline. We recommend using this file as guideline when proceeding with steps `2.1-2.3` This file can also be used for a replication of the respective study.
 
 ### 2.1 - Module 1: Preprocessing
@@ -106,7 +111,7 @@ To perform artifact correction/rejection, run:
 python b_ArtifactCorrection_module.py inputs.json
 ```
 
-### 2.3 - Module 4: EEG Analysis
+### 2.3 - Module 3: EEG Analysis
 
 To perform EEG analysis, run:
 
@@ -121,3 +126,66 @@ To perform behavioral analysis, run:
 ```bash
 python d_BehavAnalysis_module.py inputs.json
 ```
+
+### 2.5 - Module 5: Hierarchical Bayesian Modelling (HSSM)
+
+Where module 4 fits a separate drift-diffusion model **per subject**, this module fits **one
+hierarchical Bayesian DDM across all subjects at once**. Drift rate is modelled as a function of
+experimental condition and motion coherence, with each participant getting their own random
+intercept (*partial pooling*), and the output is a full posterior distribution per parameter — so
+you can make direct probability statements ("95% credible that high-level priors raise drift rate")
+rather than relying on a t-test over point estimates.
+
+**Prerequisites:**
+- **Run module 4 first.** HSSM reads the group behavioral table
+  `.../results/groupBehavioral/behavioraldata_hierprior.csv` that `d_BehavAnalysis_module.py`
+  writes. Without it the module stops with a `FileNotFoundError`.
+- The `hssm` package must be installed (it ships with the `environment_setup.yml` environment; if
+  you built your env before HSSM was added, run `pip install hssm`).
+
+**Enable it.** HSSM is off by default because Markov-Chain-Monte-Carlo sampling is slow (expect
+~15–60 min for the full dataset). Switch it on in `inputs.json`:
+
+```json
+"perform": {
+    "compute_hssm": true
+}
+```
+
+**Run it:**
+
+```bash
+python e_HSSM_module.py inputs.json
+```
+
+**Configure it.** All knobs live in `inputs.json → Analysis.hssm`:
+
+```json
+"hssm": {
+    "model_type":     "ddm",                                  // DDM variant to fit
+    "sampler":        "nuts_numpyro",                          // "mcmc" (PyMC) or "nuts_numpyro" (faster, JAX)
+    "draws":          1000,                                    // posterior samples to keep per chain
+    "tune":           1000,                                    // warm-up steps (discarded)
+    "chains":         2,                                       // independent chains (for R-hat convergence check)
+    "cores":          2,                                       // CPU cores for parallel chains
+    "target_accept":  0.9,                                     // NUTS acceptance target; raise toward 0.99 if you see divergences
+    "prior_settings": "safe",                                  // HSSM's regularising default priors
+    "link_settings":  "log_logit",
+    "formula_v":      "v ~ 1 + exp * coh_level + (1|participant)"  // drift-rate regression formula
+}
+```
+
+The `formula_v` is the scientific heart of the model. `exp` is the condition column
+(`base`/`lowlevel`/`highlevel`), `coh_level` is motion coherence, `exp * coh_level` includes their
+interaction, and `(1|participant)` adds the per-subject random intercept. To test a direct
+EEG–behavior link you would point drift rate at a trial-level EEG predictor instead, e.g.
+`"v ~ alpha_power + (1|participant)"` — just make sure that column is present in the behavioral
+table.
+
+**Outputs** (written to `.../results/groupBehavioral/`):
+- `hssm_posterior_summary.csv` — mean, SD, 95% HDI, R-hat and ESS for every parameter.
+- `hssm_trace.png` — diagnostic trace plots; converged chains look like overlapping "hairy
+  caterpillars" and R-hat should be ≈ 1.0.
+
+> For the statistics behind this module (Bayesian vs. MLE, NUTS, partial pooling, and what each DDM
+> parameter means), see `docs/learning/03-hssm-integration.md` and `04-hssm-explained.md`.

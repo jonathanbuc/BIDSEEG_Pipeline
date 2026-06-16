@@ -318,7 +318,11 @@ def save_preprocessing_step(file, step, bidspath_preprocessing, subject=None):
         #         json.dump(clean_dict, jsonfile)
         
         case _ :
-            print(f"{filename} NOT SAVED __________________________ is type {type(file)}")
+            raise TypeError(
+                f"save_preprocessing_step: no serialization case for '{filename}' "
+                f"(step '{step}', type {type(file)}). Add a matching case rather than "
+                f"letting the save silently fail."
+            )
 # _____________________________TFR helper functions_____________________________
 def make_roi_channel(epochs, roi):
     """

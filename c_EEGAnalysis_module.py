@@ -1,6 +1,6 @@
-# _____________________________Module_name_______________________________________
+# _____________________________EEGAnalysis_module________________________________
 # run with
-# python d_EEGAnalysis_module.py inputs.json
+# python c_EEGAnalysis_module.py inputs.json
 #
 #
 # * Allgemeine und Biologische Psychologie - AG Hesselman
@@ -597,15 +597,16 @@ def subject_tfr(epochs_clean, baseline, tmin, tmax, fmin, fmax, time_res, freq_r
         # compute TFR
         utils.log_msg(f'        Computing TFR over electrode cluster: {roi}... Dimensions - spectral ({fmin}-{fmax}Hz); temporal ({tmin}-{tmax}s)')
         condition_query = f"{cond_col} == '{condition}'"
-        tfr_cond_avg = epochs_clean[condition_query].compute_tfr(
-                method="morlet",
-                freqs=freqs,
-                n_cycles=n_cycles,
-                return_itc = False,
-                average=True,
-                decim=3,
-                verbose = False
-                )
+        # honor the configured TFR method (Analysis.tfr_method) instead of hardcoding morlet
+        tfr_kwargs = dict(freqs=freqs, n_cycles=n_cycles, return_itc=False,
+                          average=True, decim=3, n_jobs=n_jobs, verbose=False)
+        match tfr_method:
+            case "multitaper":
+                tfr_cond_avg = epochs_clean[condition_query].compute_tfr(
+                        method="multitaper", time_bandwidth=time_bandwidth, **tfr_kwargs)
+            case _:  # morlet (default)
+                tfr_cond_avg = epochs_clean[condition_query].compute_tfr(
+                        method="morlet", **tfr_kwargs)
 
         ### DECIBEL CONVERSION
         tfr_db = tfr_cond_avg.copy()
@@ -663,7 +664,7 @@ def subject_tfr(epochs_clean, baseline, tmin, tmax, fmin, fmax, time_res, freq_r
         power_df_list.append(power_df)
     
     # logging
-    utils.log_update(log_df, 'tfr_method', 'morlet')
+    utils.log_update(log_df, 'tfr_method', tfr_method)
     utils.log_update(log_df, 'frequency_range', [fmin, fmax])
     utils.log_update(log_df, 'temporal_range', [tmin, tmax])
     utils.log_update(log_df, 'cycles_denominator', time_res)
@@ -925,7 +926,8 @@ def CBPT(tfr_dict, datatype, comparisons, roi, bidspath_out, log_df, epochs_min,
                 threshold=threshold, 
                 stat_fun = None, #F-statistic mne.stats.f_oneway, #t-statistic: utils.ttest_rel_wrapper, # paired (repeated measures) t-test - returns t-statistic array
                 tail=1, # 0 = two-tailed (undirected) test, 1 = right-tailed test, -1 = left-tailed test
-                seed=seed 
+                seed=seed,
+                n_jobs=n_jobs
             )
             # Save raw cluster data for external plotting
             np.savez_compressed(
@@ -1003,7 +1005,7 @@ def run_fooof_analysis(epochs_clean, condition_dict, subject, roi, bidspath_out_
         epochs_cond = epochs_cond.crop(tmin=0, tmax=tmax) #prediction window: tmin=0, tmax=tmax
 
         # Compute PSD
-        psd = epochs_cond.compute_psd(method='welch', verbose=False)# whole epoch: n_fft=326, prestim interval: n_fft=251  fmin=f_range[0], fmax=f_range[1],
+        psd = epochs_cond.compute_psd(method='welch', n_jobs=n_jobs, verbose=False)# whole epoch: n_fft=326, prestim interval: n_fft=251  fmin=f_range[0], fmax=f_range[1],
 
         # Get PSD data and freqs
         psd_roi = psd.pick(roi)
@@ -1095,12 +1097,105 @@ def run_fooof_analysis(epochs_clean, condition_dict, subject, roi, bidspath_out_
 
     return fm, df_fooofsum, df_alphapeak
 
+
+# _____________ Per-trial individual alpha frequency (IAF) _____________
+def extract_trial_alpha(epochs_clean, roi, tmax, alpha_freq_range, f_range,
+                        peak_threshold, subject, save_dir):
+    """
+    Estimate the individual alpha centre frequency for EACH trial (epoch).
+
+    run_fooof_analysis() above averages the spectrum across all trials of a
+    condition and fits ONE FOOOF model per condition. This function instead keeps
+    every epoch separate, so each trial gets its own alpha-frequency value — the
+    quantity Jonathan wants as a trial-by-trial covariate in the drift model.
+
+    Two estimates are produced per epoch:
+
+      alpha_cf_fooof : centre frequency of the strongest FOOOF peak inside the
+                       alpha band (the parametric "peak" estimate). NaN when FOOOF
+                       finds no alpha peak on that trial — this NaN rate is the
+                       reliability we are measuring on these short epochs.
+      alpha_cf_cog   : power-weighted mean frequency ("centre of gravity") inside
+                       the alpha band, computed AFTER removing the 1/f background.
+                       Always defined, so it is the robust fallback.
+
+    Returns epochs.metadata with the per-trial alpha columns appended, and writes
+    it to sub-<subject>_trial_alpha.csv.
+    """
+    lo, hi = alpha_freq_range
+
+    # 1) Restrict to the post-stimulus prediction window and the occipital ROI.
+    #    .copy() so the caller's epochs are never mutated; crop/pick keep all epochs.
+    ep = epochs_clean.copy().crop(tmin=0, tmax=tmax).pick(roi)
+
+    # 2) One power spectrum PER EPOCH. n_per_seg = full window => a single Welch
+    #    segment, i.e. the finest frequency resolution this ~1.5 s window allows
+    #    (~1/1.5 ≈ 0.67 Hz). Shorter segments would average down noise but blur the
+    #    resolution to ~2 Hz — too coarse to locate an alpha peak per trial.
+    n_times = ep.get_data().shape[-1]
+    psd = ep.compute_psd(method='welch', fmin=f_range[0], fmax=f_range[1],
+                         n_fft=n_times, n_per_seg=n_times, n_jobs=1, verbose=False)
+    freqs = psd.freqs
+    spectra = psd.get_data().mean(axis=1)          # (n_epochs, n_channels, n_freqs) -> mean over ROI
+    alpha_mask = (freqs >= lo) & (freqs <= hi)
+
+    cf_fooof, pw_fooof, r2s, peak_found, cf_cog = [], [], [], [], []
+    for spectrum in spectra:
+        # --- (a) parametric alpha peak via FOOOF ---
+        fm = FOOOF(aperiodic_mode='fixed', peak_threshold=peak_threshold,
+                   max_n_peaks=6, peak_width_limits=(1.5, 4), verbose=False)
+        cf_f, pw_f, r2 = np.nan, np.nan, np.nan
+        try:
+            fm.fit(freqs, spectrum, f_range)
+            r2 = fm.r_squared_
+            peaks = fm.peak_params_                 # rows of (CF, PW, BW)
+            in_alpha = peaks[(peaks[:, 0] >= lo) & (peaks[:, 0] <= hi)]
+            if len(in_alpha):
+                cf_f, pw_f = in_alpha[np.argmax(in_alpha[:, 1])][:2]  # strongest peak
+        except Exception:
+            pass
+
+        # --- (b) robust centre of gravity, with 1/f removed ---
+        # Rebuild the aperiodic (1/f) background from FOOOF's fitted params and
+        # subtract it, so the weighting reflects true oscillatory power rather than
+        # the low-frequency tilt of the background. Fall back to the raw spectrum
+        # if the FOOOF fit itself failed.
+        if np.isfinite(r2):
+            offset, exponent = fm.aperiodic_params_
+            aperiodic_lin = 10 ** (offset - exponent * np.log10(freqs))
+            periodic = spectrum - aperiodic_lin
+        else:
+            periodic = spectrum
+        w = np.clip(periodic[alpha_mask], 0, None)   # weights must be non-negative
+        cg = np.average(freqs[alpha_mask], weights=w) if w.sum() > 0 else np.nan
+
+        cf_fooof.append(cf_f); pw_fooof.append(pw_f); r2s.append(r2)
+        peak_found.append(bool(np.isfinite(cf_f))); cf_cog.append(cg)
+
+    # 3) Attach the per-trial estimates to the trial metadata table (row order of
+    #    compute_psd matches epochs order, so this aligns trial-for-trial).
+    df = epochs_clean.metadata.copy()
+    df['alpha_cf_fooof']   = np.round(cf_fooof, 4)
+    df['alpha_pw_fooof']   = np.round(pw_fooof, 4)
+    df['alpha_cf_cog']     = np.round(cf_cog, 4)
+    df['fooof_r2']         = np.round(r2s, 4)
+    df['alpha_peak_found'] = peak_found
+
+    os.makedirs(save_dir, exist_ok=True)
+    out_csv = os.path.join(save_dir, f'sub-{subject}_trial_alpha.csv')
+    df.to_csv(out_csv, index=False)
+    coverage = 100 * np.mean(peak_found)
+    utils.log_msg(f"        Per-trial alpha: {len(df)} trials, "
+                  f"FOOOF peak on {coverage:.0f}% of them -> {out_csv}")
+    return df
+
 # _____________________________Loading___________________________________________
 ## load inputs
 inputs = utils.read_inputs(sys.argv[1])
 
 # assign path variables
 bidspath = utils.get_bidspath(inputs, 'bids_proc')
+n_jobs = inputs['basic']['n_jobs']
 
 # make results directories
 result_dir = os.path.join(bidspath.root, 'results')
@@ -1121,6 +1216,8 @@ fmin = inputs['Analysis']['fmin']
 fmax = inputs['Analysis']['fmax']
 time_res = inputs['Analysis']['time_res'] 
 freq_res = inputs['Analysis']['freq_res'] 
+tfr_method = inputs['Analysis']['tfr_method']
+time_bandwidth = inputs['Analysis'].get('time_bandwidth', 4.0)
 alpha_freq_range = inputs['Analysis']['alpha_freq_range']
 roi = inputs['Analysis']['ROI']
 condition_dict = inputs['Analysis']['conditions']
@@ -1224,10 +1321,16 @@ if __name__ == '__main__':
     # ____________________ PSD & FOOOF Analysis ______________________
         if compute_fooof:
             utils.log_msg(f'        Computing FOOOF')
-        # psd_dict = subject_psd(epochs, fmin, fmax, condition_dict, 'Oz', bidspath_processing_subject, subject)
-        fm, df_fooofsum, df_fooofalpha  = run_fooof_analysis(epochs, condition_dict, subject=subject, roi=roi, bidspath_out_subject=bidspath_processing_subject, tmax=tmax, alpha_freq_range=alpha_freq_range, baseline=baseline, f_range=fooof_f_range, peak_threshold=fooof_peak_threshold)
-        global_fooof_dfs.append(df_fooofsum)
-        fooof_alpha_dfs.append(df_fooofalpha)
+            fm, df_fooofsum, df_fooofalpha = run_fooof_analysis(epochs, condition_dict, subject=subject, roi=roi, bidspath_out_subject=bidspath_processing_subject, tmax=tmax, alpha_freq_range=alpha_freq_range, baseline=baseline, f_range=fooof_f_range, peak_threshold=fooof_peak_threshold)
+            global_fooof_dfs.append(df_fooofsum)
+            fooof_alpha_dfs.append(df_fooofalpha)
+
+            # per-trial individual alpha frequency (future trial-by-trial HSSM covariate)
+            extract_trial_alpha(epochs, roi=roi, tmax=tmax, alpha_freq_range=alpha_freq_range,
+                                f_range=fooof_f_range, peak_threshold=fooof_peak_threshold,
+                                subject=subject, save_dir=os.path.join(eeg_dir, 'trial_alpha'))
+        else:
+            utils.log_msg(f'     -- FOOOF not performed')
 
         timepoint_end = utils.log_msg(f'DONE:   EEG Analysis Module - Subject Level')
         utils.log_msg(f'        Time elapsed: {str(timepoint_end-timepoint_start)}\n\n')
@@ -1235,22 +1338,27 @@ if __name__ == '__main__':
     # ________________________Saving & Plotting - Subject Level ________________________
     # concatenating Wavelet (TFR) and FOOOF Alpha Frequency measures
     tfr_alpha = pd.concat(tfr_alpha_dfs, ignore_index=True)
-    fooof_alpha = pd.concat(fooof_alpha_dfs, ignore_index=True)
-    power_df = pd.merge(tfr_alpha, fooof_alpha, on=['participant', 'exp'], how='left')
+    if fooof_alpha_dfs:
+        fooof_alpha = pd.concat(fooof_alpha_dfs, ignore_index=True)
+        power_df = pd.merge(tfr_alpha, fooof_alpha, on=['participant', 'exp'], how='left')
+    else:
+        power_df = tfr_alpha
     power_file = f'{result_dir}/EEG_alphapower_hierprior.csv'
     power_df.to_csv(power_file, index=False)
 
+    # only plot parameters present in the data (FOOOF columns are absent when FOOOF is off)
+    plot_parameters = [p for p in eeg_parameters if p in power_df.columns]
+
     # Plot results
-    raincloud_plot(power_df,condition_dict, eeg_parameters, eeg_dir)
-    paired_plot(power_df, condition_dict, eeg_parameters, eeg_dir)
+    raincloud_plot(power_df, condition_dict, plot_parameters, eeg_dir)
+    paired_plot(power_df, condition_dict, plot_parameters, eeg_dir)
     tfr_plots_subjects(tfr_dict_sub, condition_dict, fmin, fmax, tmin, tmax, eeg_dir)
 
-
-    # Saving FOOF summary
-    global_df = pd.concat(global_fooof_dfs, ignore_index=True)
-    global_df.to_csv(global_master_csv, index=False)
-    
-    utils.log_msg(f"        Global FOOOF summary written to: {global_master_csv}")
+    # Saving FOOOF summary
+    if global_fooof_dfs:
+        global_df = pd.concat(global_fooof_dfs, ignore_index=True)
+        global_df.to_csv(global_master_csv, index=False)
+        utils.log_msg(f"        Global FOOOF summary written to: {global_master_csv}")
 
     # Logging
     timepoint_end = utils.log_msg(f'DONE:   EEG Analysis Module - Subject Level')
@@ -1358,7 +1466,7 @@ def subject_psd(epochs_clean, fmin, fmax, condition_dict, channel, bidspath_out,
         epochs_cond = epochs_cond.pick(channel)
 
         # Compute PSD
-        psd = epochs_cond.compute_psd(method='welch', fmin=fmin, fmax=fmax, n_fft=326, verbose=False)
+        psd = epochs_cond.compute_psd(method='welch', fmin=fmin, fmax=fmax, n_fft=326, n_jobs=n_jobs, verbose=False)
 
         # Get PSD data and freqs
         data = psd.get_data().squeeze()  # shape: (n_epochs, n_freqs)

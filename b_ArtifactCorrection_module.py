@@ -1,6 +1,6 @@
 # _____________________________ArtifactCorrection_______________________________________
 # run with
-# python c_ArtifactCorrection_module.py inputs.json
+# python b_ArtifactCorrection_module.py inputs.json
 #
 # * Allgemeine und Biologische Psychologie - AG Hesselman
 # * Psychologische Hochschule
@@ -114,8 +114,8 @@ def epoching(raw, df, epoch_dict, tmin, tmax, log_df, baseline=None):
         utils.log_update(log_df, 'epoch_max', tmax)
         return epochs, log_df
 
-    return None
-    
+    return None, log_df
+
 ## Compute interpolation_mask for bad channels
 def badChannels(epochs, rd_state, log_df):
     """
@@ -165,7 +165,7 @@ def badChannels(epochs, rd_state, log_df):
 
     ### compute overall bad channels using RANSAC
     utils.log_msg(f"        Fitting RANSAC to epochs...")
-    ransac = Ransac(picks=picks, random_state = rd_state, n_jobs=4, verbose=False)
+    ransac = Ransac(picks=picks, random_state = rd_state, n_jobs=n_jobs, verbose=False)
     ran_fit = ransac.fit(epochs)
 
     # logging
@@ -254,12 +254,12 @@ def autoICLabel(epochs, ica, reject_labels, rej_threshold, bidspath_processing, 
     # iterate through artComp_plot (storing all plots) to individually save diagnostic plots
     for i, fig in enumerate(artIC_plot):
         idx = exclude_keys[i]
-        fig.savefig(f"{artIC_dir}/IC{idx}_{exclude_dict[idx]}_Prob{prob[idx]:.4f}.png", format = "png", dpi=300)
+        fig.savefig(f"{artIC_dir}/IC{idx}_{exclude_dict[idx]}_Prob{prob[idx]:.4f}.png", format = "png", dpi=diag_dpi)
         fig.clf()  # Clear each figure to free memory]
     # BRAIN components
     for i, fig in enumerate(brainIC_plot):
         idx = include_keys[i]
-        fig.savefig(f"{brainIC_dir}/IC{idx}_{include_dict[idx]}_Prob{prob[idx]:.4f}.png", format = "png", dpi=300)
+        fig.savefig(f"{brainIC_dir}/IC{idx}_{include_dict[idx]}_Prob{prob[idx]:.4f}.png", format = "png", dpi=diag_dpi)
         fig.clf()  # Clear each figure to free memory
 
     # only keep artefact labels above rejection threshold (90%)
@@ -339,7 +339,7 @@ def manualICLabel(epochs, ica, bidspath_processing, log_df):
 
     # iterate through artComp_plot (storing all plots) to individualy save diagnostic plots for all artefactual ICs
     for i, fig in enumerate(artComp_plot):
-        fig.savefig(f"{ic_prop_dir}/IC{list(exclude_dict.keys())[i]}_{list(exclude_dict.values())[i]}.png", format = "png", dpi=300)
+        fig.savefig(f"{ic_prop_dir}/IC{list(exclude_dict.keys())[i]}_{list(exclude_dict.values())[i]}.png", format = "png", dpi=diag_dpi)
         fig.clf()  # Clear each figure to free memory
 
     # remove artifactual components and project data back to electrode space
@@ -369,7 +369,7 @@ def badEpochs(epochs, rd_state, bidspath_processing, log_df, epoch_rejection_typ
     picks = mne.pick_types(epochs.info, meg=False, eeg=True, stim=False, eog=False)
 
     # create autoreject object and fit it to data
-    ar = AutoReject(picks=picks, random_state=rd_state, n_jobs=4, verbose=False)
+    ar = AutoReject(picks=picks, random_state=rd_state, n_jobs=n_jobs, verbose=False)
     ar.fit(epochs[:40])#[:40] --> fitted/trained on how many epochs
 
     #____________________________ make actual interpolation____________________________
@@ -438,7 +438,7 @@ def badEpochs(epochs, rd_state, bidspath_processing, log_df, epoch_rejection_typ
 
     # save plot
     rej_log_plot = transform_rej_log.plot('horizontal', show=False)
-    rej_log_plot.savefig(f"{autoreject_dir}/reject_log.png", format = "png", dpi=300)
+    rej_log_plot.savefig(f"{autoreject_dir}/reject_log.png", format = "png", dpi=diag_dpi)
     rej_log_plot.clf()
 
     ### logging
@@ -561,6 +561,10 @@ eeg_contrasts = inputs['Analysis']['eeg_contrasts']
 compute_erp = inputs['perform']['compute_erp']
 average_stim_trigger = inputs['perform']['average_stim_trigger']
 
+# performance / compute
+n_jobs = inputs['basic']['n_jobs']
+diag_dpi = inputs['basic']['diagnostic_dpi']
+
 
 
 ## extract subject list
@@ -606,11 +610,12 @@ if __name__ == '__main__':
 
         # # perform epoching
         epochs, log_df = epoching(raw_filt, df, epoch_dict, tmin, tmax, log_df)# >>> IMPORTANT: currently no baseline correction performed here <<<
-        diagnostic_plots(epochs, bidspath_processing_subject)
-        
-        if epochs is None or not bool(epochs):  # If none, events for epoching do not exist in raw.annotations
+
+        if epochs is None or not bool(epochs):  # events for epoching are absent from raw.annotations
             utils.log_msg(f'      X ERROR: None of the following events were found in raw.annotations: {list(epoch_dict.keys())}. Continuing with Subject {int(subject) + 1}')
             continue  # Skip to the next subject
+
+        diagnostic_plots(epochs, bidspath_processing_subject)
 
         # identify bad channels to mask before ICA
         if mask_ICA:
@@ -652,8 +657,7 @@ if __name__ == '__main__':
         ## rereference data
         if perform_rereferencing:
             epochs, log_df = rereferencing(epochs, rereference, log_df)
-            diagnostic_plots(raw_step, bidspath_processing_subject)
-            # utils.save_preprocessing_step(raw_step, '04rawreref')
+            diagnostic_plots(epochs, bidspath_processing_subject)
         else:
             utils.log_msg(f'     -- Rereferencing not performed')
 
@@ -704,7 +708,7 @@ def badEpochs_legacy(epochs, rd_state, bidspath_processing):
     picks = mne.pick_types(epochs.info, meg=False, eeg=True, stim=False, eog=False)
 
     # create autoreject object and fit it to data
-    ar = AutoReject(picks=picks, random_state=rd_state, n_jobs=4, verbose=False)
+    ar = AutoReject(picks=picks, random_state=rd_state, n_jobs=n_jobs, verbose=False)
     ar.fit(epochs)#[:40] --> fitted/trained on how many epochs
 
     #____________________________ make actual interpolation____________________________
@@ -747,7 +751,7 @@ def badEpochs_legacy(epochs, rd_state, bidspath_processing):
 
     # save plot
     rej_log_plot = transform_rej_log.plot('horizontal', show=False)
-    rej_log_plot.savefig(f"{autoreject_dir}/reject_log.png", format = "png", dpi=300)
+    rej_log_plot.savefig(f"{autoreject_dir}/reject_log.png", format = "png", dpi=diag_dpi)
     rej_log_plot.clf()
 
     # global 

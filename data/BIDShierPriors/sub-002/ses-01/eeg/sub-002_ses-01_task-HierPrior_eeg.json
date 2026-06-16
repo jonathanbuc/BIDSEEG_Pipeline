@@ -1,10 +1,10 @@
 {
     "TaskName": "HierPrior",
-    "Manufacturer": "Brain Products",
+    "Manufacturer": "n/a",
     "PowerLineFrequency": 50.0,
-    "SamplingFrequency": 1000.0,
+    "SamplingFrequency": 250.0,
     "SoftwareFilters": "n/a",
-    "RecordingDuration": 3869.819,
+    "RecordingDuration": 3869.996,
     "RecordingType": "continuous",
     "EEGReference": "n/a",
     "EEGGround": "n/a",

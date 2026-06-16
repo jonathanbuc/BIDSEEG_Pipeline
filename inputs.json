@@ -1,13 +1,15 @@
 {
     "basic": {
         "sourcedata": "./data/sourcedata",
-        "subject_ID": "003",
+        "subject_ID": "001",
         "session": "01",
         "task": "HierPrior",
-        "current_step": "04epochsCorr",
+        "current_step": null,
         "bids_root_in": "./data/BIDShierPriors",
         "bids_root_out": "./data/BIDShierPriors/derivatives",
         "get_chan_stats": true,
+        "n_jobs": -1,
+        "diagnostic_dpi": 150,
         "event_dict": {
             "": 0,
             "S_1": 1,
@@ -47,7 +49,8 @@
         "perform_cbpt_group": false,
         "compute_sdt": true,
         "compute_ddm": true,
-        "compute_fooof": true
+        "compute_fooof": true,
+        "compute_hssm": true
     },
     "preprocessing": {
         "samplingrate_down": 250,
@@ -121,6 +124,7 @@
             14
         ],
         "tfr_method": "multitaper",
+        "time_bandwidth": 4.0,
         "time_res": 2,
         "freq_res": 65,
         "stat_model": "ANOVA",
@@ -186,6 +190,18 @@
             "PW_dB",
             "PW_dB_sum",
             "Aperiodic_Exponent"
-        ]
+        ],
+        "hssm": {
+            "model_type": "ddm",
+            "sampler": "nuts_numpyro",
+            "draws": 1000,
+            "tune": 1000,
+            "chains": 2,
+            "cores": 2,
+            "target_accept": 0.9,
+            "prior_settings": "safe",
+            "link_settings": "log_logit",
+            "formula_v": "v ~ 1 + exp * coh_level + (1|participant)"
+        }
     }
 }

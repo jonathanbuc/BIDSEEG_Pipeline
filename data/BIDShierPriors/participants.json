@@ -9,9 +9,8 @@
     "sex": {
         "Description": "Biological sex of the participant",
         "Levels": {
-            "f": "female",
-            "m": "male",
-            "t": "trans"
+            "F": "female",
+            "M": "male"
         }
     },
     "hand": {
