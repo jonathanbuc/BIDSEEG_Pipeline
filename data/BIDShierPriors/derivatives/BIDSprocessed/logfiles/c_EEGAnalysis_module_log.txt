@@ -34758,3 +34758,418 @@ Tue June 16 16:36:44  2026 c_EEGAnalysis_module.py: DONE:   EEG Analysis Module 
 Tue June 16 16:36:44  2026 c_EEGAnalysis_module.py:         Time elapsed: 0:00:02.687568
 
 
+Wed June 17 09:26:53  2026 c_EEGAnalysis_module.py: START:  EEG Analysis Module - Subject Level
+Wed June 17 09:26:53  2026 c_EEGAnalysis_module.py: _______ Processing Subject-001_______
+Wed June 17 09:26:53  2026 c_EEGAnalysis_module.py:         Loading epoched data from sub-001_ses-01_task-HierPrior_proc-04epochsCorr
+Wed June 17 09:26:53  2026 c_EEGAnalysis_module.py:         *** Time-Frequency Analysis ***
+Wed June 17 09:26:53  2026 c_EEGAnalysis_module.py:         Computing TFR over electrode cluster: ['O1', 'Oz', 'O2']... Dimensions - spectral (5-40Hz); temporal (-0.6-1.5s)
+Wed June 17 09:26:59  2026 c_EEGAnalysis_module.py:         Computing TFR over electrode cluster: ['O1', 'Oz', 'O2']... Dimensions - spectral (5-40Hz); temporal (-0.6-1.5s)
+Wed June 17 09:27:03  2026 c_EEGAnalysis_module.py:         Computing TFR over electrode cluster: ['O1', 'Oz', 'O2']... Dimensions - spectral (5-40Hz); temporal (-0.6-1.5s)
+Wed June 17 09:27:07  2026 c_EEGAnalysis_module.py:         Saving <class 'mne.time_frequency.tfr.AverageTFR'> as fif file (base) to data/BIDShierPriors/derivatives/BIDSprocessed/sub-001/ses-01/eeg
+Wed June 17 09:27:07  2026 c_EEGAnalysis_module.py:         Saving <class 'mne.time_frequency.tfr.AverageTFR'> as fif file (lowlevel) to data/BIDShierPriors/derivatives/BIDSprocessed/sub-001/ses-01/eeg
+Wed June 17 09:27:07  2026 c_EEGAnalysis_module.py:         Saving <class 'mne.time_frequency.tfr.AverageTFR'> as fif file (highlevel) to data/BIDShierPriors/derivatives/BIDSprocessed/sub-001/ses-01/eeg
+Wed June 17 09:27:07  2026 c_EEGAnalysis_module.py:         Computing FOOOF
+Wed June 17 09:27:07  2026 c_EEGAnalysis_module.py:         fitting SpecParam with the following parameters: peak_threshold=2, max_n_peaks=6, peak_width_limits=(1.5, 4), f_range=[5, 40]
+Wed June 17 09:27:20  2026 c_EEGAnalysis_module.py:             - baseF3: CF: 0, PW_dB 0
+Wed June 17 09:27:20  2026 c_EEGAnalysis_module.py:             - baseF3: CF: 0, PW_dB 0
+Wed June 17 09:27:20  2026 c_EEGAnalysis_module.py:             - baseF3: CF: 20.48674921003861, PW_dB 3.581973578987938
+Wed June 17 09:27:20  2026 c_EEGAnalysis_module.py:             - baseF3: CF: 0, PW_dB 0
+Wed June 17 09:27:20  2026 c_EEGAnalysis_module.py:             - baseFT9: CF: 0, PW_dB 0
+Wed June 17 09:27:20  2026 c_EEGAnalysis_module.py:             - baseFT9: CF: 6.627677542692695, PW_dB 1.0163768572765086
+Wed June 17 09:27:20  2026 c_EEGAnalysis_module.py:             - baseFT9: CF: 0, PW_dB 0
+Wed June 17 09:27:20  2026 c_EEGAnalysis_module.py:             - baseFT9: CF: 38.83947007981115, PW_dB 2.5609167375389674
+Wed June 17 09:27:20  2026 c_EEGAnalysis_module.py:             - baseFz: CF: 0, PW_dB 0
+Wed June 17 09:27:20  2026 c_EEGAnalysis_module.py:             - baseFz: CF: 0, PW_dB 0
+Wed June 17 09:27:20  2026 c_EEGAnalysis_module.py:             - baseFz: CF: 18.124502109289303, PW_dB 3.9503295685680406
+Wed June 17 09:27:20  2026 c_EEGAnalysis_module.py:             - baseFz: CF: 0, PW_dB 0
+Wed June 17 09:27:20  2026 c_EEGAnalysis_module.py:             - baseFC5: CF: 0, PW_dB 0
+Wed June 17 09:27:20  2026 c_EEGAnalysis_module.py:             - baseFC5: CF: 5.994500409442439, PW_dB 2.9103685656328793
+Wed June 17 09:27:20  2026 c_EEGAnalysis_module.py:             - baseFC5: CF: 20.120872528725894, PW_dB 3.6216500602218993
+Wed June 17 09:27:20  2026 c_EEGAnalysis_module.py:             - baseFC5: CF: 0, PW_dB 0
+Wed June 17 09:27:20  2026 c_EEGAnalysis_module.py:             - baseT7: CF: 0, PW_dB 0
+Wed June 17 09:27:20  2026 c_EEGAnalysis_module.py:             - baseT7: CF: 6.245135590740545, PW_dB 1.3675804065378294
+Wed June 17 09:27:20  2026 c_EEGAnalysis_module.py:             - baseT7: CF: 16.65618238036222, PW_dB 2.792410389577924
+Wed June 17 09:27:20  2026 c_EEGAnalysis_module.py:             - baseT7: CF: 31.675940261872245, PW_dB 3.06682882019091
+Wed June 17 09:27:21  2026 c_EEGAnalysis_module.py:             - baseC3: CF: 0, PW_dB 0
+Wed June 17 09:27:21  2026 c_EEGAnalysis_module.py:             - baseC3: CF: 6.8978210133845925, PW_dB 1.2603523997682586
+Wed June 17 09:27:21  2026 c_EEGAnalysis_module.py:             - baseC3: CF: 15.55570618722525, PW_dB 1.4964736531868716
+Wed June 17 09:27:21  2026 c_EEGAnalysis_module.py:             - baseC3: CF: 0, PW_dB 0
+Wed June 17 09:27:21  2026 c_EEGAnalysis_module.py:             - baseFp1: CF: 0, PW_dB 0
+Wed June 17 09:27:21  2026 c_EEGAnalysis_module.py:             - baseFp1: CF: 6.365578035110729, PW_dB 1.6204638334780697
+Wed June 17 09:27:21  2026 c_EEGAnalysis_module.py:             - baseFp1: CF: 23.67904462791554, PW_dB 1.0695168337958805
+Wed June 17 09:27:21  2026 c_EEGAnalysis_module.py:             - baseFp1: CF: 38.628458270592, PW_dB 2.2284758868576127
+Wed June 17 09:27:21  2026 c_EEGAnalysis_module.py:             - baseF7: CF: 0, PW_dB 0
+Wed June 17 09:27:21  2026 c_EEGAnalysis_module.py:             - baseF7: CF: 6.3537199192540195, PW_dB 1.7455659520572908
+Wed June 17 09:27:21  2026 c_EEGAnalysis_module.py:             - baseF7: CF: 0, PW_dB 0
+Wed June 17 09:27:21  2026 c_EEGAnalysis_module.py:             - baseF7: CF: 38.22882198340566, PW_dB 2.3407016676271297
+Wed June 17 09:27:26  2026 c_EEGAnalysis_module.py:             - baseCP1: CF: 0, PW_dB 0
+Wed June 17 09:27:26  2026 c_EEGAnalysis_module.py:             - baseCP1: CF: 0, PW_dB 0
+Wed June 17 09:27:26  2026 c_EEGAnalysis_module.py:             - baseCP1: CF: 16.798708309492454, PW_dB 1.7643751502381555
+Wed June 17 09:27:26  2026 c_EEGAnalysis_module.py:             - baseCP1: CF: 0, PW_dB 0
+Wed June 17 09:27:26  2026 c_EEGAnalysis_module.py:             - baseTP9: CF: 0, PW_dB 0
+Wed June 17 09:27:26  2026 c_EEGAnalysis_module.py:             - baseTP9: CF: 0, PW_dB 0
+Wed June 17 09:27:26  2026 c_EEGAnalysis_module.py:             - baseTP9: CF: 0, PW_dB 0
+Wed June 17 09:27:26  2026 c_EEGAnalysis_module.py:             - baseTP9: CF: 38.178823430986235, PW_dB 2.431646778944998
+Wed June 17 09:27:26  2026 c_EEGAnalysis_module.py:             - baseCP5: CF: 0, PW_dB 0
+Wed June 17 09:27:26  2026 c_EEGAnalysis_module.py:             - baseCP5: CF: 0, PW_dB 0
+Wed June 17 09:27:26  2026 c_EEGAnalysis_module.py:             - baseCP5: CF: 16.047449206778143, PW_dB 1.8446445836703695
+Wed June 17 09:27:26  2026 c_EEGAnalysis_module.py:             - baseCP5: CF: 32.64742164898657, PW_dB 2.946148449410231
+Wed June 17 09:27:26  2026 c_EEGAnalysis_module.py:             - basePz: CF: 0, PW_dB 0
+Wed June 17 09:27:26  2026 c_EEGAnalysis_module.py:             - basePz: CF: 0, PW_dB 0
+Wed June 17 09:27:26  2026 c_EEGAnalysis_module.py:             - basePz: CF: 15.46311868394856, PW_dB 2.259366091431172
+Wed June 17 09:27:26  2026 c_EEGAnalysis_module.py:             - basePz: CF: 0, PW_dB 0
+Wed June 17 09:27:26  2026 c_EEGAnalysis_module.py:             - baseP3: CF: 0, PW_dB 0
+Wed June 17 09:27:26  2026 c_EEGAnalysis_module.py:             - baseP3: CF: 0, PW_dB 0
+Wed June 17 09:27:26  2026 c_EEGAnalysis_module.py:             - baseP3: CF: 15.24845321943273, PW_dB 2.402178744585406
+Wed June 17 09:27:26  2026 c_EEGAnalysis_module.py:             - baseP3: CF: 37.964445932983544, PW_dB 0.940968447747732
+Wed June 17 09:27:26  2026 c_EEGAnalysis_module.py:             - baseO1: CF: 0, PW_dB 0
+Wed June 17 09:27:26  2026 c_EEGAnalysis_module.py:             - baseO1: CF: 0, PW_dB 0
+Wed June 17 09:27:26  2026 c_EEGAnalysis_module.py:             - baseO1: CF: 19.883024732900907, PW_dB 1.3497558390320208
+Wed June 17 09:27:26  2026 c_EEGAnalysis_module.py:             - baseO1: CF: 0, PW_dB 0
+Wed June 17 09:27:27  2026 c_EEGAnalysis_module.py:             - baseOz: CF: 0, PW_dB 0
+Wed June 17 09:27:27  2026 c_EEGAnalysis_module.py:             - baseOz: CF: 0, PW_dB 0
+Wed June 17 09:27:27  2026 c_EEGAnalysis_module.py:             - baseOz: CF: 16.930893278219646, PW_dB 1.800397714115558
+Wed June 17 09:27:27  2026 c_EEGAnalysis_module.py:             - baseOz: CF: 0, PW_dB 0
+Wed June 17 09:27:27  2026 c_EEGAnalysis_module.py:             - baseP7: CF: 0, PW_dB 0
+Wed June 17 09:27:27  2026 c_EEGAnalysis_module.py:             - baseP7: CF: 0, PW_dB 0
+Wed June 17 09:27:27  2026 c_EEGAnalysis_module.py:             - baseP7: CF: 15.163254364424812, PW_dB 1.8615931830588295
+Wed June 17 09:27:27  2026 c_EEGAnalysis_module.py:             - baseP7: CF: 33.011578771736104, PW_dB 1.9644766433900607
+Wed June 17 09:27:32  2026 c_EEGAnalysis_module.py:             - baseO2: CF: 0, PW_dB 0
+Wed June 17 09:27:32  2026 c_EEGAnalysis_module.py:             - baseO2: CF: 0, PW_dB 0
+Wed June 17 09:27:32  2026 c_EEGAnalysis_module.py:             - baseO2: CF: 20.91428428918821, PW_dB 1.3508788879560285
+Wed June 17 09:27:32  2026 c_EEGAnalysis_module.py:             - baseO2: CF: 0, PW_dB 0
+Wed June 17 09:27:32  2026 c_EEGAnalysis_module.py:             - baseP4: CF: 0, PW_dB 0
+Wed June 17 09:27:32  2026 c_EEGAnalysis_module.py:             - baseP4: CF: 0, PW_dB 0
+Wed June 17 09:27:32  2026 c_EEGAnalysis_module.py:             - baseP4: CF: 18.19636385648297, PW_dB 1.3580063475711412
+Wed June 17 09:27:32  2026 c_EEGAnalysis_module.py:             - baseP4: CF: 0, PW_dB 0
+Wed June 17 09:27:32  2026 c_EEGAnalysis_module.py:             - baseP8: CF: 0, PW_dB 0
+Wed June 17 09:27:32  2026 c_EEGAnalysis_module.py:             - baseP8: CF: 0, PW_dB 0
+Wed June 17 09:27:32  2026 c_EEGAnalysis_module.py:             - baseP8: CF: 0, PW_dB 0
+Wed June 17 09:27:32  2026 c_EEGAnalysis_module.py:             - baseP8: CF: 0, PW_dB 0
+Wed June 17 09:27:32  2026 c_EEGAnalysis_module.py:             - baseTP10: CF: 0, PW_dB 0
+Wed June 17 09:27:32  2026 c_EEGAnalysis_module.py:             - baseTP10: CF: 0, PW_dB 0
+Wed June 17 09:27:32  2026 c_EEGAnalysis_module.py:             - baseTP10: CF: 15.094846146797625, PW_dB 1.5352607130793139
+Wed June 17 09:27:32  2026 c_EEGAnalysis_module.py:             - baseTP10: CF: 39.89361702127659, PW_dB 1.8315845029571953
+Wed June 17 09:27:33  2026 c_EEGAnalysis_module.py:             - baseCP6: CF: 0, PW_dB 0
+Wed June 17 09:27:33  2026 c_EEGAnalysis_module.py:             - baseCP6: CF: 0, PW_dB 0
+Wed June 17 09:27:33  2026 c_EEGAnalysis_module.py:             - baseCP6: CF: 0, PW_dB 0
+Wed June 17 09:27:33  2026 c_EEGAnalysis_module.py:             - baseCP6: CF: 38.65177749383609, PW_dB 2.6444958861094214
+Wed June 17 09:27:33  2026 c_EEGAnalysis_module.py:             - baseCP2: CF: 0, PW_dB 0
+Wed June 17 09:27:33  2026 c_EEGAnalysis_module.py:             - baseCP2: CF: 0, PW_dB 0
+Wed June 17 09:27:33  2026 c_EEGAnalysis_module.py:             - baseCP2: CF: 16.099970451804847, PW_dB 1.447778278686922
+Wed June 17 09:27:33  2026 c_EEGAnalysis_module.py:             - baseCP2: CF: 0, PW_dB 0
+Wed June 17 09:27:33  2026 c_EEGAnalysis_module.py:             - baseCz: CF: 0, PW_dB 0
+Wed June 17 09:27:33  2026 c_EEGAnalysis_module.py:             - baseCz: CF: 6.40324803832944, PW_dB 3.717368937141572
+Wed June 17 09:27:33  2026 c_EEGAnalysis_module.py:             - baseCz: CF: 17.551607842958365, PW_dB 1.1486605715703924
+Wed June 17 09:27:33  2026 c_EEGAnalysis_module.py:             - baseCz: CF: 32.196064777811415, PW_dB 2.044546865275123
+Wed June 17 09:27:33  2026 c_EEGAnalysis_module.py:             - baseC4: CF: 0, PW_dB 0
+Wed June 17 09:27:33  2026 c_EEGAnalysis_module.py:             - baseC4: CF: 6.667139774061167, PW_dB 1.394626441110205
+Wed June 17 09:27:33  2026 c_EEGAnalysis_module.py:             - baseC4: CF: 17.262689056631555, PW_dB 1.4987196925519797
+Wed June 17 09:27:33  2026 c_EEGAnalysis_module.py:             - baseC4: CF: 0, PW_dB 0
+Wed June 17 09:27:37  2026 c_EEGAnalysis_module.py:             - baseT8: CF: 0, PW_dB 0
+Wed June 17 09:27:37  2026 c_EEGAnalysis_module.py:             - baseT8: CF: 0, PW_dB 0
+Wed June 17 09:27:37  2026 c_EEGAnalysis_module.py:             - baseT8: CF: 0, PW_dB 0
+Wed June 17 09:27:37  2026 c_EEGAnalysis_module.py:             - baseT8: CF: 0, PW_dB 0
+Wed June 17 09:27:38  2026 c_EEGAnalysis_module.py:             - baseFC6: CF: 0, PW_dB 0
+Wed June 17 09:27:38  2026 c_EEGAnalysis_module.py:             - baseFC6: CF: 0, PW_dB 0
+Wed June 17 09:27:38  2026 c_EEGAnalysis_module.py:             - baseFC6: CF: 21.2188380253095, PW_dB 0.9123905782130848
+Wed June 17 09:27:38  2026 c_EEGAnalysis_module.py:             - baseFC6: CF: 36.00957426322952, PW_dB 1.9651540448129445
+Wed June 17 09:27:38  2026 c_EEGAnalysis_module.py:             - baseFT10: CF: 0, PW_dB 0
+Wed June 17 09:27:38  2026 c_EEGAnalysis_module.py:             - baseFT10: CF: 0, PW_dB 0
+Wed June 17 09:27:38  2026 c_EEGAnalysis_module.py:             - baseFT10: CF: 14.941672898121356, PW_dB 0.6787373143278153
+Wed June 17 09:27:38  2026 c_EEGAnalysis_module.py:             - baseFT10: CF: 36.63293271391496, PW_dB 1.049952992347496
+Wed June 17 09:27:38  2026 c_EEGAnalysis_module.py:             - baseFC2: CF: 0, PW_dB 0
+Wed June 17 09:27:38  2026 c_EEGAnalysis_module.py:             - baseFC2: CF: 6.3575828245889205, PW_dB 4.157848181498753
+Wed June 17 09:27:38  2026 c_EEGAnalysis_module.py:             - baseFC2: CF: 21.509301486625994, PW_dB 1.6006791197201942
+Wed June 17 09:27:38  2026 c_EEGAnalysis_module.py:             - baseFC2: CF: 0, PW_dB 0
+Wed June 17 09:27:39  2026 c_EEGAnalysis_module.py:             - baseF4: CF: 0, PW_dB 0
+Wed June 17 09:27:39  2026 c_EEGAnalysis_module.py:             - baseF4: CF: 0, PW_dB 0
+Wed June 17 09:27:39  2026 c_EEGAnalysis_module.py:             - baseF4: CF: 18.614993087026924, PW_dB 2.0961458203814054
+Wed June 17 09:27:39  2026 c_EEGAnalysis_module.py:             - baseF4: CF: 37.73617569266974, PW_dB 1.9206875498371012
+Wed June 17 09:27:39  2026 c_EEGAnalysis_module.py:             - baseFp2: CF: 0, PW_dB 0
+Wed June 17 09:27:39  2026 c_EEGAnalysis_module.py:             - baseFp2: CF: 0, PW_dB 0
+Wed June 17 09:27:39  2026 c_EEGAnalysis_module.py:             - baseFp2: CF: 0, PW_dB 0
+Wed June 17 09:27:39  2026 c_EEGAnalysis_module.py:             - baseFp2: CF: 38.71501542122739, PW_dB 2.618257966895996
+Wed June 17 09:27:39  2026 c_EEGAnalysis_module.py:             - baseF8: CF: 0, PW_dB 0
+Wed June 17 09:27:39  2026 c_EEGAnalysis_module.py:             - baseF8: CF: 0, PW_dB 0
+Wed June 17 09:27:39  2026 c_EEGAnalysis_module.py:             - baseF8: CF: 19.76995017352827, PW_dB 0.6666644084243423
+Wed June 17 09:27:39  2026 c_EEGAnalysis_module.py:             - baseF8: CF: 36.53866285717465, PW_dB 1.6969004413276068
+Wed June 17 09:27:45  2026 c_EEGAnalysis_module.py:             - lowlevelFz: CF: 0, PW_dB 0
+Wed June 17 09:27:45  2026 c_EEGAnalysis_module.py:             - lowlevelFz: CF: 0, PW_dB 0
+Wed June 17 09:27:45  2026 c_EEGAnalysis_module.py:             - lowlevelFz: CF: 20.922191950775854, PW_dB 4.157171994830158
+Wed June 17 09:27:45  2026 c_EEGAnalysis_module.py:             - lowlevelFz: CF: 0, PW_dB 0
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelC3: CF: 0, PW_dB 0
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelC3: CF: 0, PW_dB 0
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelC3: CF: 16.45556627862916, PW_dB 1.8581550528787893
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelC3: CF: 38.64342899365734, PW_dB 0.8303045984478352
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelF3: CF: 0, PW_dB 0
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelF3: CF: 6.697295485831835, PW_dB 5.821487571937336
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelF3: CF: 21.338595447240632, PW_dB 4.17692516642683
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelF3: CF: 39.33137998861876, PW_dB 1.7224186071261194
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelF7: CF: 0, PW_dB 0
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelF7: CF: 0, PW_dB 0
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelF7: CF: 24.66861409495209, PW_dB 1.161219453760829
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelF7: CF: 39.346497364772524, PW_dB 1.8667011655224108
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelFT9: CF: 0, PW_dB 0
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelFT9: CF: 0, PW_dB 0
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelFT9: CF: 25.09402013578134, PW_dB 0.8546922405908397
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelFT9: CF: 38.39387233790583, PW_dB 1.874710505259305
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelFC5: CF: 0, PW_dB 0
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelFC5: CF: 0, PW_dB 0
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelFC5: CF: 23.198568156552188, PW_dB 1.785651083097477
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelFC5: CF: 0, PW_dB 0
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelT7: CF: 0, PW_dB 0
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelT7: CF: 0, PW_dB 0
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelT7: CF: 28.99693838742161, PW_dB 1.8356648030916922
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelT7: CF: 38.12259238001705, PW_dB 2.4261142046707107
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelFp1: CF: 0, PW_dB 0
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelFp1: CF: 0, PW_dB 0
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelFp1: CF: 19.192957955629304, PW_dB 0.7675460375709342
+Wed June 17 09:27:46  2026 c_EEGAnalysis_module.py:             - lowlevelFp1: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelTP9: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelTP9: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelTP9: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelTP9: CF: 38.23362358768533, PW_dB 1.2182556409989154
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelP7: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelP7: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelP7: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelP7: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelOz: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelOz: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelOz: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelOz: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelCP5: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelCP5: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelCP5: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelCP5: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelPz: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelCP1: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelPz: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelCP1: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelPz: CF: 16.12453613089868, PW_dB 2.0446680535031447
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelPz: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelCP1: CF: 16.348730119621575, PW_dB 2.0518285373925416
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelCP1: CF: 38.68748985221721, PW_dB 0.9549734014008493
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelO1: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelO1: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelO1: CF: 16.05781309320674, PW_dB 2.5267861363370514
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelO1: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelP3: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelP3: CF: 0, PW_dB 0
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelP3: CF: 16.636079870676152, PW_dB 2.174360241845097
+Wed June 17 09:27:52  2026 c_EEGAnalysis_module.py:             - lowlevelP3: CF: 0, PW_dB 0
+Wed June 17 09:27:57  2026 c_EEGAnalysis_module.py:             - lowlevelO2: CF: 0, PW_dB 0
+Wed June 17 09:27:57  2026 c_EEGAnalysis_module.py:             - lowlevelO2: CF: 0, PW_dB 0
+Wed June 17 09:27:57  2026 c_EEGAnalysis_module.py:             - lowlevelO2: CF: 0, PW_dB 0
+Wed June 17 09:27:57  2026 c_EEGAnalysis_module.py:             - lowlevelO2: CF: 0, PW_dB 0
+Wed June 17 09:27:57  2026 c_EEGAnalysis_module.py:             - lowlevelP8: CF: 0, PW_dB 0
+Wed June 17 09:27:57  2026 c_EEGAnalysis_module.py:             - lowlevelP8: CF: 0, PW_dB 0
+Wed June 17 09:27:57  2026 c_EEGAnalysis_module.py:             - lowlevelP8: CF: 0, PW_dB 0
+Wed June 17 09:27:57  2026 c_EEGAnalysis_module.py:             - lowlevelP8: CF: 0, PW_dB 0
+Wed June 17 09:27:57  2026 c_EEGAnalysis_module.py:             - lowlevelTP10: CF: 0, PW_dB 0
+Wed June 17 09:27:57  2026 c_EEGAnalysis_module.py:             - lowlevelTP10: CF: 0, PW_dB 0
+Wed June 17 09:27:57  2026 c_EEGAnalysis_module.py:             - lowlevelTP10: CF: 0, PW_dB 0
+Wed June 17 09:27:57  2026 c_EEGAnalysis_module.py:             - lowlevelTP10: CF: 0, PW_dB 0
+Wed June 17 09:27:58  2026 c_EEGAnalysis_module.py:             - lowlevelP4: CF: 0, PW_dB 0
+Wed June 17 09:27:58  2026 c_EEGAnalysis_module.py:             - lowlevelP4: CF: 0, PW_dB 0
+Wed June 17 09:27:58  2026 c_EEGAnalysis_module.py:             - lowlevelP4: CF: 17.612227805573106, PW_dB 1.588267365901519
+Wed June 17 09:27:58  2026 c_EEGAnalysis_module.py:             - lowlevelP4: CF: 0, PW_dB 0
+Wed June 17 09:27:58  2026 c_EEGAnalysis_module.py:             - lowlevelCP6: CF: 0, PW_dB 0
+Wed June 17 09:27:58  2026 c_EEGAnalysis_module.py:             - lowlevelCP6: CF: 0, PW_dB 0
+Wed June 17 09:27:58  2026 c_EEGAnalysis_module.py:             - lowlevelCP6: CF: 0, PW_dB 0
+Wed June 17 09:27:58  2026 c_EEGAnalysis_module.py:             - lowlevelCP6: CF: 0, PW_dB 0
+Wed June 17 09:27:58  2026 c_EEGAnalysis_module.py:             - lowlevelC4: CF: 0, PW_dB 0
+Wed June 17 09:27:58  2026 c_EEGAnalysis_module.py:             - lowlevelC4: CF: 0, PW_dB 0
+Wed June 17 09:27:58  2026 c_EEGAnalysis_module.py:             - lowlevelC4: CF: 16.419683114390676, PW_dB 2.0005686096162556
+Wed June 17 09:27:58  2026 c_EEGAnalysis_module.py:             - lowlevelC4: CF: 0, PW_dB 0
+Wed June 17 09:27:58  2026 c_EEGAnalysis_module.py:             - lowlevelCP2: CF: 0, PW_dB 0
+Wed June 17 09:27:58  2026 c_EEGAnalysis_module.py:             - lowlevelCP2: CF: 0, PW_dB 0
+Wed June 17 09:27:58  2026 c_EEGAnalysis_module.py:             - lowlevelCP2: CF: 15.846990147547617, PW_dB 2.238985680579546
+Wed June 17 09:27:58  2026 c_EEGAnalysis_module.py:             - lowlevelCP2: CF: 0, PW_dB 0
+Wed June 17 09:27:58  2026 c_EEGAnalysis_module.py:             - lowlevelCz: CF: 0, PW_dB 0
+Wed June 17 09:27:58  2026 c_EEGAnalysis_module.py:             - lowlevelCz: CF: 6.995510658189043, PW_dB 2.1670419366057736
+Wed June 17 09:27:58  2026 c_EEGAnalysis_module.py:             - lowlevelCz: CF: 15.952544522377229, PW_dB 1.7098468540183909
+Wed June 17 09:27:58  2026 c_EEGAnalysis_module.py:             - lowlevelCz: CF: 31.459079484363734, PW_dB 1.9139892921660717
+Wed June 17 09:28:03  2026 c_EEGAnalysis_module.py:             - lowlevelT8: CF: 0, PW_dB 0
+Wed June 17 09:28:03  2026 c_EEGAnalysis_module.py:             - lowlevelT8: CF: 0, PW_dB 0
+Wed June 17 09:28:03  2026 c_EEGAnalysis_module.py:             - lowlevelT8: CF: 0, PW_dB 0
+Wed June 17 09:28:03  2026 c_EEGAnalysis_module.py:             - lowlevelT8: CF: 39.0156573086881, PW_dB 2.003135072740818
+Wed June 17 09:28:03  2026 c_EEGAnalysis_module.py:             - lowlevelFT10: CF: 0, PW_dB 0
+Wed June 17 09:28:03  2026 c_EEGAnalysis_module.py:             - lowlevelFT10: CF: 0, PW_dB 0
+Wed June 17 09:28:03  2026 c_EEGAnalysis_module.py:             - lowlevelFT10: CF: 18.03378271159945, PW_dB 1.152077935681195
+Wed June 17 09:28:03  2026 c_EEGAnalysis_module.py:             - lowlevelFT10: CF: 36.0095744680851, PW_dB 1.0912664885969292
+Wed June 17 09:28:04  2026 c_EEGAnalysis_module.py:             - lowlevelFC6: CF: 0, PW_dB 0
+Wed June 17 09:28:04  2026 c_EEGAnalysis_module.py:             - lowlevelFC6: CF: 0, PW_dB 0
+Wed June 17 09:28:04  2026 c_EEGAnalysis_module.py:             - lowlevelFC6: CF: 24.19402612951961, PW_dB 2.0910316428589226
+Wed June 17 09:28:04  2026 c_EEGAnalysis_module.py:             - lowlevelFC6: CF: 0, PW_dB 0
+Wed June 17 09:28:04  2026 c_EEGAnalysis_module.py:             - lowlevelFC2: CF: 0, PW_dB 0
+Wed June 17 09:28:04  2026 c_EEGAnalysis_module.py:             - lowlevelFC2: CF: 6.564252115416701, PW_dB 4.25509192378513
+Wed June 17 09:28:04  2026 c_EEGAnalysis_module.py:             - lowlevelFC2: CF: 23.304641668884358, PW_dB 2.1178068981671316
+Wed June 17 09:28:04  2026 c_EEGAnalysis_module.py:             - lowlevelFC2: CF: 31.104832407808974, PW_dB 1.2113147025317161
+Wed June 17 09:28:04  2026 c_EEGAnalysis_module.py:             - lowlevelF4: CF: 0, PW_dB 0
+Wed June 17 09:28:04  2026 c_EEGAnalysis_module.py:             - lowlevelF4: CF: 0, PW_dB 0
+Wed June 17 09:28:04  2026 c_EEGAnalysis_module.py:             - lowlevelF4: CF: 25.76704171375434, PW_dB 2.773627446784399
+Wed June 17 09:28:04  2026 c_EEGAnalysis_module.py:             - lowlevelF4: CF: 35.4806606125004, PW_dB 1.3957151691018765
+Wed June 17 09:28:04  2026 c_EEGAnalysis_module.py:             - lowlevelFp2: CF: 0, PW_dB 0
+Wed June 17 09:28:04  2026 c_EEGAnalysis_module.py:             - lowlevelFp2: CF: 0, PW_dB 0
+Wed June 17 09:28:04  2026 c_EEGAnalysis_module.py:             - lowlevelFp2: CF: 26.25942711855759, PW_dB 0.4756776969722587
+Wed June 17 09:28:04  2026 c_EEGAnalysis_module.py:             - lowlevelFp2: CF: 39.796643556811865, PW_dB 1.754018340329786
+Wed June 17 09:28:04  2026 c_EEGAnalysis_module.py:             - lowlevelF8: CF: 0, PW_dB 0
+Wed June 17 09:28:04  2026 c_EEGAnalysis_module.py:             - lowlevelF8: CF: 0, PW_dB 0
+Wed June 17 09:28:04  2026 c_EEGAnalysis_module.py:             - lowlevelF8: CF: 17.560585732086743, PW_dB 1.2895013886559958
+Wed June 17 09:28:04  2026 c_EEGAnalysis_module.py:             - lowlevelF8: CF: 0, PW_dB 0
+Wed June 17 09:28:11  2026 c_EEGAnalysis_module.py:             - highlevelF7: CF: 0, PW_dB 0
+Wed June 17 09:28:11  2026 c_EEGAnalysis_module.py:             - highlevelF7: CF: 0, PW_dB 0
+Wed June 17 09:28:11  2026 c_EEGAnalysis_module.py:             - highlevelF7: CF: 0, PW_dB 0
+Wed June 17 09:28:11  2026 c_EEGAnalysis_module.py:             - highlevelF7: CF: 0, PW_dB 0
+Wed June 17 09:28:11  2026 c_EEGAnalysis_module.py:             - highlevelT7: CF: 0, PW_dB 0
+Wed June 17 09:28:11  2026 c_EEGAnalysis_module.py:             - highlevelT7: CF: 0, PW_dB 0
+Wed June 17 09:28:11  2026 c_EEGAnalysis_module.py:             - highlevelT7: CF: 16.413186926552058, PW_dB 2.3089909664208186
+Wed June 17 09:28:11  2026 c_EEGAnalysis_module.py:             - highlevelT7: CF: 35.30314547987241, PW_dB 3.333725116428159
+Wed June 17 09:28:11  2026 c_EEGAnalysis_module.py:             - highlevelF3: CF: 0, PW_dB 0
+Wed June 17 09:28:11  2026 c_EEGAnalysis_module.py:             - highlevelF3: CF: 0, PW_dB 0
+Wed June 17 09:28:11  2026 c_EEGAnalysis_module.py:             - highlevelF3: CF: 22.38105653821078, PW_dB 3.662720432694062
+Wed June 17 09:28:11  2026 c_EEGAnalysis_module.py:             - highlevelF3: CF: 0, PW_dB 0
+Wed June 17 09:28:11  2026 c_EEGAnalysis_module.py:             - highlevelFp1: CF: 0, PW_dB 0
+Wed June 17 09:28:11  2026 c_EEGAnalysis_module.py:             - highlevelFp1: CF: 0, PW_dB 0
+Wed June 17 09:28:11  2026 c_EEGAnalysis_module.py:             - highlevelFp1: CF: 0, PW_dB 0
+Wed June 17 09:28:11  2026 c_EEGAnalysis_module.py:             - highlevelFp1: CF: 0, PW_dB 0
+Wed June 17 09:28:12  2026 c_EEGAnalysis_module.py:             - highlevelFC5: CF: 0, PW_dB 0
+Wed June 17 09:28:12  2026 c_EEGAnalysis_module.py:             - highlevelFC5: CF: 0, PW_dB 0
+Wed June 17 09:28:12  2026 c_EEGAnalysis_module.py:             - highlevelFC5: CF: 29.53987413994558, PW_dB 1.3333397705359573
+Wed June 17 09:28:12  2026 c_EEGAnalysis_module.py:             - highlevelFC5: CF: 35.133641182241554, PW_dB 2.1748794037059405
+Wed June 17 09:28:12  2026 c_EEGAnalysis_module.py:             - highlevelC3: CF: 0, PW_dB 0
+Wed June 17 09:28:12  2026 c_EEGAnalysis_module.py:             - highlevelC3: CF: 0, PW_dB 0
+Wed June 17 09:28:12  2026 c_EEGAnalysis_module.py:             - highlevelC3: CF: 15.727786714525912, PW_dB 3.0619806780471848
+Wed June 17 09:28:12  2026 c_EEGAnalysis_module.py:             - highlevelC3: CF: 0, PW_dB 0
+Wed June 17 09:28:12  2026 c_EEGAnalysis_module.py:             - highlevelFz: CF: 0, PW_dB 0
+Wed June 17 09:28:12  2026 c_EEGAnalysis_module.py:             - highlevelFz: CF: 6.445208337296983, PW_dB 5.819185910239906
+Wed June 17 09:28:12  2026 c_EEGAnalysis_module.py:             - highlevelFz: CF: 24.73000618306889, PW_dB 3.470485560597254
+Wed June 17 09:28:12  2026 c_EEGAnalysis_module.py:             - highlevelFz: CF: 0, PW_dB 0
+Wed June 17 09:28:13  2026 c_EEGAnalysis_module.py:             - highlevelFT9: CF: 0, PW_dB 0
+Wed June 17 09:28:13  2026 c_EEGAnalysis_module.py:             - highlevelFT9: CF: 6.920114772527033, PW_dB 2.467197845657765
+Wed June 17 09:28:13  2026 c_EEGAnalysis_module.py:             - highlevelFT9: CF: 15.758987863851562, PW_dB 1.456994176944768
+Wed June 17 09:28:13  2026 c_EEGAnalysis_module.py:             - highlevelFT9: CF: 37.71846385088417, PW_dB 2.0671505907587218
+Wed June 17 09:28:17  2026 c_EEGAnalysis_module.py:             - highlevelPz: CF: 0, PW_dB 0
+Wed June 17 09:28:17  2026 c_EEGAnalysis_module.py:             - highlevelPz: CF: 0, PW_dB 0
+Wed June 17 09:28:17  2026 c_EEGAnalysis_module.py:             - highlevelPz: CF: 16.545071402164368, PW_dB 2.2081783727208304
+Wed June 17 09:28:17  2026 c_EEGAnalysis_module.py:             - highlevelPz: CF: 0, PW_dB 0
+Wed June 17 09:28:17  2026 c_EEGAnalysis_module.py:             - highlevelP7: CF: 0, PW_dB 0
+Wed June 17 09:28:17  2026 c_EEGAnalysis_module.py:             - highlevelP7: CF: 0, PW_dB 0
+Wed June 17 09:28:17  2026 c_EEGAnalysis_module.py:             - highlevelP7: CF: 15.32826858935472, PW_dB 3.459270463747579
+Wed June 17 09:28:17  2026 c_EEGAnalysis_module.py:             - highlevelP7: CF: 0, PW_dB 0
+Wed June 17 09:28:17  2026 c_EEGAnalysis_module.py:             - highlevelTP9: CF: 0, PW_dB 0
+Wed June 17 09:28:17  2026 c_EEGAnalysis_module.py:             - highlevelTP9: CF: 0, PW_dB 0
+Wed June 17 09:28:17  2026 c_EEGAnalysis_module.py:             - highlevelTP9: CF: 15.80489446741569, PW_dB 2.3202502276430437
+Wed June 17 09:28:17  2026 c_EEGAnalysis_module.py:             - highlevelTP9: CF: 0, PW_dB 0
+Wed June 17 09:28:18  2026 c_EEGAnalysis_module.py:             - highlevelP3: CF: 0, PW_dB 0
+Wed June 17 09:28:18  2026 c_EEGAnalysis_module.py:             - highlevelP3: CF: 0, PW_dB 0
+Wed June 17 09:28:18  2026 c_EEGAnalysis_module.py:             - highlevelP3: CF: 15.314106658362865, PW_dB 2.9890246142461763
+Wed June 17 09:28:18  2026 c_EEGAnalysis_module.py:             - highlevelP3: CF: 0, PW_dB 0
+Wed June 17 09:28:18  2026 c_EEGAnalysis_module.py:             - highlevelO1: CF: 0, PW_dB 0
+Wed June 17 09:28:18  2026 c_EEGAnalysis_module.py:             - highlevelO1: CF: 0, PW_dB 0
+Wed June 17 09:28:18  2026 c_EEGAnalysis_module.py:             - highlevelO1: CF: 16.143508458828283, PW_dB 2.746787119976215
+Wed June 17 09:28:18  2026 c_EEGAnalysis_module.py:             - highlevelO1: CF: 0, PW_dB 0
+Wed June 17 09:28:18  2026 c_EEGAnalysis_module.py:             - highlevelCP1: CF: 0, PW_dB 0
+Wed June 17 09:28:18  2026 c_EEGAnalysis_module.py:             - highlevelCP1: CF: 6.899035793322239, PW_dB 1.237926521404038
+Wed June 17 09:28:18  2026 c_EEGAnalysis_module.py:             - highlevelCP1: CF: 16.60392511521407, PW_dB 2.8058335796142586
+Wed June 17 09:28:18  2026 c_EEGAnalysis_module.py:             - highlevelCP1: CF: 0, PW_dB 0
+Wed June 17 09:28:18  2026 c_EEGAnalysis_module.py:             - highlevelCP5: CF: 0, PW_dB 0
+Wed June 17 09:28:18  2026 c_EEGAnalysis_module.py:             - highlevelCP5: CF: 0, PW_dB 0
+Wed June 17 09:28:18  2026 c_EEGAnalysis_module.py:             - highlevelCP5: CF: 15.672865902143563, PW_dB 3.4361227847837483
+Wed June 17 09:28:18  2026 c_EEGAnalysis_module.py:             - highlevelCP5: CF: 38.26242568139648, PW_dB 2.2340580239062113
+Wed June 17 09:28:18  2026 c_EEGAnalysis_module.py:             - highlevelOz: CF: 0, PW_dB 0
+Wed June 17 09:28:18  2026 c_EEGAnalysis_module.py:             - highlevelOz: CF: 0, PW_dB 0
+Wed June 17 09:28:18  2026 c_EEGAnalysis_module.py:             - highlevelOz: CF: 15.726614210300191, PW_dB 2.5380297177900424
+Wed June 17 09:28:18  2026 c_EEGAnalysis_module.py:             - highlevelOz: CF: 0, PW_dB 0
+Wed June 17 09:28:23  2026 c_EEGAnalysis_module.py:             - highlevelP8: CF: 0, PW_dB 0
+Wed June 17 09:28:23  2026 c_EEGAnalysis_module.py:             - highlevelP8: CF: 0, PW_dB 0
+Wed June 17 09:28:23  2026 c_EEGAnalysis_module.py:             - highlevelP8: CF: 16.86975451541852, PW_dB 1.6518049586887429
+Wed June 17 09:28:23  2026 c_EEGAnalysis_module.py:             - highlevelP8: CF: 0, PW_dB 0
+Wed June 17 09:28:24  2026 c_EEGAnalysis_module.py:             - highlevelCP6: CF: 0, PW_dB 0
+Wed June 17 09:28:24  2026 c_EEGAnalysis_module.py:             - highlevelCP6: CF: 0, PW_dB 0
+Wed June 17 09:28:24  2026 c_EEGAnalysis_module.py:             - highlevelCP6: CF: 16.293801272526338, PW_dB 1.6314736823707676
+Wed June 17 09:28:24  2026 c_EEGAnalysis_module.py:             - highlevelCP6: CF: 0, PW_dB 0
+Wed June 17 09:28:24  2026 c_EEGAnalysis_module.py:             - highlevelP4: CF: 0, PW_dB 0
+Wed June 17 09:28:24  2026 c_EEGAnalysis_module.py:             - highlevelP4: CF: 0, PW_dB 0
+Wed June 17 09:28:24  2026 c_EEGAnalysis_module.py:             - highlevelP4: CF: 18.327634430573454, PW_dB 2.0753844250947395
+Wed June 17 09:28:24  2026 c_EEGAnalysis_module.py:             - highlevelP4: CF: 0, PW_dB 0
+Wed June 17 09:28:24  2026 c_EEGAnalysis_module.py:             - highlevelTP10: CF: 0, PW_dB 0
+Wed June 17 09:28:24  2026 c_EEGAnalysis_module.py:             - highlevelTP10: CF: 0, PW_dB 0
+Wed June 17 09:28:24  2026 c_EEGAnalysis_module.py:             - highlevelTP10: CF: 16.482734536893958, PW_dB 1.847028098122614
+Wed June 17 09:28:24  2026 c_EEGAnalysis_module.py:             - highlevelTP10: CF: 36.78575817942395, PW_dB 1.5888143982923175
+Wed June 17 09:28:24  2026 c_EEGAnalysis_module.py:             - highlevelO2: CF: 0, PW_dB 0
+Wed June 17 09:28:24  2026 c_EEGAnalysis_module.py:             - highlevelO2: CF: 0, PW_dB 0
+Wed June 17 09:28:24  2026 c_EEGAnalysis_module.py:             - highlevelO2: CF: 16.012941737979947, PW_dB 2.230273689523372
+Wed June 17 09:28:24  2026 c_EEGAnalysis_module.py:             - highlevelO2: CF: 0, PW_dB 0
+Wed June 17 09:28:24  2026 c_EEGAnalysis_module.py:             - highlevelCP2: CF: 0, PW_dB 0
+Wed June 17 09:28:24  2026 c_EEGAnalysis_module.py:             - highlevelCP2: CF: 6.8838784952805145, PW_dB 1.4432889345723865
+Wed June 17 09:28:24  2026 c_EEGAnalysis_module.py:             - highlevelCP2: CF: 16.996486635534332, PW_dB 1.916652082485335
+Wed June 17 09:28:24  2026 c_EEGAnalysis_module.py:             - highlevelCP2: CF: 0, PW_dB 0
+Wed June 17 09:28:24  2026 c_EEGAnalysis_module.py:             - highlevelCz: CF: 0, PW_dB 0
+Wed June 17 09:28:24  2026 c_EEGAnalysis_module.py:             - highlevelCz: CF: 6.50443035317319, PW_dB 3.767413064961058
+Wed June 17 09:28:24  2026 c_EEGAnalysis_module.py:             - highlevelCz: CF: 29.326302287220578, PW_dB 1.6779073791336252
+Wed June 17 09:28:24  2026 c_EEGAnalysis_module.py:             - highlevelCz: CF: 34.75505112645703, PW_dB 1.0140404915345869
+Wed June 17 09:28:25  2026 c_EEGAnalysis_module.py:             - highlevelC4: CF: 0, PW_dB 0
+Wed June 17 09:28:25  2026 c_EEGAnalysis_module.py:             - highlevelC4: CF: 6.967417646658959, PW_dB 1.7501295449124044
+Wed June 17 09:28:25  2026 c_EEGAnalysis_module.py:             - highlevelC4: CF: 16.99271325487261, PW_dB 1.999154582529723
+Wed June 17 09:28:25  2026 c_EEGAnalysis_module.py:             - highlevelC4: CF: 0, PW_dB 0
+Wed June 17 09:28:29  2026 c_EEGAnalysis_module.py:             - highlevelFC6: CF: 0, PW_dB 0
+Wed June 17 09:28:29  2026 c_EEGAnalysis_module.py:             - highlevelFC6: CF: 0, PW_dB 0
+Wed June 17 09:28:29  2026 c_EEGAnalysis_module.py:             - highlevelFC6: CF: 0, PW_dB 0
+Wed June 17 09:28:29  2026 c_EEGAnalysis_module.py:             - highlevelFC6: CF: 0, PW_dB 0
+Wed June 17 09:28:29  2026 c_EEGAnalysis_module.py:             - highlevelF4: CF: 0, PW_dB 0
+Wed June 17 09:28:29  2026 c_EEGAnalysis_module.py:             - highlevelF4: CF: 0, PW_dB 0
+Wed June 17 09:28:29  2026 c_EEGAnalysis_module.py:             - highlevelF4: CF: 0, PW_dB 0
+Wed June 17 09:28:29  2026 c_EEGAnalysis_module.py:             - highlevelF4: CF: 0, PW_dB 0
+Wed June 17 09:28:29  2026 c_EEGAnalysis_module.py:             - highlevelT8: CF: 0, PW_dB 0
+Wed June 17 09:28:29  2026 c_EEGAnalysis_module.py:             - highlevelT8: CF: 0, PW_dB 0
+Wed June 17 09:28:29  2026 c_EEGAnalysis_module.py:             - highlevelT8: CF: 15.745745498375966, PW_dB 1.0190672313575888
+Wed June 17 09:28:29  2026 c_EEGAnalysis_module.py:             - highlevelT8: CF: 31.50327428284486, PW_dB 0.9285021040044583
+Wed June 17 09:28:29  2026 c_EEGAnalysis_module.py:             - highlevelFT10: CF: 0, PW_dB 0
+Wed June 17 09:28:29  2026 c_EEGAnalysis_module.py:             - highlevelFT10: CF: 0, PW_dB 0
+Wed June 17 09:28:29  2026 c_EEGAnalysis_module.py:             - highlevelFT10: CF: 0, PW_dB 0
+Wed June 17 09:28:29  2026 c_EEGAnalysis_module.py:             - highlevelFT10: CF: 37.63096210754781, PW_dB 1.3446650724513276
+Wed June 17 09:28:29  2026 c_EEGAnalysis_module.py:             - highlevelF8: CF: 0, PW_dB 0
+Wed June 17 09:28:29  2026 c_EEGAnalysis_module.py:             - highlevelF8: CF: 0, PW_dB 0
+Wed June 17 09:28:29  2026 c_EEGAnalysis_module.py:             - highlevelF8: CF: 0, PW_dB 0
+Wed June 17 09:28:29  2026 c_EEGAnalysis_module.py:             - highlevelF8: CF: 38.79818964053092, PW_dB 1.2331053716572349
+Wed June 17 09:28:30  2026 c_EEGAnalysis_module.py:             - highlevelFp2: CF: 0, PW_dB 0
+Wed June 17 09:28:30  2026 c_EEGAnalysis_module.py:             - highlevelFp2: CF: 0, PW_dB 0
+Wed June 17 09:28:30  2026 c_EEGAnalysis_module.py:             - highlevelFp2: CF: 0, PW_dB 0
+Wed June 17 09:28:30  2026 c_EEGAnalysis_module.py:             - highlevelFp2: CF: 37.53436433444919, PW_dB 1.5450082042596236
+Wed June 17 09:28:30  2026 c_EEGAnalysis_module.py:             - highlevelFC2: CF: 0, PW_dB 0
+Wed June 17 09:28:30  2026 c_EEGAnalysis_module.py:             - highlevelFC2: CF: 6.680030627231552, PW_dB 4.929208166201935
+Wed June 17 09:28:30  2026 c_EEGAnalysis_module.py:             - highlevelFC2: CF: 17.619843373478524, PW_dB 1.5820946190195961
+Wed June 17 09:28:30  2026 c_EEGAnalysis_module.py:             - highlevelFC2: CF: 0, PW_dB 0
+Wed June 17 09:28:31  2026 c_EEGAnalysis_module.py: DONE:   EEG Analysis Module - Subject Level
+Wed June 17 09:28:31  2026 c_EEGAnalysis_module.py:         Time elapsed: 0:01:38.154833
+
+
+Wed June 17 09:28:32  2026 c_EEGAnalysis_module.py:         Pair-plots saved to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/groupDDM_SDT/paired
+Wed June 17 09:28:32  2026 c_EEGAnalysis_module.py:         Global FOOOF summary written to: data/BIDShierPriors/derivatives/BIDSprocessed/results/master_fooof_summary.csv
+Wed June 17 09:28:32  2026 c_EEGAnalysis_module.py: DONE:   EEG Analysis Module - Subject Level
+Wed June 17 09:28:32  2026 c_EEGAnalysis_module.py:         Time elapsed: 0:01:39.501706
+
+
+Wed June 17 09:28:32  2026 c_EEGAnalysis_module.py: START:  EEG Analysis Module - Group Level
+Wed June 17 09:28:32  2026 c_EEGAnalysis_module.py: _______ Analysis of subjects: ['001']_______
+Wed June 17 09:28:32  2026 c_EEGAnalysis_module.py:         *** TFRs - computing TFRs across all subjects ***
+Wed June 17 09:28:32  2026 c_EEGAnalysis_module.py:      Computing grand average TFR for condition: base
+Wed June 17 09:28:32  2026 c_EEGAnalysis_module.py:      Saved grand average TFR for condition base to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/groupTFR/grand_avg_cond-base_tfr.fif
+Wed June 17 09:28:32  2026 c_EEGAnalysis_module.py:      Computing grand average TFR for condition: lowlevel
+Wed June 17 09:28:32  2026 c_EEGAnalysis_module.py:      Saved grand average TFR for condition lowlevel to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/groupTFR/grand_avg_cond-lowlevel_tfr.fif
+Wed June 17 09:28:32  2026 c_EEGAnalysis_module.py:      Computing grand average TFR for condition: highlevel
+Wed June 17 09:28:32  2026 c_EEGAnalysis_module.py:      Saved grand average TFR for condition highlevel to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/groupTFR/grand_avg_cond-highlevel_tfr.fif
+Wed June 17 09:28:32  2026 c_EEGAnalysis_module.py:         Saving Grand Average TFR plot to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/diagnostic_plots/GrandAvgTFR_base.png
+Wed June 17 09:28:33  2026 c_EEGAnalysis_module.py:         Saving Grand Average TFR plot to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/diagnostic_plots/GrandAvgTFR_lowlevel.png
+Wed June 17 09:28:33  2026 c_EEGAnalysis_module.py:         Saving Grand Average TFR plot to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/diagnostic_plots/GrandAvgTFR_highlevel.png
+Wed June 17 09:28:33  2026 c_EEGAnalysis_module.py:         Saving Grand Average TFR difference plot to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/diagnostic_plots/GrandAvgTFR_diff_lowlevelvsbase.png
+Wed June 17 09:28:33  2026 c_EEGAnalysis_module.py:         Saving Grand Average TFR difference plot to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/diagnostic_plots/GrandAvgTFR_diff_highlevelvsbase.png
+Wed June 17 09:28:34  2026 c_EEGAnalysis_module.py:         Saving Grand Average TFR difference plot to data/BIDShierPriors/derivatives/BIDSprocessed/results/groupEEG/diagnostic_plots/GrandAvgTFR_diff_lowlevelvshighlevel.png
+Wed June 17 09:28:34  2026 c_EEGAnalysis_module.py:      -- group-CBPT not performed
+Wed June 17 09:28:34  2026 c_EEGAnalysis_module.py:      -- No ERP features extracted or statistical analysis performed
+Wed June 17 09:28:34  2026 c_EEGAnalysis_module.py: DONE:   EEG Analysis Module - Group Level
+Wed June 17 09:28:34  2026 c_EEGAnalysis_module.py:         Time elapsed: 0:00:01.597387
+
+
