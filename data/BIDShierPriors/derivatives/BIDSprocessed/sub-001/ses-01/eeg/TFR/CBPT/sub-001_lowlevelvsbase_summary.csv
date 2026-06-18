@@ -1,0 +1,9 @@
+subject,comparison,cluster,p_value,significant,mean_value,cluster_statistic,cluster_size,freq_range,time_range_ms,peak_freq,peak_time_ms
+sub-001,lowlevelvsbase,0,0.0001,True,0.0,48747.4068,3794,5.0-40.0,600.0-2100.0,11.6,1884.0
+sub-001,lowlevelvsbase,1,0.8932,False,0.0,276.5507,50,16.6-18.9,1596.0-1728.0,17.8,1656.0
+sub-001,lowlevelvsbase,2,0.8801,False,0.0,289.5407,45,18.9-21.6,1284.0-1428.0,20.2,1344.0
+sub-001,lowlevelvsbase,3,0.0341,True,0.0,2577.9782,394,22.3-36.3,768.0-1572.0,28.0,1200.0
+sub-001,lowlevelvsbase,4,0.707,False,0.0,447.0922,70,32.9-40.0,600.0-900.0,34.0,600.0
+sub-001,lowlevelvsbase,5,0.2638,False,0.0,1050.7069,81,32.9-38.7,1656.0-1884.0,36.3,1776.0
+sub-001,lowlevelvsbase,6,0.9941,False,0.0,112.5138,21,34.0-37.5,1368.0-1452.0,35.1,1416.0
+sub-001,lowlevelvsbase,7,0.9909,False,0.0,128.5019,26,37.5-40.0,1236.0-1380.0,38.7,1272.0

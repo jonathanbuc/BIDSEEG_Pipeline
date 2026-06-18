@@ -43,7 +43,7 @@
         "compute_erp": false,
         "average_stim_trigger": true,
         "perform_tfr": true,
-        "perform_cbpt": false,
+        "perform_cbpt": true,
         "perform_cbpt_group": false,
         "compute_sdt": true,
         "compute_ddm": true,

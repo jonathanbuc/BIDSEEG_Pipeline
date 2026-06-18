@@ -1,0 +1,15 @@
+subject,comparison,cluster,p_value,significant,mean_value,cluster_statistic,cluster_size,freq_range,time_range_ms,peak_freq,peak_time_ms
+sub-001,highlevelvsbase,0,0.002,True,0.0,4820.2758,705,5.0-13.7,1140.0-1776.0,7.6,1212.0
+sub-001,highlevelvsbase,1,0.0027,True,0.0,4340.6383,724,6.1-22.3,600.0-948.0,8.4,792.0
+sub-001,highlevelvsbase,2,0.9603,False,0.0,193.4182,46,8.4-9.9,2004.0-2100.0,9.0,2052.0
+sub-001,highlevelvsbase,3,1.0,False,0.0,25.0747,6,15.6-17.2,2088.0-2100.0,16.1,2100.0
+sub-001,highlevelvsbase,4,0.6001,False,0.0,529.8674,91,16.1-18.9,984.0-1236.0,17.2,1140.0
+sub-001,highlevelvsbase,5,1.0,False,0.0,11.8602,3,17.2-17.8,600.0-612.0,17.8,600.0
+sub-001,highlevelvsbase,6,0.7429,False,0.0,396.2994,65,18.9-21.6,1296.0-1476.0,20.2,1368.0
+sub-001,highlevelvsbase,7,0.8804,False,0.0,281.473,46,20.2-23.8,1860.0-1992.0,22.3,1932.0
+sub-001,highlevelvsbase,8,1.0,False,-0.0,33.1327,8,23.0-23.8,1524.0-1572.0,23.8,1536.0
+sub-001,highlevelvsbase,9,1.0,False,0.0,32.5009,7,27.1-27.1,1296.0-1368.0,27.1,1344.0
+sub-001,highlevelvsbase,10,1.0,False,0.0,12.4189,3,28.9-28.9,876.0-900.0,28.9,888.0
+sub-001,highlevelvsbase,11,1.0,False,0.0,7.8992,2,28.9-28.9,1488.0-1500.0,28.9,1488.0
+sub-001,highlevelvsbase,12,0.9757,False,-0.0,165.2994,29,30.8-34.0,1908.0-2004.0,32.9,1956.0
+sub-001,highlevelvsbase,13,0.9993,False,0.0,65.0628,12,35.1-36.3,1752.0-1824.0,35.1,1788.0
