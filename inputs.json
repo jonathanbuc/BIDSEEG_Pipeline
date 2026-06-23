@@ -136,6 +136,10 @@
             "gamma": [
                 30,
                 80
+            ],
+            "alpha": [
+                7,
+                14
             ]
         },
         "tfr_method": "multitaper",

@@ -965,9 +965,9 @@ def CBPT(tfr_dict, datatype, comparisons, roi, bidspath_out, log_df, epochs_min,
     return log_df
 
 
-
 alpha = 0.05
-def plot_cbpt_results(cluster_p_values, clusters, T_obs, alpha, component, comparison):
+def plot_cbpt_results(cluster_p_values, clusters, T_obs, alpha, component, comparison, epochs_info, save_dir):
+
 
     sig_clusters = np.where(cluster_p_values < alpha)[0]
 
@@ -988,7 +988,7 @@ def plot_cbpt_results(cluster_p_values, clusters, T_obs, alpha, component, compa
 
         im, _ = mne.viz.plot_topomap(
             T_obs,
-            info,
+            epochs_info,
             mask=mask,
             axes=ax,
             show=False,
@@ -1003,16 +1003,13 @@ def plot_cbpt_results(cluster_p_values, clusters, T_obs, alpha, component, compa
 
         colorbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
         colorbar.set_label(f'{component} {comparison} T Values')
-        save_dir = "/Users/cenjingwang/Desktop/Berlin_Summer_Research_2026_DAAD_RISE/BIDSEEG_Pipeline/data/BIDShierPriors/derivatives/BIDSprocesse/results"
-        fig.savefig(os.path.join(save_dir, f"{component}_{comparison}_cluster{clu_idx}_cbpt.png"), dpi=300, bbox_inches='tight')
+        #save_dir = "/Users/cenjingwang/Desktop/Berlin_Summer_Research_2026_DAAD_RISE/BIDSEEG_Pipeline/data/BIDShierPriors/derivatives/BIDSprocesse/results"
+        fig.savefig(os.path.join(save_dir, f"{component}_AperiodicOffset_global_cluster{clu_idx}_cbpt_topoplot.png"), dpi=300, bbox_inches='tight')
         plt.close()
-
-    
         
+        return im
 
-    return im
 
-'''
 def test_arrays(data, component, cond_names):
     """
     Reorganizes fooof_bands_total sample into arrays for cluster analysis for repeated measures.
@@ -1020,7 +1017,7 @@ def test_arrays(data, component, cond_names):
     Parameters
     ----------
     data = pandas.DataFrame 
-        with columns ['participant', 'exp', 'chn', component]
+        with columns ['participant', 'exp', 'channels', component]
     component : str
         Name of the component to analyze, e.g. 'Aperiodic_Exponent'
     cond_names : list of str
@@ -1033,7 +1030,7 @@ def test_arrays(data, component, cond_names):
     t_test_arrays : dict
         Dictionary containing arrays for each t-test comparison.
     """
-    average_rows = data[data["chn"] == "average"].index
+    average_rows = data[data["channels"] == "average"].index
     data = data.drop(average_rows, inplace=False)
 
     participants = sorted(data["participant"].unique())
@@ -1042,11 +1039,11 @@ def test_arrays(data, component, cond_names):
 
     for cond in cond_names:
         pivot = (
-            data.loc[data["exp"] == cond, ["participant", "chn", component]]
-                .groupby(["participant", "chn"])[component]
+            data.loc[data["exp"] == cond, ["participant", "channels", component]]
+                .groupby(["participant", "channels"])[component]
                 .mean()
-                .unstack("chn")
-                .reindex(index=participants, columns=roi)
+                .unstack("channels")
+                .reindex(index=participants, columns=sorted(data["channels"].unique()))
         )
 
         if pivot.isna().any().any():
@@ -1111,7 +1108,7 @@ def cbpt_global(f_test_array, n_permutations, alpha, seed, chn_adjacency):
         threshold = threshold, 
         n_permutations= n_permutations, 
         tail=1, # 0 = two-tailed (undirected) test, 1 = right-tailed test, -1 = left-tailed test
-        stat_fun= stat_fun,
+        stat_fun= None,
         adjacency=chn_adjacency,
         n_jobs=-1, # might be unnecessary 
         seed=seed, 
@@ -1181,91 +1178,71 @@ def cbpt_local(t_test_arrays, n_permutations, seed, chn_adjacency):
     return results
 
 
-global_cbpt_results = {}
-local_cbpt_results = {}
+#####CBPTS ANALYSIS + GRAPHS 
 
-components_cbpt = [
-              "Aperiodic_Exponent",
-              "Aperiodic_Offset",
-              "delta_PW_dB_sum",
-              "theta_PW_dB_sum",
-              "alpha_PW_dB_sum",
-              "beta_PW_dB_sum",
-              "gamma_PW_dB_sum",
-              "alpha_CF_Hz_peak"
-              ]
+# csv_path = os.path.join(result_dir, 'EEG_bands_hierprior.csv')
+# fooof_cbpt_save_dir = os.path.join(result_dir, 'FOOOF_CBPT')
+# os.makedirs(fooof_cbpt_save_dir, exist_ok=True)
 
-data = pd.read_csv("/Users/cenjingwang/Desktop/Berlin_Summer_Research_2026_DAAD_RISE/BIDSEEG_Pipeline/data/BIDShierPriors/derivatives/BIDSprocessed/results/EEG_alphapower_hierprior.csv", delimiter = ',')
-for component in components_cbpt:
-    print(f'   ==== Testing {component}... ====')
-    f_test_array, t_test_arrays = test_arrays(data, component, conditions)
-    global_cbpt_results[component] = cbpt_global(f_test_array, cbpt_n_permutations, cbpt_alpha, cbpt_seed, chn_adjacency)
-    local_cbpt_results[component] = cbpt_local(t_test_arrays, cbpt_n_permutations, cbpt_seed, chn_adjacency)
+
+
+def run_fooof_cbpt(condition_dict, cbpt_n_permutations, cbpt_alpha, cbpt_seed, epochs_info, csv_path, save_dir):
     
+    chn_adjacency, _ = mne.channels.find_ch_adjacency(epochs_info, ch_type='eeg')
+    cond_col, conditions = list(condition_dict.items())[0]
+    
+    data = pd.read_csv(csv_path, delimiter=',')
+    
+    components_cbpt = [
+        "Aperiodic_Exponent",
+        "Aperiodic_Offset",
+        "total_delta_dB",
+        "total_theta_dB",
+        "total_alpha_dB",
+        "total_beta_dB",
+        "total_gamma_dB",
+        "alpha_CF_Hz_peak"
+    ]
 
-cluster_p_values = plot_cbpt_results['Aperiodic_Exponent']['base_lowlevel']['cluster_pv']
-clusters = plot_cbpt_results['Aperiodic_Exponent']['base_lowlevel']['clusters']
-T_obs = plot_cbpt_results['Aperiodic_Exponent']['base_lowlevel']['T_obs']
+    global_cbpt_results = {}
+    local_cbpt_results = {}
 
-plot_cbpt_results(cluster_p_values, clusters, T_obs, alpha, component = 'Aperiodic Exponent', comparison = 'base vs. low')
+    for component in components_cbpt:
+        print(f'   ==== Testing {component}... ====')
+        f_test_array, t_test_arrays = test_arrays(data, component, conditions)
+        global_cbpt_results[component] = cbpt_global(f_test_array, cbpt_n_permutations, cbpt_alpha, cbpt_seed, chn_adjacency)
+        local_cbpt_results[component] = cbpt_local(t_test_arrays, cbpt_n_permutations, cbpt_seed, chn_adjacency)
 
-cluster_p_values = plot_cbpt_results['Aperiodic_Offset']['base_lowlevel']['cluster_pv']
-clusters = plot_cbpt_results['Aperiodic_Offset']['base_lowlevel']['clusters']
-T_obs = plot_cbpt_results['Aperiodic_Offset']['base_lowlevel']['T_obs']
+    # plot local results
+    for component in components_cbpt:
+        for comparison_key in local_cbpt_results[component]:
+            cluster_p_values = local_cbpt_results[component][comparison_key]['cluster_pv']
+            clusters = local_cbpt_results[component][comparison_key]['clusters']
+            T_obs = local_cbpt_results[component][comparison_key]['T_obs']
 
-plot_cbpt_results(cluster_p_values, clusters, T_obs, alpha, component = 'Aperiodic Offset', comparison = 'base vs. low')
+            plot_cbpt_results(cluster_p_values, clusters, T_obs, cbpt_alpha, component, comparison_key, epochs_info, save_dir)
 
-cluster_p_values = plot_cbpt_results['Aperiodic_Offset']['base_highlevel']['cluster_pv']
-clusters = plot_cbpt_results['Aperiodic_Offset']['base_highlevel']['clusters']
-T_obs = plot_cbpt_results['Aperiodic_Offset']['base_highlevel']['T_obs']
+    # plot global results
+    for component in components_cbpt:
+        cluster_p_values = global_cbpt_results[component]['cluster_pv']
+        clusters = global_cbpt_results[component]['clusters']
+        F_obs = global_cbpt_results[component]['F_obs']
+        sig_clusters = np.where(cluster_p_values < cbpt_alpha)[0]
+        print(f"Found {len(sig_clusters)} significant clusters for {component}")
+        for i_clu, clu_idx in enumerate(sig_clusters):
+            mask = clusters[clu_idx]
+            fig, ax = plt.subplots(figsize=(6, 6))
+            im, _ = mne.viz.plot_topomap(F_obs, epochs_info, mask=mask, axes=ax, show=False, extrapolate='head', cmap='PiYG')
+            ax.set_title(f"Cluster {clu_idx}\np = {cluster_p_values[clu_idx]:.4f}")
+            colorbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+            colorbar.set_label(f'{component} F Values')
+            fig.savefig(os.path.join(save_dir, f"{component}_global_cluster{clu_idx}_cbpt_topoplot.png"), dpi=300, bbox_inches='tight')
+            plt.close()
 
-plot_cbpt_results(cluster_p_values, clusters, T_obs, alpha, component = 'Aperiodic Offset', comparison = 'base vs. high')
-
-cluster_p_values = global_cbpt_results['Aperiodic_Offset']['cluster_pv']
-clusters = global_cbpt_results['Aperiodic_Offset']['clusters']
-F_obs = global_cbpt_results['Aperiodic_Offset']['F_obs']
-
-sig_clusters = np.where(cluster_p_values < alpha)[0]
-
-print(f"Found {len(sig_clusters)} significant clusters")
-
-for i in sig_clusters:
-    print(
-        f"Cluster {i}: "
-        f"p = {cluster_p_values[i]:.4f}, "
-        f"n_channels = {clusters[i].sum()}"
-    )
-
-for i_clu, clu_idx in enumerate(np.where(cluster_p_values < alpha)[0]):
-
-    mask = clusters[clu_idx]  # Boolean mask for channels
-
-    fig, ax = plt.subplots(figsize=(6, 6))
-
-    im, _ = mne.viz.plot_topomap(
-        T_obs,
-        info,
-        mask=mask,
-        axes=ax,
-        show=False,
-        extrapolate = 'head',
-        cmap = 'PiYG'
-    )
-
-    ax.set_title(
-        f"Cluster {clu_idx}\n"
-        f"p = {cluster_p_values[clu_idx]:.4f}"
-    )
-
-    colorbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-    colorbar.set_label('Aperiodic Offset F Values')
-
-    save_dir = "/Users/cenjingwang/Desktop/Berlin_Summer_Research_2026_DAAD_RISE/BIDSEEG_Pipeline/data/BIDShierPriors/derivatives/BIDSprocesse/results"
-    fig.savefig(os.path.join(save_dir, f"{component}_{comparison}_cluster{clu_idx}_cbpt_topoplot.png"), dpi=300, bbox_inches='tight')
-    plt.close()
+    return global_cbpt_results, local_cbpt_results
 
 
-'''
+
 #_____________FOOOF______________
 
 
@@ -1374,7 +1351,7 @@ def run_fooof_analysis(epochs_clean, condition_dict, subject, bidspath_out_subje
     
     return fm, df_fooofsum, df_bandpeaks
 
-# def plot_topomap_generic(data, info, title="Topomap", cmap="viridis", mask=None, mask_params=None, vmin=None, vmax=None, colorbar_label="Value", save_path=None, figsize=(6, 6), extrapolate="head"):
+#def plot_topomap_generic(data, info, title="Topomap", cmap="viridis", mask=None, mask_params=None, vmin=None, vmax=None, colorbar_label="Value", save_path=None, figsize=(6, 6), extrapolate="head"):
    
 #     fig, ax = plt.subplots(figsize=(6, ))
 
@@ -1726,18 +1703,33 @@ if __name__ == '__main__':
         if compute_fooof:
             utils.log_msg(f'        Computing FOOOF')
         # psd_dict = subject_psd(epochs, fmin, fmax, condition_dict, 'Oz', bidspath_processing_subject, subject)
-        fm, df_fooofsum, df_fooofalpha  = run_fooof_analysis(epochs, condition_dict, subject=subject, bidspath_out_subject=bidspath_processing_subject, tmax=tmax, narrowband_freqs=narrowband_freq_ranges, baseline=baseline, f_range=fooof_f_range, peak_threshold=fooof_peak_threshold,log_df=log_df)
-        global_fooof_dfs.append(df_fooofsum)
-        fooof_alpha_dfs.append(df_fooofalpha)
+            fm, df_fooofsum, df_fooofalpha  = run_fooof_analysis(epochs, condition_dict, subject=subject, bidspath_out_subject=bidspath_processing_subject, tmax=tmax, narrowband_freqs=narrowband_freq_ranges, baseline=baseline, f_range=fooof_f_range, peak_threshold=fooof_peak_threshold,log_df=log_df)
+            global_fooof_dfs.append(df_fooofsum)
+            fooof_alpha_dfs.append(df_fooofalpha)
 
         timepoint_end = utils.log_msg(f'DONE:   EEG Analysis Module - Subject Level')
         utils.log_msg(f'        Time elapsed: {str(timepoint_end-timepoint_start)}\n\n')
-        
+    # __________________________________Run CBPT FOOOF _________________________________
+
+        epochs_info = epochs.info
+        # epochs_info = mne.read_epochs(
+        #         utils.load_preprocessing_step(bidspath, subjects[-1], 'from_fif'),
+        #         preload=False,
+        #         verbose=False
+        # ).info
+        csv_path = os.path.join(result_dir, 'EEG_bands_hierprior.csv')
+        fooof_cbpt_save_dir = os.path.join(result_dir, 'FOOOF_CBPT')
+        os.makedirs(fooof_cbpt_save_dir, exist_ok=True)
+
+        global_cbpt_results, local_cbpt_results = run_fooof_cbpt(condition_dict, cbpt_n_permutations, cbpt_alpha, cbpt_seed, epochs_info, csv_path, fooof_cbpt_save_dir)      
+    
+
     # ________________________Saving & Plotting - Subject Level ________________________
     # concatenating Wavelet (TFR) and FOOOF Alpha Frequency measures
     tfr_alpha = pd.concat(tfr_alpha_dfs, ignore_index=True)
     fooof_alpha = pd.concat(fooof_alpha_dfs, ignore_index=True)
     power_df = pd.merge(tfr_alpha, fooof_alpha, on=['participant', 'exp'], how='left')
+    
     
     # added for different band names 
     band_rename = {}
@@ -1745,13 +1737,13 @@ if __name__ == '__main__':
         band_rename[f"{band}_PW_dB_sum"] = f"total_{band}_dB"
         band_rename[f"{band}_PW_dB_peak"] = f"relative_{band}_dB"
     power_df = power_df.rename(columns=band_rename)
-    
+    power_df = power_df.loc[:, ~power_df.columns.duplicated(keep='first')]  #to deduplicate 
     power_file = f'{result_dir}/EEG_bands_hierprior.csv'
     power_df.to_csv(power_file, index=False)
 
     # Plot results
     #changed for variable naming purposes 
-    eeg_parameters_valid = [p for p in eeg_parameters if p in power_df.columns and power_df[p].notna().any()] # to account for nan
+    eeg_parameters_valid = [p for p in eeg_parameters if p in power_df.columns and bool(power_df[p].notna().any())] # to account for nan
     #raincloud_plot(power_df, condition_dict, eeg_parameters_valid, eeg_dir)
     paired_plot(power_df, condition_dict, eeg_parameters_valid, eeg_dir)
     #raincloud_plot(power_df,condition_dict, eeg_parameters, eeg_dir)
@@ -1770,7 +1762,6 @@ if __name__ == '__main__':
     utils.log_msg(f'        Time elapsed: {str(timepoint_end-timepoint_start)}\n\n')
 
 # __________________________________Subject Analysis - END _________________________________
-
 
 # __________________________________Group Analysis - START _________________________________
     print(f'\n\n\n\n')
