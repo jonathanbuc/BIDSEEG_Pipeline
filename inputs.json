@@ -1,7 +1,7 @@
 {
     "basic": {
         "sourcedata": "./data/sourcedata",
-        "subject_ID": "001",
+        "subject_ID": "003",
         "session": "01",
         "task": "HierPrior",
         "current_step": "04epochsCorr",

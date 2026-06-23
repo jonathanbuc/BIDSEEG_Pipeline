@@ -970,44 +970,50 @@ def plot_cbpt_results(cluster_p_values, clusters, T_obs, alpha, component, compa
 
 
     sig_clusters = np.where(cluster_p_values < alpha)[0]
-
     print(f"Found {len(sig_clusters)} significant clusters")
+    # for i in sig_clusters:
+    #     print(
+    #         f"Cluster {i}: "
+    #         f"p = {cluster_p_values[i]:.4f}, "
+    #         f"n_channels = {clusters[i].sum()}"
+    #     )
 
-    for i in sig_clusters:
-        print(
-            f"Cluster {i}: "
-            f"p = {cluster_p_values[i]:.4f}, "
-            f"n_channels = {clusters[i].sum()}"
-        )
+    # for i_clu, clu_idx in enumerate(np.where(cluster_p_values < alpha)[0]):
 
-    for i_clu, clu_idx in enumerate(np.where(cluster_p_values < alpha)[0]):
+    #     mask = clusters[clu_idx]  # Boolean mask for channels
 
-        mask = clusters[clu_idx]  # Boolean mask for channels
+    #     fig, ax = plt.subplots(figsize=(6, 6))
 
-        fig, ax = plt.subplots(figsize=(6, 6))
+    #     im, _ = mne.viz.plot_topomap(
+    #         T_obs,
+    #         epochs_info,
+    #         mask=mask,
+    #         axes=ax,
+    #         show=False,
+    #         extrapolate = 'head',
+    #         cmap = 'PiYG'
+    #     )
 
-        im, _ = mne.viz.plot_topomap(
-            T_obs,
-            epochs_info,
-            mask=mask,
-            axes=ax,
-            show=False,
-            extrapolate = 'head',
-            cmap = 'PiYG'
-        )
+    #     ax.set_title(
+    #         f"Cluster {clu_idx}\n"
+    #         f"p = {cluster_p_values[clu_idx]:.4f}"
+    #     )
 
-        ax.set_title(
-            f"Cluster {clu_idx}\n"
-            f"p = {cluster_p_values[clu_idx]:.4f}"
-        )
-
-        colorbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-        colorbar.set_label(f'{component} {comparison} T Values')
-        #save_dir = "/Users/cenjingwang/Desktop/Berlin_Summer_Research_2026_DAAD_RISE/BIDSEEG_Pipeline/data/BIDShierPriors/derivatives/BIDSprocesse/results"
-        fig.savefig(os.path.join(save_dir, f"{component}_AperiodicOffset_global_cluster{clu_idx}_cbpt_topoplot.png"), dpi=300, bbox_inches='tight')
-        plt.close()
+    #     colorbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    #     colorbar.set_label(f'{component} {comparison} T Values')
+    #     fig.savefig(os.path.join(save_dir, f"{component}_AperiodicOffset_global_cluster{clu_idx}_cbpt_topoplot.png"), dpi=300, bbox_inches='tight')
+    #     plt.close()
         
-        return im
+        #return im
+    for clu_idx in sig_clusters:
+        print(f"Cluster {clu_idx}: p = {cluster_p_values[clu_idx]:.4f}, n_channels = {clusters[clu_idx].sum()}")
+        plot_topomap_generic(
+            values=T_obs, info=epochs_info,
+            save_path=os.path.join(save_dir, f"{component}_{comparison}_cluster{clu_idx}_cbpt_topoplot.png"),
+            label=f'{component} {comparison} T Values',
+            title=f"Cluster {clu_idx}\np = {cluster_p_values[clu_idx]:.4f}",
+            mask=clusters[clu_idx], cmap='PiYG'
+        )
 
 
 def test_arrays(data, component, cond_names):
@@ -1178,13 +1184,6 @@ def cbpt_local(t_test_arrays, n_permutations, seed, chn_adjacency):
     return results
 
 
-#####CBPTS ANALYSIS + GRAPHS 
-
-# csv_path = os.path.join(result_dir, 'EEG_bands_hierprior.csv')
-# fooof_cbpt_save_dir = os.path.join(result_dir, 'FOOOF_CBPT')
-# os.makedirs(fooof_cbpt_save_dir, exist_ok=True)
-
-
 
 def run_fooof_cbpt(condition_dict, cbpt_n_permutations, cbpt_alpha, cbpt_seed, epochs_info, csv_path, save_dir):
     
@@ -1213,32 +1212,34 @@ def run_fooof_cbpt(condition_dict, cbpt_n_permutations, cbpt_alpha, cbpt_seed, e
         global_cbpt_results[component] = cbpt_global(f_test_array, cbpt_n_permutations, cbpt_alpha, cbpt_seed, chn_adjacency)
         local_cbpt_results[component] = cbpt_local(t_test_arrays, cbpt_n_permutations, cbpt_seed, chn_adjacency)
 
-    # plot local results
+
+
     for component in components_cbpt:
         for comparison_key in local_cbpt_results[component]:
-            cluster_p_values = local_cbpt_results[component][comparison_key]['cluster_pv']
-            clusters = local_cbpt_results[component][comparison_key]['clusters']
-            T_obs = local_cbpt_results[component][comparison_key]['T_obs']
+            plot_cbpt_results(
+                local_cbpt_results[component][comparison_key]['cluster_pv'],
+                local_cbpt_results[component][comparison_key]['clusters'],
+                local_cbpt_results[component][comparison_key]['T_obs'],
+                cbpt_alpha, component, comparison_key, epochs_info, save_dir
+            
+            )
+            
+        
 
-            plot_cbpt_results(cluster_p_values, clusters, T_obs, cbpt_alpha, component, comparison_key, epochs_info, save_dir)
-
-    # plot global results
-    for component in components_cbpt:
-        cluster_p_values = global_cbpt_results[component]['cluster_pv']
-        clusters = global_cbpt_results[component]['clusters']
-        F_obs = global_cbpt_results[component]['F_obs']
-        sig_clusters = np.where(cluster_p_values < cbpt_alpha)[0]
-        print(f"Found {len(sig_clusters)} significant clusters for {component}")
-        for i_clu, clu_idx in enumerate(sig_clusters):
-            mask = clusters[clu_idx]
-            fig, ax = plt.subplots(figsize=(6, 6))
-            im, _ = mne.viz.plot_topomap(F_obs, epochs_info, mask=mask, axes=ax, show=False, extrapolate='head', cmap='PiYG')
-            ax.set_title(f"Cluster {clu_idx}\np = {cluster_p_values[clu_idx]:.4f}")
-            colorbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-            colorbar.set_label(f'{component} F Values')
-            fig.savefig(os.path.join(save_dir, f"{component}_global_cluster{clu_idx}_cbpt_topoplot.png"), dpi=300, bbox_inches='tight')
-            plt.close()
-
+    
+    for component, label in [('Aperiodic_Offset', 'Aperiodic Offset F Values'), ('total_alpha_dB', 'Alpha F Values')]:
+        sig_clusters = np.where(global_cbpt_results[component]['cluster_pv'] < cbpt_alpha)[0]
+        for clu_idx in sig_clusters:
+            plot_topomap_generic(
+                values=global_cbpt_results[component]['F_obs'],
+                info=epochs_info,
+                save_path=os.path.join(save_dir, f"{component}_global_cluster{clu_idx}_cbpt_topoplot.png"),
+                label=label,
+                title=f"Cluster {clu_idx}\np = {global_cbpt_results[component]['cluster_pv'][clu_idx]:.4f}",
+                mask=global_cbpt_results[component]['clusters'][clu_idx],
+                cmap='PiYG'
+            )
+            
     return global_cbpt_results, local_cbpt_results
 
 
@@ -1337,44 +1338,49 @@ def run_fooof_analysis(epochs_clean, condition_dict, subject, bidspath_out_subje
     ch_orders = psd.ch_names
     avg_exponents = [df_bandpeaks[df_bandpeaks['channels'] == ch]['Aperiodic_Exponent'].mean() for ch in ch_orders ] #prevent NaN when no peaks found, so always one row per channel
     avg_exponents_plot = [0 if np.isnan(v) else v for v in avg_exponents] #replacing Nan with 0 for plots
-    fig, ax = plt.subplots(figsize=(6, 5))
+    #fig, ax = plt.subplots(figsize=(6, 5))
     mask = np.array([not np.isnan(v) for v in avg_exponents]) #grays out the bad channels 
-    im, _ = mne.viz.plot_topomap(avg_exponents_plot, psd.info, cmap='viridis', mask=mask, mask_params=dict(marker='o', markerfacecolor='grey', markersize=2), extrapolate='head', show=False, axes=ax)
-    colorbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-    colorbar.set_label('Aperiodic Exponent')  
+    # im, _ = mne.viz.plot_topomap(avg_exponents_plot, psd.info, cmap='viridis', mask=mask, mask_params=dict(marker='o', markerfacecolor='grey', markersize=2), extrapolate='head', show=False, axes=ax)
+    # colorbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    # colorbar.set_label('Aperiodic Exponent')  
 
-    fig.savefig(os.path.join(save_dir, f"sub-{subject}_aperiodic_topomap.png"), dpi=300, bbox_inches='tight')
-    plt.close()
+    # fig.savefig(os.path.join(save_dir, f"sub-{subject}_aperiodic_topomap.png"), dpi=300, bbox_inches='tight')
+    # plt.close()
+    plot_topomap_generic(
+        values=avg_exponents_plot,
+        info=psd.info,
+        save_path=os.path.join(save_dir, f"sub-{subject}_aperiodic_topomap.png"),
+        label='Aperiodic Exponent',
+        mask=mask,
+        mask_params=dict(marker='o', markerfacecolor='grey', markersize=2)
+    )
+
 
     utils.log_update(log_df, 'max_n_peaks', 6) # logs the parameters used
 
     
     return fm, df_fooofsum, df_bandpeaks
 
-#def plot_topomap_generic(data, info, title="Topomap", cmap="viridis", mask=None, mask_params=None, vmin=None, vmax=None, colorbar_label="Value", save_path=None, figsize=(6, 6), extrapolate="head"):
-   
-#     fig, ax = plt.subplots(figsize=(6, ))
+def plot_topomap_generic(values, info, save_path, label, title=None, mask=None, mask_params=None, cmap="viridis", colorbar_label="Value", extrapolate='head'):
+    fig, ax = plt.subplots(figsize=(6,5))
+    im, _ = mne.viz.plot_topomap(
+        values,
+        info,
+        mask=mask,
+        mask_params=mask_params,
+        axes=ax,
+        show=False,
+        extrapolate=extrapolate,
+        cmap=cmap 
+    )
+    colorbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    colorbar.set_label(label)  
+    fig.savefig(save_path, dpi=300, bbox_inches='tight')
+    if title:
+        ax.set_title(title) 
+    plt.close()
 
-#     im, _ = mne.viz.plot_topomap(
-#         data,
-#         info,
-#         axes=ax,
-#         cmap=cmap,
-#         mask=mask,
-#         mask_params=mask_params,
-#         show=False,
-#         vmin=vmin,
-#         vmax=vmax,
-#         extrapolate=extrapolate
-#     )
 
-#     mask = np.array([not np.isnan(v) for v in avg_exponents]) 
-#     colorbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-#     colorbar.set_label('Aperiodic Exponent')  
-
-#     fig.savefig(os.path.join(save_dir, f"sub-{subject}_aperiodic_topomap.png"), dpi=300, bbox_inches='tight')
-#     ax.set_title(title) 
-#     plt.close(fig)
 
 
 def _fit_channel(channels, psd_data, ch_names, freqs, condition, subject, save_dir, f_range, peak_threshold, narrowband_freqs):
@@ -1711,17 +1717,12 @@ if __name__ == '__main__':
         utils.log_msg(f'        Time elapsed: {str(timepoint_end-timepoint_start)}\n\n')
     # __________________________________Run CBPT FOOOF _________________________________
 
-        epochs_info = epochs.info
-        # epochs_info = mne.read_epochs(
-        #         utils.load_preprocessing_step(bidspath, subjects[-1], 'from_fif'),
-        #         preload=False,
-        #         verbose=False
-        # ).info
-        csv_path = os.path.join(result_dir, 'EEG_bands_hierprior.csv')
-        fooof_cbpt_save_dir = os.path.join(result_dir, 'FOOOF_CBPT')
-        os.makedirs(fooof_cbpt_save_dir, exist_ok=True)
+    epochs_info = epochs.info
+    csv_path = os.path.join(result_dir, 'EEG_bands_hierprior.csv')
+    fooof_cbpt_save_dir = os.path.join(result_dir, 'FOOOF_CBPT')
+    os.makedirs(fooof_cbpt_save_dir, exist_ok=True)
 
-        global_cbpt_results, local_cbpt_results = run_fooof_cbpt(condition_dict, cbpt_n_permutations, cbpt_alpha, cbpt_seed, epochs_info, csv_path, fooof_cbpt_save_dir)      
+    global_cbpt_results, local_cbpt_results = run_fooof_cbpt(condition_dict, cbpt_n_permutations, cbpt_alpha, cbpt_seed, epochs_info, csv_path, fooof_cbpt_save_dir)      
     
 
     # ________________________Saving & Plotting - Subject Level ________________________
