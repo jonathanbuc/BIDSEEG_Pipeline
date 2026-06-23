@@ -1012,7 +1012,7 @@ def plot_cbpt_results(cluster_p_values, clusters, T_obs, alpha, component, compa
             save_path=os.path.join(save_dir, f"{component}_{comparison}_cluster{clu_idx}_cbpt_topoplot.png"),
             label=f'{component} {comparison} T Values',
             title=f"Cluster {clu_idx}\np = {cluster_p_values[clu_idx]:.4f}",
-            mask=clusters[clu_idx], cmap='PiYG'
+            mask=clusters[clu_idx], cmap='viridis'
         )
 
 
@@ -1237,7 +1237,7 @@ def run_fooof_cbpt(condition_dict, cbpt_n_permutations, cbpt_alpha, cbpt_seed, e
                 label=label,
                 title=f"Cluster {clu_idx}\np = {global_cbpt_results[component]['cluster_pv'][clu_idx]:.4f}",
                 mask=global_cbpt_results[component]['clusters'][clu_idx],
-                cmap='PiYG'
+                cmap='viridis'
             )
             
     return global_cbpt_results, local_cbpt_results
