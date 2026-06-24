@@ -758,6 +758,12 @@ def group_tfr(tfr_dict_subjects, condition_dict, eeg_dir):
 
     return grand_avg_tfr
     
+#helper function: 
+def _find_cue_onset(sample_tfr, estimated_cue_onset):
+    if sample_tfr.times.min() < 0:
+        return 0.0
+    cue_onset = sample_tfr.times[np.argmin(np.abs(sample_tfr.times - estimated_cue_onset))]
+    return max(cue_onset, sample_tfr.times.min())
 
 # Data Extraction from TFR Function for CBPT
 def cbpt_tfr_prep(tfr_dict, cond1, cond2, datatype, epochs_min, log_df):
@@ -800,23 +806,24 @@ def cbpt_tfr_prep(tfr_dict, cond1, cond2, datatype, epochs_min, log_df):
             
             # Determine cue onset: if times include negative values, cue onset is at 0
             # If times start at 0 or positive, they're shifted and we need to find cue onset
-            if sample_tfr.times.min() < 0:
-                # TFR times preserve epoch time axis, cue onset is at time 0
-                cue_onset_time = 0.0
-                print(f'Cue onset time: {cue_onset_time}')
-            else:
-                # TFR times are shifted (start at 0 instead of epoch tmin)
-                # In subject_tfr, baseline ends at abs(tmin) - 0.1
-                # If epochs are -0.6 to 1.5, baseline ends at 0.5, so cue onset is just after
-                # Estimate: find time point closest to where baseline would end + small buffer
-                # Based on typical baseline of ~0.5s before cue, cue onset is around 0.5-0.6s in shifted time
-                # Use the time point closest to 0.6 (typical abs(tmin) for -0.6 epoch start)
-                # Find closest time point to estimated cue onset
-                cue_onset_time = sample_tfr.times[np.argmin(np.abs(sample_tfr.times - estimated_cue_onset))]
-                # Ensure we don't go before the first time point
-                if cue_onset_time < sample_tfr.times.min():
-                    cue_onset_time = sample_tfr.times.min()
-            
+            # if sample_tfr.times.min() < 0:
+            #     # TFR times preserve epoch time axis, cue onset is at time 0
+            #     cue_onset_time = 0.0
+            #     utils.log_msg(f"'Cue onset time: {cue_onset_time}")
+            # else:
+            #     # TFR times are shifted (start at 0 instead of epoch tmin)
+            #     # In subject_tfr, baseline ends at abs(tmin) - 0.1
+            #     # If epochs are -0.6 to 1.5, baseline ends at 0.5, so cue onset is just after
+            #     # Estimate: find time point closest to where baseline would end + small buffer
+            #     # Based on typical baseline of ~0.5s before cue, cue onset is around 0.5-0.6s in shifted time
+            #     # Use the time point closest to 0.6 (typical abs(tmin) for -0.6 epoch start)
+            #     # Find closest time point to estimated cue onset
+            #     cue_onset_time = sample_tfr.times[np.argmin(np.abs(sample_tfr.times - estimated_cue_onset))]
+            #     # Ensure we don't go before the first time point
+            #     if cue_onset_time < sample_tfr.times.min():
+            #         cue_onset_time = sample_tfr.times.min()
+            cue_onset_time = _find_cue_onset(sample_tfr, estimated_cue_onset)
+            utils.log_msg(f"Cue onset time: {cue_onset_time}")
             # Crop TFRs to cue onset onwards using MNE crop method (more reliable)
             # Crop each TFR object to remove baseline
             for subject in tfr_dict.keys():
@@ -838,20 +845,21 @@ def cbpt_tfr_prep(tfr_dict, cond1, cond2, datatype, epochs_min, log_df):
             
             # Determine cue onset from TFR times
             sample_tfr = tfr_dict[cond1]
-            if sample_tfr.times.min() < 0:
-                # TFR times preserve epoch time axis, cue onset is at time 0
-                cue_onset_time = 0.0
-            else:
-                # TFR times are shifted (start at 0 instead of epoch tmin)
-                # In subject_tfr, baseline ends at abs(tmin) - 0.1
-                # If epochs are -0.6 to 1.5, baseline ends at 0.5, so cue onset is just after
-                # Estimate: find time point closest to where baseline would end + small buffer
-                # Find closest time point to estimated cue onset
-                cue_onset_time = sample_tfr.times[np.argmin(np.abs(sample_tfr.times - estimated_cue_onset))]
-                # Ensure we don't go before the first time point
-                if cue_onset_time < sample_tfr.times.min():
-                    cue_onset_time = sample_tfr.times.min()
-            
+            # if sample_tfr.times.min() < 0:
+            #     # TFR times preserve epoch time axis, cue onset is at time 0
+            #     cue_onset_time = 0.0
+            # else:
+            #     # TFR times are shifted (start at 0 instead of epoch tmin)
+            #     # In subject_tfr, baseline ends at abs(tmin) - 0.1
+            #     # If epochs are -0.6 to 1.5, baseline ends at 0.5, so cue onset is just after
+            #     # Estimate: find time point closest to where baseline would end + small buffer
+            #     # Find closest time point to estimated cue onset
+            #     cue_onset_time = sample_tfr.times[np.argmin(np.abs(sample_tfr.times - estimated_cue_onset))]
+            #     # Ensure we don't go before the first time point
+            #     if cue_onset_time < sample_tfr.times.min():
+            #         cue_onset_time = sample_tfr.times.min()
+            cue_onset_time = _find_cue_onset(sample_tfr, estimated_cue_onset)
+
             # Crop TFR objects to remove baseline before extracting data
             tfr_dict[cond1] = tfr_dict[cond1].copy().crop(tmin=cue_onset_time, tmax=None)
             tfr_dict[cond2] = tfr_dict[cond2].copy().crop(tmin=cue_onset_time, tmax=None)
@@ -970,43 +978,9 @@ def plot_cbpt_results(cluster_p_values, clusters, T_obs, alpha, component, compa
 
 
     sig_clusters = np.where(cluster_p_values < alpha)[0]
-    print(f"Found {len(sig_clusters)} significant clusters")
-    # for i in sig_clusters:
-    #     print(
-    #         f"Cluster {i}: "
-    #         f"p = {cluster_p_values[i]:.4f}, "
-    #         f"n_channels = {clusters[i].sum()}"
-    #     )
-
-    # for i_clu, clu_idx in enumerate(np.where(cluster_p_values < alpha)[0]):
-
-    #     mask = clusters[clu_idx]  # Boolean mask for channels
-
-    #     fig, ax = plt.subplots(figsize=(6, 6))
-
-    #     im, _ = mne.viz.plot_topomap(
-    #         T_obs,
-    #         epochs_info,
-    #         mask=mask,
-    #         axes=ax,
-    #         show=False,
-    #         extrapolate = 'head',
-    #         cmap = 'PiYG'
-    #     )
-
-    #     ax.set_title(
-    #         f"Cluster {clu_idx}\n"
-    #         f"p = {cluster_p_values[clu_idx]:.4f}"
-    #     )
-
-    #     colorbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-    #     colorbar.set_label(f'{component} {comparison} T Values')
-    #     fig.savefig(os.path.join(save_dir, f"{component}_AperiodicOffset_global_cluster{clu_idx}_cbpt_topoplot.png"), dpi=300, bbox_inches='tight')
-    #     plt.close()
-        
-        #return im
+    utils.log_msg(f"Found {len(sig_clusters)} significant clusters")
     for clu_idx in sig_clusters:
-        print(f"Cluster {clu_idx}: p = {cluster_p_values[clu_idx]:.4f}, n_channels = {clusters[clu_idx].sum()}")
+        utils.log_msg(f"Cluster {clu_idx}: p = {cluster_p_values[clu_idx]:.4f}, n_channels = {clusters[clu_idx].sum()}")
         plot_topomap_generic(
             values=T_obs, info=epochs_info,
             save_path=os.path.join(save_dir, f"{component}_{comparison}_cluster{clu_idx}_cbpt_topoplot.png"),
@@ -1055,13 +1029,13 @@ def test_arrays(data, component, cond_names):
         if pivot.isna().any().any():
             missing = pivot.isna().sum()
             #raise ValueError(f"Missing values in condition {cond}:\n{missing}")
-            print(f"Missing values in condition {cond}:\n{missing}")
+            utils.log_msg(f"Missing values in condition {cond}:\n{missing}")
 
         condition_arrays[cond] = pivot.to_numpy()
 
     f_test_array = np.stack([condition_arrays[cond] for cond in cond_names], axis=1)
 
-    print(f"f_test_array.shape: {f_test_array.shape}")
+    utils.log_msg(f"f_test_array.shape: {f_test_array.shape}")
 
     t_test_arrays = {}
 
@@ -1069,7 +1043,7 @@ def test_arrays(data, component, cond_names):
     t_test_arrays["base_highlevel"] = condition_arrays["base"] - condition_arrays["highlevel"]
     t_test_arrays["low_highlevel"] = condition_arrays["lowlevel"] - condition_arrays["highlevel"]
 
-    print(f"t_test_arrays['base_lowlevel'].shape: {t_test_arrays['base_lowlevel'].shape}")
+    utils.log_msg(f"t_test_arrays['base_lowlevel'].shape: {t_test_arrays['base_lowlevel'].shape}")
 
     return f_test_array, t_test_arrays
 
@@ -1106,8 +1080,7 @@ def cbpt_global(f_test_array, n_permutations, alpha, seed, chn_adjacency):
         effects = 'A',
         pvalue = alpha
     )
-
-    print("Running global CBPT for F-test across all conditions...")
+    utils.log_msg(f"Running global CBPT for F-test across all conditions...")
 
     F_obs, clusters, cluster_p_values, H0 = mne.stats.permutation_cluster_test(
         X = f_test_array,
@@ -1122,8 +1095,8 @@ def cbpt_global(f_test_array, n_permutations, alpha, seed, chn_adjacency):
     )
 
     if cluster_p_values is not None:
-        print(f"  --- Global CBPT cluster p values: {cluster_p_values}")
-
+        utils.log_msg(f"  --- Global CBPT cluster p values: {cluster_p_values}")
+    
     results = {}
 
     results = {
@@ -1158,7 +1131,7 @@ def cbpt_local(t_test_arrays, n_permutations, seed, chn_adjacency):
     results = {}
 
     for comp, arr in t_test_arrays.items():
-        print(f"Running CBPT for {comp}")
+        utils.log_msg(f"Running CBPT for {comp}")
     
         T_obs, clusters, cluster_p_values, H0 = mne.stats.permutation_cluster_1samp_test(
             X = arr,
@@ -1171,8 +1144,7 @@ def cbpt_local(t_test_arrays, n_permutations, seed, chn_adjacency):
             seed=seed,
             out_type="mask", 
             )
-
-        print(f"  --- Cluster p_vals for {comp}:", cluster_p_values)
+        utils.log_msg(f"  --- Cluster p_vals for {comp}: {cluster_p_values}")
 
         results[comp] = {
             'T_obs':      T_obs,
@@ -1206,15 +1178,14 @@ def run_fooof_cbpt(condition_dict, cbpt_n_permutations, cbpt_alpha, cbpt_seed, e
     global_cbpt_results = {}
     local_cbpt_results = {}
 
+    
+
     for component in components_cbpt:
-        print(f'   ==== Testing {component}... ====')
+        utils.log_msg(f"   ==== Testing {component}... ====")
         f_test_array, t_test_arrays = test_arrays(data, component, conditions)
         global_cbpt_results[component] = cbpt_global(f_test_array, cbpt_n_permutations, cbpt_alpha, cbpt_seed, chn_adjacency)
         local_cbpt_results[component] = cbpt_local(t_test_arrays, cbpt_n_permutations, cbpt_seed, chn_adjacency)
 
-
-
-    for component in components_cbpt:
         for comparison_key in local_cbpt_results[component]:
             plot_cbpt_results(
                 local_cbpt_results[component][comparison_key]['cluster_pv'],
@@ -1292,7 +1263,6 @@ def run_fooof_analysis(epochs_clean, condition_dict, subject, bidspath_out_subje
     epochs_clean.apply_baseline(baseline=baseline, verbose=False)
 
     df_fooofsum_list = []
-    # df_alphapeak_list = []
     df_bandpeaks_list = []
 
     utils.log_msg(f"        fitting SpecParam with the following parameters: peak_threshold={peak_threshold}, max_n_peaks=6, peak_width_limits=(1.5, 4), f_range={f_range}")
@@ -1330,22 +1300,20 @@ def run_fooof_analysis(epochs_clean, condition_dict, subject, bidspath_out_subje
     df_fooofsum = pd.concat(df_fooofsum_list, ignore_index=True)
     df_bandpeaks = pd.concat(df_bandpeaks_list, ignore_index=True)
     
+    
     df_bandpeaks.loc[df_bandpeaks['Aperiodic_Exponent'] < 0, 'Aperiodic_Exponent'] = float('nan')
     df_bandpeaks.loc[df_bandpeaks['R_squared'] < 0.9, 'Aperiodic_Exponent'] = float('nan')
 
     
     #topoplot of aperiodic exponents 
     ch_orders = psd.ch_names
-    avg_exponents = [df_bandpeaks[df_bandpeaks['channels'] == ch]['Aperiodic_Exponent'].mean() for ch in ch_orders ] #prevent NaN when no peaks found, so always one row per channel
-    avg_exponents_plot = [0 if np.isnan(v) else v for v in avg_exponents] #replacing Nan with 0 for plots
-    #fig, ax = plt.subplots(figsize=(6, 5))
-    mask = np.array([not np.isnan(v) for v in avg_exponents]) #grays out the bad channels 
-    # im, _ = mne.viz.plot_topomap(avg_exponents_plot, psd.info, cmap='viridis', mask=mask, mask_params=dict(marker='o', markerfacecolor='grey', markersize=2), extrapolate='head', show=False, axes=ax)
-    # colorbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-    # colorbar.set_label('Aperiodic Exponent')  
-
-    # fig.savefig(os.path.join(save_dir, f"sub-{subject}_aperiodic_topomap.png"), dpi=300, bbox_inches='tight')
-    # plt.close()
+    exponent_by_ch = df_bandpeaks.groupby('channels')['Aperiodic_Exponent'].mean() #improve speed, grouping and scanning 64 times instead of doing it indivudally  
+    avg_exponents = np.array([exponent_by_ch.get(ch, np.nan) for ch in ch_orders])
+    #avg_exponents = [df_bandpeaks[df_bandpeaks['channels'] == ch]['Aperiodic_Exponent'].mean() for ch in ch_orders ] #prevent NaN when no peaks found, so always one row per channel
+    avg_exponents_plot = np.nan_to_num(avg_exponents, nan=0.0)
+    mask = ~np.isnan(avg_exponents)
+    #avg_exponents_plot = [0 if np.isnan(v) else v for v in avg_exponents] #replacing Nan with 0 for plots
+    #mask = np.array([not np.isnan(v) for v in avg_exponents]) #grays out the bad channels 
     plot_topomap_generic(
         values=avg_exponents_plot,
         info=psd.info,
@@ -1373,11 +1341,11 @@ def plot_topomap_generic(values, info, save_path, label, title=None, mask=None, 
         extrapolate=extrapolate,
         cmap=cmap 
     )
+    if title:
+        ax.set_title(title) 
     colorbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
     colorbar.set_label(label)  
     fig.savefig(save_path, dpi=300, bbox_inches='tight')
-    if title:
-        ax.set_title(title) 
     plt.close()
 
 
@@ -1387,9 +1355,6 @@ def _fit_channel(channels, psd_data, ch_names, freqs, condition, subject, save_d
     ch_idx = ch_names.index(channels) #to reduce redundancy with copying and so forth 
     spectrum = psd_data[:, ch_idx, :].mean(axis=0)
     
-    #psd_channels = psd.copy().pick(channels)
-    #spectrum = psd_channels.get_data().squeeze().mean(axis=0)  # avg over epochs only 
-
     model_path = os.path.join(save_dir, f"sub-{subject}_{condition}_{channels}_fooof_model.json")
     fig_path_basic = os.path.join(save_dir, f"sub-{subject}_{condition}_{channels}_fooof_basic.png")
     fig_path_full = os.path.join(save_dir, f"sub-{subject}_{condition}_{channels}_fooof_full.png") 
@@ -1444,15 +1409,22 @@ def _fit_channel(channels, psd_data, ch_names, freqs, condition, subject, save_d
             df_fooofsum_cond['Aperiodic_Exponent'].notna() &
             df_fooofsum_cond['R_squared'].notna()
         )
-    #df_fooofsum_list.append(df_fooofsum_cond)
-        
+    
+    #aperiodic exponent over entire head
 
+    global_exponent = (
+        df_fooofsum_cond
+        .groupby(['participant', 'exp'])['Aperiodic_Exponent']
+        .transform('mean')
+    )
+    df_fooofsum_cond['global_Aperiodic_Exponent'] = global_exponent
+    
+   
     
 
 
 
     # ----- Extract Delta, Theta, Alpha, Beta and Gamma Peak and save summary -----
-    rows_bandpeaks = []
     # initializing single row (dict instead of list) with model params                
     rows_bandpeaks_dict = {
         "participant": f'sub-{subject}',
@@ -1518,6 +1490,7 @@ tmin = inputs['preprocessing']['epoch_min']
 tmax = inputs['preprocessing']['epoch_max']
 baseline = inputs['preprocessing']['baseline_correction']
 
+ 
 # TFR parameters
 fmin = inputs['Analysis']['fmin']
 fmax = inputs['Analysis']['fmax']
@@ -1582,81 +1555,6 @@ if __name__ == '__main__':
 
     ## load log
     log_df = utils.log_load()
-
-    # _____________________________Loading___________________________________________
-    ## load inputs
-    inputs = utils.read_inputs(sys.argv[1])
-
-    # assign path variables
-    bidspath = utils.get_bidspath(inputs, 'bids_proc')
-
-    # make results directories
-    result_dir = os.path.join(bidspath.root, 'results')
-    os.makedirs(result_dir, exist_ok=True)
-    eeg_dir = os.path.join(result_dir, 'groupEEG')
-    os.makedirs(eeg_dir, exist_ok=True)
-
-    #  Time Frequency Representation (TFR)
-    perform_tfr = inputs['perform']['perform_tfr']
-    perform_cbpt = inputs['perform']['perform_cbpt']
-    perform_cbpt_group = inputs['perform']['perform_cbpt_group']
-    tmin = inputs['preprocessing']['epoch_min']
-    tmax = inputs['preprocessing']['epoch_max']
-    baseline = inputs['preprocessing']['baseline_correction']
-
-    # TFR parameters
-    fmin = inputs['Analysis']['fmin']
-    fmax = inputs['Analysis']['fmax']
-    time_res = inputs['Analysis']['time_res'] 
-    freq_res = inputs['Analysis']['freq_res'] 
-    roi = inputs['Analysis']['ROI']
-    condition_dict = inputs['Analysis']['conditions']
-    eeg_contrasts = inputs['Analysis']['eeg_contrasts']
-    eeg_parameters = inputs['Analysis']['brain_parameters_to_plot']
-
-    # CBPT parameters
-    cbpt_threshold = inputs['Analysis']['cbpt']['threshold']
-    cbpt_n_permutations = inputs['Analysis']['cbpt']['n_permutations']
-    cbpt_alpha = inputs['Analysis']['cbpt']['alpha']
-    cbpt_seed = inputs['Analysis']['cbpt']['seed']
-
-
-    # FOOOF
-    fooof_f_range = inputs['Analysis']['fooof']['fooof_f_range']
-    fooof_peak_threshold = inputs['Analysis']['fooof']['fooof_peak_threshold']
-    compute_fooof = inputs ['perform']['compute_fooof']
-    narrowband_freq_ranges = inputs['Analysis']['narrowband_freqs']
-
-    #print(f"Loaded narrowband frequency ranges for FOOOF analysis: {narrowband_freq_range}")
-    
-
-    # ERP
-    compute_erp = inputs['perform']['compute_erp']
-    plot_roi = inputs['Analysis']['plot_roi']    
-    times = inputs['Analysis']['times']
-
-
-    ## extract subject list
-    subjects = utils.find_subjects(bidspath.root)
-
-    # process from subjex x onwards
-    # subjects = [sub for sub in subjects if int(sub) > 28]
-
-    # subjects to exclude
-    # subjects_to_exclude = ['028']
-    # subjects = [item for item in subjects if item not in subjects_to_exclude]
-
-    # statistics
-    stat_model = inputs['Analysis']['stat_model']
-    metric = inputs['Analysis']['metric']
-    comparisons = inputs['Analysis']['comparisons']
-
-    # fooof summaries dfs and save_dir
-    global_fooof_dfs = []  
-    tfr_bands_dfs = []
-    fooof_bands_dfs = []
-    global_master_csv = os.path.join(bidspath.root, "results", "master_fooof_summary.csv")
-
 
 
     # __________________________________Subject Analysis - Start _________________________________
@@ -1745,10 +1643,7 @@ if __name__ == '__main__':
     # Plot results
     #changed for variable naming purposes 
     eeg_parameters_valid = [p for p in eeg_parameters if p in power_df.columns and bool(power_df[p].notna().any())] # to account for nan
-    #raincloud_plot(power_df, condition_dict, eeg_parameters_valid, eeg_dir)
     paired_plot(power_df, condition_dict, eeg_parameters_valid, eeg_dir)
-    #raincloud_plot(power_df,condition_dict, eeg_parameters, eeg_dir)
-    #paired_plot(power_df, condition_dict, eeg_parameters, eeg_dir)
     tfr_plots_subjects(tfr_dict_sub, condition_dict, fmin, fmax, tmin, tmax, eeg_dir)
 
 
@@ -1772,10 +1667,7 @@ if __name__ == '__main__':
 
     ## Loading data and output paths
     bidspaths_epochs = utils.get_bidspath(inputs, 'epochs_list', subjects) # list of path-strings to epochs of each subject
-    # bidspaths_tfrs = utils.get_bidspath(inputs, 'tfr_list', subjects) # list of path-strings to TFRs of each subject
-    # Load epochs as dict: epochs_dict{'condition_1' : [mne.Evoked_sub001, mne.Evoked_sub002, ...],'condition_2' : [mne.Evoked_sub001, mne.Evoked_sub002, ...], ...
-    # epochs_dict = utils.load_epochs_dict(bidspaths_epochs, condition_dict, roi)
-
+    
 
     # Compute Grand Average TFR
     if perform_tfr:
@@ -1810,11 +1702,7 @@ if __name__ == '__main__':
     else:
             utils.log_msg(f'     -- No ERP features extracted or statistical analysis performed')
 
-        ## compute average ERPs
-        # utils.log_msg(f'        *** ERPs - computing ERPs for all subjects ***')
-        # evoked_dict, grand_avg_evoked = grandAverage_ERP(baseline, epochs_dict, epoch_dict, roi, bidspath_results)
-        # utils.save_preprocessing_step(grand_avg_evoked, '05GrandAvEvoked', bidspath_results)
-
+    
     timepoint_end = utils.log_msg(f'DONE:   EEG Analysis Module - Group Level')
     utils.log_save(log_df,f'{bidspath.root}' ,'log_dataframe.csv')
     utils.log_msg(f'        Time elapsed: {str(timepoint_end-timepoint_start)}\n\n')
