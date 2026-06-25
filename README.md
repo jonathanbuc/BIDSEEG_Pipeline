@@ -1,6 +1,6 @@
 # BIDS-EEG Processing Pipeline - J.Buchholz
 
-This pipeline enables easy-use, semi-automated processing of EEG-data from **BIDSraw** up to statistical analysis, including **preprocessing**, **artifact correction/rejection** and **conventional** and **parameterized frequency analysis**. The behavioral module further provides code for **generlized drift diffusion modelling**. All input can be provided via a single .json file, wherefore *no extensive coding expertise is required!*
+This pipeline enables easy-use, semi-automated processing of EEG-data from **BIDSraw** up to statistical analysis, including **preprocessing**, **artifact correction/rejection** and **conventional** and **parameterized frequency analysis**. The behavioral modules further enable **generlized and hierarchical drift diffusion modelling (g/hDDM)**. The implemented HSSM-package enables analysis of DDM-parameter with trial-by-trial covariates (i.e. expectations, ERPs, frequency measures.) All input can be provided via a single .json file, wherefore *no extensive coding expertise is required!*
 
 The pipeline implements 4 modules:
 
@@ -120,4 +120,12 @@ To perform behavioral analysis, run:
 
 ```bash
 python d_BehavAnalysis_module.py inputs.json
+```
+
+### 2.5 - Module 4: HSSM Analysis
+
+To perform HSSM analysis, run:
+
+```bash
+python e_HSSM_module.py inputs.json
 ```
