@@ -1,7 +1,7 @@
 {
     "basic": {
         "sourcedata": "./data/sourcedata",
-        "subject_ID": "001",
+        "subject_ID": "003",
         "session": "01",
         "task": "HierPrior",
         "current_step": "04epochsCorr",
@@ -157,7 +157,9 @@
             "threshold": null,
             "n_permutations": 10000,
             "alpha": 0.05,
-            "seed": 42
+            "seed": 42,
+            "run_global": false,
+            "run_local": true
         },
         "fooof": {
             "fooof_f_range": [

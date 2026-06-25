@@ -975,10 +975,36 @@ def CBPT(tfr_dict, datatype, comparisons, roi, bidspath_out, log_df, epochs_min,
 
 alpha = 0.05
 def plot_cbpt_results(cluster_p_values, clusters, T_obs, alpha, component, comparison, epochs_info, save_dir):
+    """
+    Plot topographic maps for all significant clusters identified by
+    the cluster-based permutation test (CBPT).
+
+    Parameters
+    ----------
+    cluster_p_values : array
+        P-values for each detected cluster.
+    clusters : array
+        Boolean masks indicating which channels belong to each cluster.
+    T_obs : array
+        Observed test statistic (e.g., t-values) for each channel.
+    alpha : float
+        Significance threshold for determining significant clusters.
+    component : str
+        ERP component name used for labeling outputs.
+    comparison : str
+        Condition comparison name used for labeling outputs.
+    epochs_info : mne.Info
+        Channel information required for topographic plotting.
+    save_dir : str
+        Directory where figures will be saved.
+    """
 
 
+    # Find indices of clusters whose p-values survive the significance threshold
     sig_clusters = np.where(cluster_p_values < alpha)[0]
     utils.log_msg(f"Found {len(sig_clusters)} significant clusters")
+
+    #Topoplot for each significant cluster 
     for clu_idx in sig_clusters:
         utils.log_msg(f"Cluster {clu_idx}: p = {cluster_p_values[clu_idx]:.4f}, n_channels = {clusters[clu_idx].sum()}")
         plot_topomap_generic(
@@ -1158,9 +1184,26 @@ def cbpt_local(t_test_arrays, n_permutations, seed, chn_adjacency):
 
 
 def run_fooof_cbpt(condition_dict, cbpt_n_permutations, cbpt_alpha, cbpt_seed, epochs_info, csv_path, save_dir):
-    
+
+    """
+    Run cluster-based permutation testing (CBPT) on FOOOF-derived
+    spectral parameters and power-band measures.
+
+    1. Global CBPT (F-test across all conditions)
+    2. Local CBPT (pairwise t-tests between conditions)
+    3. Topographic visualization of significant clusters
+
+    Returns dictionaries containing global and local CBPT results.
+    """
+
+    # Compute channel adjacency matrix required by cluster-based statistics
     chn_adjacency, _ = mne.channels.find_ch_adjacency(epochs_info, ch_type='eeg')
+    # Extract experimental conditions from configuration dictionary
     cond_col, conditions = list(condition_dict.items())[0]
+
+    run_global = inputs['Analysis']['cbpt'].get('run_global', True)
+    run_local = inputs['Analysis']['cbpt'].get('run_local', True)
+
     
     data = pd.read_csv(csv_path, delimiter=',')
     
@@ -1177,41 +1220,46 @@ def run_fooof_cbpt(condition_dict, cbpt_n_permutations, cbpt_alpha, cbpt_seed, e
 
     global_cbpt_results = {}
     local_cbpt_results = {}
-
     
-
+    
+    # Run CBPT separately for each spectral feature
+   
     for component in components_cbpt:
         utils.log_msg(f"   ==== Testing {component}... ====")
         f_test_array, t_test_arrays = test_arrays(data, component, conditions)
-        global_cbpt_results[component] = cbpt_global(f_test_array, cbpt_n_permutations, cbpt_alpha, cbpt_seed, chn_adjacency)
-        local_cbpt_results[component] = cbpt_local(t_test_arrays, cbpt_n_permutations, cbpt_seed, chn_adjacency)
-
-        for comparison_key in local_cbpt_results[component]:
-            plot_cbpt_results(
-                local_cbpt_results[component][comparison_key]['cluster_pv'],
-                local_cbpt_results[component][comparison_key]['clusters'],
-                local_cbpt_results[component][comparison_key]['T_obs'],
-                cbpt_alpha, component, comparison_key, epochs_info, save_dir
-            
-            )
-            
+        if run_global:
+            global_cbpt_results[component] = cbpt_global(f_test_array, cbpt_n_permutations, cbpt_alpha, cbpt_seed, chn_adjacency)
+        if run_local:
+            local_cbpt_results[component] = cbpt_local(t_test_arrays, cbpt_n_permutations, cbpt_seed, chn_adjacency)
+    if run_local: 
+        for component in components_cbpt:
+            for comparison_key in local_cbpt_results[component]:
+                plot_cbpt_results(
+                    local_cbpt_results[component][comparison_key]['cluster_pv'],
+                    local_cbpt_results[component][comparison_key]['clusters'],
+                    local_cbpt_results[component][comparison_key]['T_obs'],
+                    cbpt_alpha, component, comparison_key, epochs_info, save_dir
+                
+                )
+                
         
-
-    
-    for component, label in [('Aperiodic_Offset', 'Aperiodic Offset F Values'), ('total_alpha_dB', 'Alpha F Values')]:
-        sig_clusters = np.where(global_cbpt_results[component]['cluster_pv'] < cbpt_alpha)[0]
-        for clu_idx in sig_clusters:
-            plot_topomap_generic(
-                values=global_cbpt_results[component]['F_obs'],
-                info=epochs_info,
-                save_path=os.path.join(save_dir, f"{component}_global_cluster{clu_idx}_cbpt_topoplot.png"),
-                label=label,
-                title=f"Cluster {clu_idx}\np = {global_cbpt_results[component]['cluster_pv'][clu_idx]:.4f}",
-                mask=global_cbpt_results[component]['clusters'][clu_idx],
-                cmap='viridis'
-            )
-            
-    return global_cbpt_results, local_cbpt_results
+    # Generate topoplots for significant global CBPT clusters.
+    if run_global:
+        for component, label in [('Aperiodic_Offset', 'Aperiodic Offset F Values'), ('total_alpha_dB', 'Alpha F Values')]:
+            # Identify significant clusters from omnibus F-tests
+            sig_clusters = np.where(global_cbpt_results[component]['cluster_pv'] < cbpt_alpha)[0]
+            for clu_idx in sig_clusters:
+                plot_topomap_generic(
+                    values=global_cbpt_results[component]['F_obs'],
+                    info=epochs_info,
+                    save_path=os.path.join(save_dir, f"{component}_global_cluster{clu_idx}_cbpt_topoplot.png"),
+                    label=label,
+                    title=f"Cluster {clu_idx}\np = {global_cbpt_results[component]['cluster_pv'][clu_idx]:.4f}",
+                    mask=global_cbpt_results[component]['clusters'][clu_idx],
+                    cmap='viridis'
+                )
+                
+    return global_cbpt_results if run_global else None, local_cbpt_results if run_local else None
 
 
 
@@ -1281,9 +1329,19 @@ def run_fooof_analysis(epochs_clean, condition_dict, subject, bidspath_out_subje
         # Get PSD data and freqs
         freqs = psd.freqs
         all_channels = psd.ch_names 
-
         psd_data = psd.get_data()  # extract once, pass as plain numpy array
         
+        # mean PSD across all channels
+        mean_psd = psd_data.mean(axis=(0, 1))
+        fm_global = FOOOF(aperiodic_mode='fixed', peak_threshold=peak_threshold,
+                  max_n_peaks=6, peak_width_limits=(1.4, 8))
+        fm_global.fit(freqs, mean_psd, f_range)
+        global_exp = fm_global.aperiodic_params_[1]
+        global_r2 = fm_global.r_squared_ 
+
+        if global_r2 < 0.9 or global_exp < 0: 
+            global_exp = np.nan 
+
         #for parallel processing 
         results = Parallel(n_jobs=-1, backend='loky')( # n_jobs = -1 uses every CPU on computer, loky = default 
             delayed(_fit_channel)(  
@@ -1294,13 +1352,17 @@ def run_fooof_analysis(epochs_clean, condition_dict, subject, bidspath_out_subje
         )
 
         for fm, df_fooofsum_cond, df_bandpeaks_cond in results:
+            df_fooofsum_cond['global_Aperiodic_Exponent'] = global_exp 
             df_fooofsum_list.append(df_fooofsum_cond)
             df_bandpeaks_list.append(df_bandpeaks_cond)
         
     df_fooofsum = pd.concat(df_fooofsum_list, ignore_index=True)
     df_bandpeaks = pd.concat(df_bandpeaks_list, ignore_index=True)
+
+   
     
     
+    #discard negative aperiodic_exponents and r^2 filtering
     df_bandpeaks.loc[df_bandpeaks['Aperiodic_Exponent'] < 0, 'Aperiodic_Exponent'] = float('nan')
     df_bandpeaks.loc[df_bandpeaks['R_squared'] < 0.9, 'Aperiodic_Exponent'] = float('nan')
 
@@ -1309,11 +1371,8 @@ def run_fooof_analysis(epochs_clean, condition_dict, subject, bidspath_out_subje
     ch_orders = psd.ch_names
     exponent_by_ch = df_bandpeaks.groupby('channels')['Aperiodic_Exponent'].mean() #improve speed, grouping and scanning 64 times instead of doing it indivudally  
     avg_exponents = np.array([exponent_by_ch.get(ch, np.nan) for ch in ch_orders])
-    #avg_exponents = [df_bandpeaks[df_bandpeaks['channels'] == ch]['Aperiodic_Exponent'].mean() for ch in ch_orders ] #prevent NaN when no peaks found, so always one row per channel
     avg_exponents_plot = np.nan_to_num(avg_exponents, nan=0.0)
     mask = ~np.isnan(avg_exponents)
-    #avg_exponents_plot = [0 if np.isnan(v) else v for v in avg_exponents] #replacing Nan with 0 for plots
-    #mask = np.array([not np.isnan(v) for v in avg_exponents]) #grays out the bad channels 
     plot_topomap_generic(
         values=avg_exponents_plot,
         info=psd.info,
@@ -1330,6 +1389,20 @@ def run_fooof_analysis(epochs_clean, condition_dict, subject, bidspath_out_subje
     return fm, df_fooofsum, df_bandpeaks
 
 def plot_topomap_generic(values, info, save_path, label, title=None, mask=None, mask_params=None, cmap="viridis", colorbar_label="Value", extrapolate='head'):
+    """
+    Create and save an EEG topographic map.
+
+    Parameters
+    ----------
+    values : array
+        Channel-wise values to visualize.
+    info : mne.Info
+        EEG channel metadata.
+    mask : array | None
+        Boolean mask used to highlight significant channels.
+    save_path : str
+        Output path for the saved figure.
+    """
     fig, ax = plt.subplots(figsize=(6,5))
     im, _ = mne.viz.plot_topomap(
         values,
@@ -1352,6 +1425,24 @@ def plot_topomap_generic(values, info, save_path, label, title=None, mask=None, 
 
 
 def _fit_channel(channels, psd_data, ch_names, freqs, condition, subject, save_dir, f_range, peak_threshold, narrowband_freqs):
+    """
+    Fit a FOOOF model to the average PSD of a single EEG channel,
+    save model outputs/figures, and extract spectral features for
+    downstream statistical analysis.
+
+    Returns
+    -------
+    fm : FOOOF
+        Fitted FOOOF model.
+    df_fooofsum_cond : DataFrame
+        Peak-level summary table.
+    DataFrame
+        Channel-level band-power summary table.
+
+    Seperate function purpose for parallel processing 
+
+    """
+
     ch_idx = ch_names.index(channels) #to reduce redundancy with copying and so forth 
     spectrum = psd_data[:, ch_idx, :].mean(axis=0)
     
@@ -1410,15 +1501,15 @@ def _fit_channel(channels, psd_data, ch_names, freqs, condition, subject, save_d
             df_fooofsum_cond['R_squared'].notna()
         )
     
-    #aperiodic exponent over entire head
 
-    global_exponent = (
-        df_fooofsum_cond
-        .groupby(['participant', 'exp'])['Aperiodic_Exponent']
-        .transform('mean')
-    )
-    df_fooofsum_cond['global_Aperiodic_Exponent'] = global_exponent
-    
+        # #aperiodic exponent over entire head
+        # global_exponent = (
+        #     df_fooofsum_cond
+        #     .groupby(['participant', 'exp'])['Aperiodic_Exponent']
+        #     .transform('mean')
+        # )
+        # df_fooofsum_cond['global_Aperiodic_Exponent'] = global_exponent
+        
    
     
 
