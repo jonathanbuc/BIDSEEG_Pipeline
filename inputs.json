@@ -202,9 +202,10 @@
             "prior_settings": "safe",
             "link_settings": "log_logit",
             "formula_v": "v ~ 1 + exp * coh_level + alpha_cf_cog_wc + (1|participant)",
-            "formula_z": "z ~ 1 + prior_dic + (1|participant)",
+            "formula_z": "z ~ 1 + exp + (1|participant)",
             "formula_t": "",
-            "formula_a": ""
+            "fix_t": 0.2,
+            "formula_a": "a ~ 1 + (1|participant)"
         }
     }
 }

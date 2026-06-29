@@ -796,3 +796,247 @@ def plot_epochs_timeseries(epochs, electrodes, subject, save_dir,
         saved_paths.append(fpath)
 
     return saved_paths
+
+
+# ================= HSSM posterior plotting =====================
+# Visualizations of HSSM/DDM Bayesian posteriors, kept here so e_HSSM_module.py stays
+# clean. Templates: Romei & Tarasi (2026) Fig 4C (posterior-coefficient histograms) and
+# Franzen et al. (2025) Fig 5 (condition ridgelines), plus a drift-diffusion schematic
+# adapted (and corrected) from a conference colleague's DDM_Plots_functions.py.
+# All functions take the ArviZ InferenceData (model._inference_obj) and save into result_dir.
+
+def _hssm_draws(idata, var, coord=None):
+    """Flatten posterior draws for one variable into a 1-D array. Selecting a level by
+    its coord *value* (not the auto-generated dim name like 'v_exp_dim') keeps these
+    plots robust if the formulas change."""
+    da = idata.posterior[var]
+    if coord is not None:
+        extra = [d for d in da.dims if d not in ('chain', 'draw')][0]
+        da = da.sel({extra: coord})
+    return np.asarray(da.values).reshape(-1)
+
+
+def _hssm_expit(x):
+    """Inverse of HSSM's generalized-logit link for bounds (0, 1) -- the logistic."""
+    return 1.0 / (1.0 + np.exp(-np.asarray(x)))
+
+
+def _hssm_mean_hdi(draws, hdi_prob=0.94):
+    import arviz as az
+    lo, hi = az.hdi(np.asarray(draws), hdi_prob=hdi_prob)
+    return float(np.mean(draws)), float(lo), float(hi)
+
+
+def _hssm_factor_levels(idata, offset_var):
+    """Coord values present on a regression offset variable (the non-reference levels)."""
+    if offset_var not in idata.posterior.data_vars:
+        return []
+    dim = [d for d in idata.posterior[offset_var].dims if d not in ('chain', 'draw')][0]
+    return [str(c) for c in idata.posterior[offset_var][dim].values]
+
+
+def _hssm_coefficient_vars(idata):
+    """Discover 'slope-like' posterior coefficients worth a zero-crossing test -- skips
+    intercepts, the bare scalar parameters (a/t/z), random-effect terms, and the
+    non-centered offsets/sigmas, for which a line at 0 is not the question."""
+    out = []
+    for var in idata.posterior.data_vars:
+        name = str(var)
+        if ('Intercept' in name or name.endswith('_sigma') or name.endswith('_offset')
+                or '1|' in name or name in ('a', 't', 'z')):
+            continue
+        extra = [d for d in idata.posterior[name].dims if d not in ('chain', 'draw')]
+        if extra:
+            for lvl in [str(c) for c in idata.posterior[name][extra[0]].values]:
+                out.append((name, lvl, f'{name}[{lvl}]'))
+        else:
+            out.append((name, None, name))
+    return out
+
+
+def hssm_trace(idata, result_dir, fname='hssm_trace.png'):
+    """Readable convergence trace. The default az.plot_trace crams every variable with no
+    spacing, so titles collide with the axis above. Here we scale the figure to the row
+    count, drop the redundant non-centered '_offset' duplicates, add row spacing, and
+    shrink the long variable titles."""
+    import arviz as az
+    var_names = [str(v) for v in idata.posterior.data_vars if not str(v).endswith('_offset')]
+    n = max(len(var_names), 1)
+    axes = az.plot_trace(idata, var_names=var_names, compact=True,
+                         figsize=(12, max(2.4 * n, 4)))
+    fig = axes.ravel()[0].figure
+    for ax in axes.ravel():
+        ax.set_title(ax.get_title(), fontsize=9)
+    fig.subplots_adjust(hspace=0.9)
+    path = os.path.join(result_dir, fname)
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+    utils.log_msg(f'        Trace plot: {path}')
+    return path
+
+
+def hssm_posterior_coefficients(idata, result_dir, coefficients=None,
+                                fname='hssm_posterior_coefficients.png', hdi_prob=0.94):
+    """Romei & Tarasi (2026) Fig 4C style: one histogram per regression coefficient's
+    posterior samples, with a dashed reference line at 0. Each panel is annotated with
+    the posterior mass on the opposite side of 0 (the Bayesian 'probability of direction'
+    q-value) and the HDI -- the narrower that tail, the more credible the effect."""
+    import arviz as az
+    if coefficients is None:
+        coefficients = _hssm_coefficient_vars(idata)
+    if not coefficients:
+        utils.log_msg('        (no regression coefficients to plot)')
+        return None
+
+    n = len(coefficients)
+    ncols = min(n, 3)
+    nrows = int(np.ceil(n / ncols))
+    fig, axes = plt.subplots(nrows, ncols, figsize=(4.2 * ncols, 3.2 * nrows), squeeze=False)
+    for ax in axes.ravel()[n:]:
+        ax.axis('off')
+
+    for ax, (var, coord, label) in zip(axes.ravel(), coefficients):
+        d = _hssm_draws(idata, var, coord)
+        q = float(min((d > 0).mean(), (d < 0).mean()))
+        lo, hi = az.hdi(d, hdi_prob=hdi_prob)
+        ax.hist(d, bins=40, color='steelblue', alpha=0.85, edgecolor='white', linewidth=0.3)
+        ax.axvline(0.0, color='black', linestyle='--', linewidth=1.2)
+        ax.axvspan(lo, hi, color='steelblue', alpha=0.12)
+        ax.set_title(label, fontsize=10)
+        ax.set_xlabel('coefficient')
+        ax.set_ylabel('count')
+        ax.text(0.04, 0.96, f'q = {q:.3f}\n{int(hdi_prob * 100)}% HDI\n[{lo:.3f}, {hi:.3f}]',
+                transform=ax.transAxes, va='top', ha='left', fontsize=8,
+                bbox=dict(boxstyle='round', fc='white', ec='0.7', alpha=0.85))
+    fig.suptitle('HSSM posterior regression coefficients', fontsize=12)
+    fig.tight_layout(rect=[0, 0, 1, 0.97])
+    path = os.path.join(result_dir, fname)
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+    utils.log_msg(f'        Posterior coefficient plot: {path}')
+    return path
+
+
+def hssm_posterior_ridgeline(idata, param, factor, levels, result_dir,
+                             link='identity', fname=None, hdi_prob=0.94):
+    """Franzen et al. (2025) Fig 5 style: stacked posterior densities (a ridgeline) of one
+    DDM parameter across the levels of one factor. Per-condition draws are reconstructed
+    from the regression: reference level = the parameter's intercept; each other level =
+    intercept + that level's offset (other covariates held at their centered mean of 0).
+    For a bounded parameter pass link='logit' to map back to the natural [0, 1] scale."""
+    from scipy.stats import gaussian_kde
+
+    intercept = _hssm_draws(idata, f'{param}_Intercept')
+    offset_var = f'{param}_{factor}'
+    coords = _hssm_factor_levels(idata, offset_var)
+    has_offset = bool(coords)
+    ref = next((l for l in levels if l not in coords), levels[0])
+
+    inv = _hssm_expit if link == 'logit' else (lambda v: v)
+    per_cond = {}
+    for lvl in levels:
+        lin = intercept if (lvl == ref or not has_offset) else intercept + _hssm_draws(idata, offset_var, lvl)
+        per_cond[lvl] = inv(lin)
+
+    cmap = ['mediumblue', 'darkorchid', 'magenta', 'teal', 'darkorange']
+    fig, ax = plt.subplots(figsize=(8, 1.4 * len(levels) + 1.5))
+    for i, lvl in enumerate(levels):
+        d = per_cond[lvl]
+        kde = gaussian_kde(d)
+        xs = np.linspace(d.min(), d.max(), 200)
+        dens = kde(xs)
+        ys = dens / dens.max() * 0.9
+        base = float(i)
+        ax.fill_between(xs, base, base + ys, color=cmap[i % len(cmap)], alpha=0.7)
+        ax.plot(xs, base + ys, color='black', linewidth=0.6)
+        m = float(np.mean(d))
+        hm = float(kde(m)[0] / dens.max() * 0.9)
+        ax.plot([m, m], [base, base + hm], color='black', linewidth=1.0)
+        ax.text(xs.min(), base + 0.05, f'  {lvl}', va='bottom', ha='left', fontsize=9)
+    ax.set_yticks([])
+    ax.set_xlabel(f'{param}' + (' (natural [0,1] scale)' if link == 'logit' else ''))
+    ax.set_title(f'{param} posterior by {factor}')
+    fig.tight_layout()
+    fname = fname or f'hssm_ridgeline_{param}_by_{factor}.png'
+    path = os.path.join(result_dir, fname)
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+    utils.log_msg(f'        Ridgeline plot: {path}')
+    return path
+
+
+def hssm_ddm_schematic(idata, condition_dict, result_dir, t_value=None,
+                       fname='hssm_ddm_schematic.png', hdi_prob=0.94):
+    """Drift-diffusion 'anatomy' cartoon per condition (adapted & corrected from a
+    conference colleague's DDM_Plots_functions.py): boundary separation a (top) and 0
+    (bottom), the start point, and the mean drift slope v, each with its posterior HDI.
+    Drift v is shown per condition (from condition_dict); a and the start point are shared
+    across conditions in the current model (z is modulated by prior, not the drift factor),
+    so they repeat. Fixes vs the original: HSSM z is RELATIVE in [0,1], so the start point
+    is drawn at z*a (not z); HDIs come from real posterior draws, not a shifted intercept."""
+    cond_col, conditions = list(condition_dict.items())[0]
+
+    v_ic = _hssm_draws(idata, 'v_Intercept')
+    offset_var = f'v_{cond_col}'
+    coords = _hssm_factor_levels(idata, offset_var)
+    has_off = bool(coords)
+    ref = next((c for c in conditions if c not in coords), conditions[0])
+    v_by = {c: (v_ic if (c == ref or not has_off) else v_ic + _hssm_draws(idata, offset_var, c))
+            for c in conditions}
+
+    if 'a' in idata.posterior.data_vars:
+        a_m, a_lo, a_hi = _hssm_mean_hdi(_hssm_draws(idata, 'a'), hdi_prob)
+    elif 'a_Intercept' in idata.posterior.data_vars:
+        a_m, a_lo, a_hi = _hssm_mean_hdi(np.exp(_hssm_draws(idata, 'a_Intercept')), hdi_prob)
+    else:
+        a_m, a_lo, a_hi = 1.0, 1.0, 1.0
+
+    if 'z_Intercept' in idata.posterior.data_vars:
+        z_rel = float(np.mean(_hssm_expit(_hssm_draws(idata, 'z_Intercept'))))
+    elif 'z' in idata.posterior.data_vars:
+        z_rel = float(np.mean(_hssm_draws(idata, 'z')))
+    else:
+        z_rel = 0.5
+    z_abs = z_rel * a_m
+
+    if t_value is not None:
+        t_m = float(t_value)
+    elif 't' in idata.posterior.data_vars:
+        t_m = float(np.mean(_hssm_draws(idata, 't')))
+    else:
+        t_m = 0.0
+
+    n = len(conditions)
+    fig, axes = plt.subplots(1, n, figsize=(4.5 * n, 4.5), squeeze=False)
+    cmap = ['mediumblue', 'darkorchid', 'magenta', 'teal', 'darkorange']
+    xmax = 1.0
+    x0 = min(t_m, 0.5 * xmax)  # keep the (a.u.) non-decision band inside the window
+    for ax, cond, color in zip(axes.ravel(), conditions, cmap):
+        v_m, v_lo, v_hi = _hssm_mean_hdi(v_by[cond], hdi_prob)
+        ax.axhline(a_m, color='firebrick', linewidth=2)
+        ax.axhspan(a_lo, a_hi, color='firebrick', alpha=0.12)
+        ax.axhline(0.0, color='royalblue', linewidth=2)
+        ax.plot([x0], [z_abs], 'ko', ms=7)
+        span = xmax - x0
+        ax.plot([x0, xmax], [z_abs, z_abs + v_m * span], color=color, linewidth=2)
+        ax.plot([x0, xmax], [z_abs, z_abs + v_lo * span], color=color, linewidth=0.7, linestyle='--')
+        ax.plot([x0, xmax], [z_abs, z_abs + v_hi * span], color=color, linewidth=0.7, linestyle='--')
+        if t_m:
+            ax.axvspan(0, x0, color='gray', alpha=0.12)
+        ax.set_xlim(0, xmax)
+        ax.set_ylim(min(0, a_lo) - 0.1 * a_m, max(a_m, a_hi) + 0.1 * a_m)
+        ax.set_title(f'{cond_col} = {cond}', fontsize=10)
+        ax.set_xlabel('time (a.u.)')
+        ax.set_ylabel('evidence')
+        ax.text(0.02, a_m, f'a={a_m:.2f}', va='bottom', fontsize=8, color='firebrick')
+        ax.text(x0, z_abs, f' z={z_rel:.2f}', va='bottom', fontsize=8)
+        ax.text(x0 + span * 0.5, z_abs + v_m * span * 0.5, f'v={v_m:.2f}', fontsize=8, color=color)
+        if t_m:
+            ax.text(x0 / 2 if x0 else 0.0, a_m * 0.5, f't={t_m:.2f}', fontsize=7, ha='center', color='gray')
+    fig.suptitle('HSSM drift-diffusion structure by condition', fontsize=12)
+    fig.tight_layout(rect=[0, 0, 1, 0.95])
+    path = os.path.join(result_dir, fname)
+    fig.savefig(path, dpi=150)
+    plt.close(fig)
+    utils.log_msg(f'        DDM schematic: {path}')
+    return path

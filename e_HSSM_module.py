@@ -24,6 +24,7 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
 import utils_module as utils
+import plotting_module as plotting
 # _______________________________________________________________________________
 
 
@@ -51,6 +52,10 @@ formula_v      = hssm_cfg.get('formula_v', 'v ~ 1 + exp * coh_level + (1|partici
 formula_z      = hssm_cfg.get('formula_z', '')
 formula_t      = hssm_cfg.get('formula_t', '')
 formula_a      = hssm_cfg.get('formula_a', '')
+# Fix non-decision time to a constant (s) instead of estimating it. The task blocks
+# responses for ~500 ms, so that latency isn't decision time -- estimating t there
+# invites artifacts. None -> estimate t normally.
+fix_t          = hssm_cfg.get('fix_t', None)
 
 bidspath_processing = utils.get_bidspath(inputs, 'bids_proc')
 result_dir = os.path.join(bidspath_processing.root, 'results', 'groupBehavioral')
@@ -124,7 +129,7 @@ def prep_hssm_data(df, cond_col, conditions, formula=None):
 def fit_hssm_hierarchical(df, condition_dict, formula_v, model_type,
                            prior_settings, link_settings,
                            draws, tune, chains, cores, target_accept, sampler,
-                           formula_z='', formula_t='', formula_a=''):
+                           formula_z='', formula_t='', formula_a='', fix_t=None):
     """
     Fit a hierarchical DDM. Drift rate (v) always gets a formula; z/t/a get one only
     if a non-empty formula is passed, otherwise they stay simple group-level
@@ -140,14 +145,30 @@ def fit_hssm_hierarchical(df, condition_dict, formula_v, model_type,
     all_formulas = ' '.join([formula_v, formula_z, formula_t, formula_a])
     df_hssm = prep_hssm_data(df, cond_col, conditions, formula=all_formulas)
 
+    # Persist the exact matrix the sampler sees (recoded, centered, NaN-dropped) so the
+    # model input is inspectable without re-deriving it.
+    input_path = os.path.join(result_dir, 'hssm_input_data.csv')
+    df_hssm.to_csv(input_path, index=False)
+    utils.log_msg(f'        HSSM input data: {input_path} ({len(df_hssm)} rows)')
+
     # v keeps the identity link that produced the validated drift results; z/t/a are
     # left to link_settings (logit for the bounded z, log for the positive t/a).
     include = [{"name": "v", "formula": formula_v, "link": "identity"}]
-    for name, f in (("z", formula_z), ("t", formula_t), ("a", formula_a)):
+    # Fix t to a constant when requested: HSSM treats a scalar `prior` as a fixed value
+    # (a bambi ConstantComponent -- no sampled RV), unlike a `formula`. A fixed t will
+    # therefore not appear in the posterior trace at all.
+    if fix_t is not None:
+        include.append({"name": "t", "prior": float(fix_t)})
+    elif formula_t:
+        include.append({"name": "t", "formula": formula_t})
+    for name, f in (("z", formula_z), ("a", formula_a)):
         if f:
             include.append({"name": name, "formula": f})
 
-    formula_msg = " | ".join(spec["formula"] for spec in include)
+    # t may be a fixed scalar (no "formula" key), so describe each spec generically.
+    formula_msg = " | ".join(
+        spec.get("formula", f'{spec["name"]}={spec.get("prior")}') for spec in include
+    )
     utils.log_msg(f'        model={model_type}, sampler={sampler}, formulas="{formula_msg}"')
     utils.log_msg(f'        N={len(df_hssm)} trials, '
                   f'{df_hssm["participant"].nunique()} subjects')
@@ -213,15 +234,6 @@ def load_group_data(behav_file, formula_v, inputs):
     return df
 
 
-def save_hssm_diagnostics(model, result_dir):
-    """Save trace plots (convergence diagnostics) to the results directory."""
-    trace_path = os.path.join(result_dir, 'hssm_trace.png')
-    import arviz as az
-    az.plot_trace(model._inference_obj)
-    plt.savefig(trace_path, dpi=150, bbox_inches='tight')
-    plt.close('all')
-    utils.log_msg(f'        Trace plot: {trace_path}')
-
 # _______________________________________________________________________________
 
 
@@ -252,21 +264,39 @@ if __name__ == '__main__':
         model = fit_hssm_hierarchical(
             df_group, condition_dict, formula_v, model_type,
             prior_settings, link_settings, draws, tune, chains, cores, target_accept, sampler,
-            formula_z=formula_z, formula_t=formula_t, formula_a=formula_a
+            formula_z=formula_z, formula_t=formula_t, formula_a=formula_a, fix_t=fix_t
         )
 
         # Posterior summary -> CSV
         # model.summary() triggers log-likelihood recomputation which has a dimension
         # mismatch bug in hssm 0.2.x with numpyro + random effects; go direct to ArviZ.
         import arviz as az
-        summary = az.summary(model._inference_obj)
+        idata = model._inference_obj
+        summary = az.summary(idata)
         summary_path = os.path.join(result_dir, 'hssm_posterior_summary.csv')
         summary.to_csv(summary_path)
         utils.log_msg(f'        Posterior summary: {summary_path}')
         utils.log_msg(f'\n{summary.to_string()}\n')
 
-        # Diagnostic trace plots
-        save_hssm_diagnostics(model, result_dir)
+        # Persist the InferenceData so posterior plots can be regenerated without refitting.
+        idata_path = os.path.join(result_dir, 'hssm_idata.nc')
+        idata.to_netcdf(idata_path)
+        utils.log_msg(f'        InferenceData: {idata_path}')
+
+        # Posterior plots (functions live in plotting_module to keep this module clean):
+        # readable trace, Romei & Tarasi Fig 4C coefficient histograms, Franzen Fig 5
+        # ridgelines per condition, and the DDM-anatomy schematic.
+        cond_col = list(condition_dict.items())[0][0]
+        plotting.hssm_trace(idata, result_dir)
+        plotting.hssm_posterior_coefficients(idata, result_dir)
+        plotting.hssm_posterior_ridgeline(idata, 'v', cond_col,
+                                          condition_dict[cond_col], result_dir, link='identity')
+        if 'z_Intercept' in idata.posterior.data_vars:
+            # z now shares the exp factor (formula_z = z ~ 1 + exp), so the start-point
+            # ridgeline runs over the same conditions as v; logit link back to [0,1].
+            plotting.hssm_posterior_ridgeline(idata, 'z', cond_col,
+                                              condition_dict[cond_col], result_dir, link='logit')
+        plotting.hssm_ddm_schematic(idata, condition_dict, result_dir, t_value=fix_t)
 
         # Provenance log
         utils.log_update(log_df, 'hssm_model', model_type)
