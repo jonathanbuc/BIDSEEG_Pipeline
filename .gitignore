@@ -40,6 +40,9 @@ _env_probe.py
 dev/
 # Generated doc exports only — the .md sources (ARCHITECTURE, learning notes) stay tracked
 docs/*.html
+# Reference PDFs — unpublished preregistrations (sensitive) and third-party papers
+# (copyrighted). Kept locally for reference, never committed.
+docs/*.pdf
 
 # ── AI assistant rules (agent-specific, not tracked) ──
 AGENTS.md
