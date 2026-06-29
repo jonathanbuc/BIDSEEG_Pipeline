@@ -39,7 +39,8 @@ _env_probe.py
 # Stray Windows "/dev/null" path artifact (LFS hooks land here by accident)
 dev/
 # Generated doc exports only — the .md sources (ARCHITECTURE, learning notes) stay tracked
-docs/*.html
+# (**/ so IDE markdown-preview HTML in subfolders like docs/briefing/ is ignored too)
+docs/**/*.html
 # Reference PDFs — unpublished preregistrations (sensitive) and third-party papers
 # (copyrighted). Kept locally for reference, never committed.
 docs/*.pdf
