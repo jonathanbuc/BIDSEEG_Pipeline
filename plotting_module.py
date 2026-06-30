@@ -383,7 +383,6 @@ def grand_avg_tfr_plots(grand_avg_tfr, condition_dict, comparisons, fmin, fmax, 
     #_________________Plot grand average TFR by condition_________________
     for condition in conditions:
         tfr = grand_avg_tfr[condition]
-        print(tfr.times)
         fig = tfr.plot(fmin=fmin, fmax=fmax, tmin=tmin, tmax=tmax,
                 baseline=baseline,
                 cmap='RdBu_r',
@@ -396,7 +395,7 @@ def grand_avg_tfr_plots(grand_avg_tfr, condition_dict, comparisons, fmin, fmax, 
         ax.axvline(x=0, color='magenta', linestyle='--', linewidth=1, alpha=0.8, label='Cue Onset')
         ax.legend(loc='upper right')
         outpath = os.path.join(tfr_diag_dir, f"GrandAvgTFR_{condition}.png")
-        utils.log_msg(f"        Saving Grand Average TFR plot to {outpath}")
+        #utils.log_msg(f"        Saving Grand Average TFR plot to {outpath}")
         plt.savefig(outpath)
         plt.close()
 
@@ -428,7 +427,7 @@ def grand_avg_tfr_plots(grand_avg_tfr, condition_dict, comparisons, fmin, fmax, 
         ax.legend(loc='upper right')
         # save
         outpath = os.path.join(tfr_diag_dir, f"GrandAvgTFR_diff_{cond1}vs{cond2}.png")
-        utils.log_msg(f"        Saving Grand Average TFR difference plot to {outpath}")
+        #utils.log_msg(f"        Saving Grand Average TFR difference plot to {outpath}")
         plt.savefig(outpath)
         plt.close()
 
@@ -601,98 +600,95 @@ def plot_full_fooof_model_detailed(fm, subject, condition, save_path, log_log=Tr
     fig.savefig(save_path, dpi=300)
     plt.close(fig)
 
-def run_fooof_analysis(psd_dict, subject, channel, bidspath_out_subject,
-                       global_master_csv=None, f_range=(1, 45), peak_threshold=0.1):
+def plot_topomap(values=None, info=None, save_path=None, label="Value", title=None,
+                         mask=None, mask_params=None, cmap="viridis", colorbar_label="Value",
+                         extrapolate='head', df=None, param=None, channel_col='channels',
+                         ch_order=None):
     """
-    Fits a FOOOF model to the power spectrum, saves results (JSON), plots (basic + full), and summary CSVs.
+    Create and save an EEG topographic map.
+
+    Two ways to provide the data to plot:
+
+    1. values : array
+        A channel-ordered array, used as-is (e.g. CBPT t/F statistics).
+    2. df + param :
+        A long-format DataFrame with one row per channel and a `channel_col` column.
+        The mean of `param` per channel is computed and ordered to match `ch_order`
+        (defaults to info['ch_names']). Channels without a value are auto-masked and
+        plotted as 0.
 
     Parameters
     ----------
-    freqs : array-like
-        Frequencies from the power spectrum.
-    spectrum : array-like
-        Power spectrum values.
-    subject : str
-        Subject ID.
-    condition : str
-        Condition label.
-    channel : str
-        Channel name (e.g., 'Oz').
-    bidspath_out_subject : mne_bids.BIDSPath
-        BIDSPath object with .directory set to subject output.
-    global_master_csv : str or None
-        Path to master summary CSV (appended if provided).
-    f_range : tuple
-        Frequency range for FOOOF fitting.
-    peak_threshold : float
-        Threshold for peak detection.
-
-    Returns
-    -------
-    fm : FOOOF
-        The fitted FOOOF model.
+    values : array | None
+        Channel-wise values to visualize. Ignored if `df` and `param` are given.
+    info : mne.Info
+        EEG channel metadata.
+    save_path : str
+        Output path for the saved figure.
+    label : str
+        Colorbar label. Defaults to `param` when plotting from a DataFrame.
+    mask : array | None
+        Boolean mask used to highlight channels. Auto-derived (non-NaN) in df mode.
+    df : pandas.DataFrame | None
+        Long-format DataFrame to derive channel-wise values from.
+    param : str | None
+        Column in `df` to plot.
+    channel_col : str
+        Column in `df` holding channel names (e.g. 'channel' or 'channels').
+    ch_order : list | None
+        Channel order for the output array. Defaults to info['ch_names'].
     """
+    # ----- Derive channel-wise values from a DataFrame if requested -----
+    if df is not None and param is not None:
+        if ch_order is None:
+            ch_order = info['ch_names']
+        value_by_ch = df.groupby(channel_col)[param].mean()
+        values_full = np.array([value_by_ch.get(ch, np.nan) for ch in ch_order])
 
-        # ----- Define paths -----
-    save_dir = os.path.join(bidspath_out_subject.directory, 'FOOOF')
-    os.makedirs(save_dir, exist_ok=True)
-    summary_dir = os.path.join(save_dir, 'summaries')
-    os.makedirs(summary_dir, exist_ok=True)
+        if mask is None:
+            mask = ~np.isnan(values_full)
+            if mask_params is None:
+                mask_params = dict(marker='o', markerfacecolor='grey', markersize=2)
 
-    df_sub_list = []
+        values = np.nan_to_num(values_full, nan=0.0)
+        if label == "Value":
+            label = param
 
-    for condition, data in psd_dict.items():
-        freqs = data['freqs']
-        spectrum = data['psd'].mean(axis=0)
-        
-        model_path = os.path.join(save_dir, f"sub-{subject}_{condition}_{channel}_fooof_model.json")
-        fig_path_basic = os.path.join(save_dir, f"sub-{subject}_{condition}_{channel}_fooof_basic.png")
-        fig_path_full = os.path.join(save_dir, f"sub-{subject}_{condition}_{channel}_fooof_full.png")
-                    
-        # ----- Fit model -----
-        fm = FOOOF(aperiodic_mode='fixed', peak_threshold=peak_threshold,
-                max_n_peaks=6, peak_width_limits=(1.5, 4))
-        fm.fit(freqs, spectrum, f_range)
+    # ----- Plot -----
+    fig, ax = plt.subplots(figsize=(6, 5))
 
-        # ----- Save model JSON -----
-        fm.save(model_path, save_results=True)
+    values = np.asarray(values, dtype=float)
+    finite = np.isfinite(values)
 
-        # Detailed full iterative model
-        plot_full_fooof_model_detailed(
-            fm,
-            subject=subject,
-            condition=condition,
-            save_path=fig_path_full,
-            log_log=True
-        )
+    # explicit color limits from finite data so a single NaN doesn't break autoscaling
+    vlim = (np.nanmin(values), np.nanmax(values)) if finite.any() else (None, None)
+    
+    # MNE interpolates across all sensors; a single NaN blanks the whole map.
+    if not finite.all():
+        fill = values[finite].mean() if finite.any() else 0.0
+        values = np.where(finite, values, fill)
+        if mask is None: # keep an explicitly passed cluster mask
+            mask = finite
+            if mask_params is None:
+                mask_params = dict(marker='o', markerfacecolor='grey', markersize=2)
 
-        fm.plot()
-        plt.savefig(fig_path_basic, dpi=300)
-        plt.close()
-
-        
-
-        # ----- Extract and save summary -----
-        rows = []
-        for idx, (cf, pw, bw) in enumerate(fm.peak_params_, start=1):
-            rows.append({
-                "Subject": subject,
-                "Condition": condition,
-                "Peak #": idx,
-                "CF_Hz": cf,
-                "PW_log10": pw,
-                "PW_dB": 10 * pw,
-                "BW_Hz": bw,
-                "Aperiodic_Offset": fm.aperiodic_params_[0],
-                "Aperiodic_Exponent": fm.aperiodic_params_[1],
-                "R_squared": fm.r_squared_,
-                "Error": fm.error_
-            })
-
-        df_cond = pd.DataFrame(rows).round(6)
-        df_sub_list.append(df_cond)
-    df_sub = pd.concat(df_sub_list, ignore_index=True)
-    return fm, df_sub
+    im, _ = mne.viz.plot_topomap(
+        values,
+        info,
+        mask=mask,
+        mask_params=mask_params,
+        axes=ax,
+        show=False,
+        extrapolate=extrapolate,
+        cmap=cmap,
+        vlim=vlim
+    )
+    if title:
+        ax.set_title(title)
+    colorbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    colorbar.set_label(label)
+    fig.savefig(save_path, dpi=300, bbox_inches='tight')
+    plt.close()
 
 
 def plot_epochs_timeseries(epochs, electrodes, subject, save_dir,
@@ -796,3 +792,99 @@ def plot_epochs_timeseries(epochs, electrodes, subject, save_dir,
         saved_paths.append(fpath)
 
     return saved_paths
+
+
+
+# _____________________________LEGACY FUNCTIONS_____________________________
+def run_fooof_analysis(psd_dict, subject, channel, bidspath_out_subject,
+                       global_master_csv=None, f_range=(1, 45), peak_threshold=0.1):
+    """
+    Fits a FOOOF model to the power spectrum, saves results (JSON), plots (basic + full), and summary CSVs.
+
+    Parameters
+    ----------
+    freqs : array-like
+        Frequencies from the power spectrum.
+    spectrum : array-like
+        Power spectrum values.
+    subject : str
+        Subject ID.
+    condition : str
+        Condition label.
+    channel : str
+        Channel name (e.g., 'Oz').
+    bidspath_out_subject : mne_bids.BIDSPath
+        BIDSPath object with .directory set to subject output.
+    global_master_csv : str or None
+        Path to master summary CSV (appended if provided).
+    f_range : tuple
+        Frequency range for FOOOF fitting.
+    peak_threshold : float
+        Threshold for peak detection.
+
+    Returns
+    -------
+    fm : FOOOF
+        The fitted FOOOF model.
+    """
+
+        # ----- Define paths -----
+    save_dir = os.path.join(bidspath_out_subject.directory, 'FOOOF')
+    os.makedirs(save_dir, exist_ok=True)
+    summary_dir = os.path.join(save_dir, 'summaries')
+    os.makedirs(summary_dir, exist_ok=True)
+
+    df_sub_list = []
+
+    for condition, data in psd_dict.items():
+        freqs = data['freqs']
+        spectrum = data['psd'].mean(axis=0)
+        
+        model_path = os.path.join(save_dir, f"sub-{subject}_{condition}_{channel}_fooof_model.json")
+        fig_path_basic = os.path.join(save_dir, f"sub-{subject}_{condition}_{channel}_fooof_basic.png")
+        fig_path_full = os.path.join(save_dir, f"sub-{subject}_{condition}_{channel}_fooof_full.png")
+                    
+        # ----- Fit model -----
+        fm = FOOOF(aperiodic_mode='fixed', peak_threshold=peak_threshold,
+                max_n_peaks=6, peak_width_limits=(1.5, 4))
+        fm.fit(freqs, spectrum, f_range)
+
+        # ----- Save model JSON -----
+        fm.save(model_path, save_results=True)
+
+        # Detailed full iterative model
+        plot_full_fooof_model_detailed(
+            fm,
+            subject=subject,
+            condition=condition,
+            save_path=fig_path_full,
+            log_log=True
+        )
+
+        fm.plot()
+        plt.savefig(fig_path_basic, dpi=300)
+        plt.close()
+
+        
+
+        # ----- Extract and save summary -----
+        rows = []
+        for idx, (cf, pw, bw) in enumerate(fm.peak_params_, start=1):
+            rows.append({
+                "Subject": subject,
+                "Condition": condition,
+                "Peak #": idx,
+                "CF_Hz": cf,
+                "PW_log10": pw,
+                "PW_dB": 10 * pw,
+                "BW_Hz": bw,
+                "Aperiodic_Offset": fm.aperiodic_params_[0],
+                "Aperiodic_Exponent": fm.aperiodic_params_[1],
+                "R_squared": fm.r_squared_,
+                "Error": fm.error_
+            })
+
+        df_cond = pd.DataFrame(rows).round(6)
+        df_sub_list.append(df_cond)
+    df_sub = pd.concat(df_sub_list, ignore_index=True)
+    return fm, df_sub

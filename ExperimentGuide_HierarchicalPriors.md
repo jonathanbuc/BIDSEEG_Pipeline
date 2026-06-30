@@ -1,10 +1,22 @@
 # Experiment Guide — Hierarchical Priors RDK EEG Task
 
-This file provides a experimental guide linking the analysis of *Buchholz & Hesselmann (in review) - Hierarchical Priors Shape Dynamic Evidence Accumulation and Aperiodic EEG Activity* with the here provided data and code. This can be used as an assisting tool for first running the semi-automated EEGpipeline.
+This file provides a experimental guide linking the analysis of *Buchholz & Hesselmann (in review) - Hierarchical Priors Shape Dynamic Evidence Accumulation and Aperiodic EEG Activity* with the here provided data and code. This can be used as an assisting tool for first running a semi-automated BIDS-EEG pipeline.
 
 This EEG-BIDS dataset contains cue-locked EEG recordings and event annotations from a random-dot kinematogram (RDK) task designed to dissociate low-level and high-level priors during perceptual decision-making. The accompanying analysis tests whether hierarchical priors bias behavior through signal detection theory (SDT) and generalized drift-diffusion modeling (gDDM), and whether they modulate occipital oscillatory or aperiodic EEG activity.
 
-The trial-level variables needed for analysis are stored in `epochs.metadata` and are illustrated by the accompanying `metadata.csv` file. Each row corresponds to one cue-locked epoch/trial retained in the MNE `Epochs` object.
+The trial-level variables needed for analysis are stored in `epochs.metadata` and are illustrated by the accompanying `metadata.csv` file. Each row corresponds to one cue-locked epoch/trial retained in the MNE `Epochs` object. Additionally, [trigger codes](#trigger-codes) stored as annotations enable (less flexible) trial-wise analyses.
+
+## Data collection
+
+Data were collected from neurotypical adults with normal or corrected-to-normal vision and no neurological or psychiatric diagnoses. Fifty-three participants were tested; twelve were excluded for failing the preregistered discrimination-performance criterion, leaving 43 participants in the final sample (27 female, 1 trans; mean age 24.47 +/- 5.46 years). Participants gave written informed consent, were tested in the EEG laboratory of Psychologische Hochschule Berlin, and received course credit or monetary compensation.
+
+Stimuli were random-dot kinematograms (RDKs) with 1200 white dots (0.078 deg; 2.53 deg/s) presented inside a circular aperture (radius 9.09 deg). A subset of dots moved coherently leftward or rightward while the remaining dots moved randomly; dot lifetime was limited to 24 frames (~100 ms). Stimuli were presented with PsychoPy on a 24.5-inch LCD monitor (240 Hz refresh rate) at a fixed viewing distance of 65 cm. Auditory cues were delivered for 500 ms at 84.8 dB(A); each trial then included an approximately 1000 ms fixation-only interval, RDK presentation for up to approximately 3000 ms or until response, and a jittered 1000-1500 ms intertrial interval.
+
+The experiment used a within-subject design with three conditions: baseline/no prior, low-level prior, and high-level prior. Baseline blocks used a neutral 750 Hz tone and comprised 8 blocks of 20 trials. Low-level priors were induced implicitly by 600/900 Hz tones that predicted leftward or rightward motion with 75% contingency; tone-motion mappings were counterbalanced, learned across 3 blocks of 20 trials, and tested across 8 blocks of 20 trials. High-level priors were induced by a standardized cover story about tinted glasses that allegedly enhanced leftward or rightward motion; beliefs were reinforced across 4 learning blocks of 20 trials and tested across 8 blocks of 20 trials. Condition order was fully counterbalanced, and 160 trials per condition entered the main analyses.
+
+Before the experiment, individual motion sensitivity was estimated with two 40-trial QUEST staircases targeting 75% discrimination accuracy. The final threshold defined medium coherence; low and high coherence were 50% and 200% of this threshold, respectively. Learning blocks overrepresented medium- and high-coherence trials to support prior acquisition, whereas baseline and test blocks overrepresented low-coherence trials and contained no high-coherence trials to increase reliance on prior information.
+
+Continuous EEG was recorded from 31 active Ag/AgCl electrodes arranged according to the international 10/20 system using an actiChamp Plus amplifier at 1000 Hz. The ground electrode was placed at FPz and data were online referenced to FCz. Electrode impedances were kept below 20 kOhm, and participants were instructed to minimize blinks, saccades, muscle activity, and body movement during recording. Post-experimental questionnaires assessed demographics, manipulation checks, belief strength, and psychosis proneness.
 
 ## Task summary
 
@@ -33,25 +45,29 @@ Each `*_events.tsv` file contains raw trigger-level events, and the `*_events.js
 
 ### Event columns
 
-| Column | Meaning |
-|---|---|
-| `onset` | Event onset in seconds from the first stored data point. |
-| `duration` | Event duration in seconds. Impulse events are coded as `0.001`. |
-| `sample` | Event onset in sampling points; first sample is 0. |
-| `value` | Numeric trigger/event code. |
+
+| Column       | Meaning                                                           |
+| ------------ | ----------------------------------------------------------------- |
+| `onset`      | Event onset in seconds from the first stored data point.          |
+| `duration`   | Event duration in seconds. Non-informative in this dataset        |
+| `sample`     | Event onset in sampling points; first sample is 0.                |
+| `value`      | Numeric trigger/event code.                                       |
 | `trial_type` | Human-readable trigger label, for example `S_1`, `S_8`, or `R_1`. |
+
 
 ### Trigger codes
 
-| `value` | `trial_type` | Meaning |
-|---:|---|---|
-| 1 | `S_1` | Neutral 750 Hz tone cue onset; used in baseline and high-level prior trials. |
-| 2 | `S_2` | Low-level prior tone cue predicting rightward motion. |
-| 4 | `S_4` | Low-level prior tone cue predicting leftward motion. |
-| 8 | `S_8` | RDK onset with leftward net motion. |
-| 16 | `S_16` | RDK onset with rightward net motion. |
-| 101 | `R_1` | Correct response. |
-| 102 | `R_2` | Incorrect response. |
+
+| `value` | `trial_type` | Meaning                                                                                               |
+| ------- | ------------ | ----------------------------------------------------------------------------------------------------- |
+| 1       | `S_1`        | left prior; tone (600/900 Hz) for low-level / left-enhancing glasses for high-level prior condition   |
+| 2       | `S_2`        | right prior; tone (600/900 Hz) for low-level / right-enhancing glasses for high-level prior condition |
+| 4       | `S_4`        | no prior; 750 Hz tone cue onset in baseline.                                                          |
+| 8       | `S_8`        | RDK onset with leftward net motion.                                                                   |
+| 16      | `S_16`       | RDK onset with rightward net motion.                                                                  |
+| 101     | `R_1`        | Correct response.                                                                                     |
+| 102     | `R_2`        | Incorrect response.                                                                                   |
+
 
 A raw trial can be reconstructed as:
 
@@ -63,32 +79,34 @@ For manuscript-level reproduction, use `epochs.metadata` rather than only the ra
 
 The table below explains the columns in `metadata.csv`, which are attached to each cue-locked MNE `Epochs` object as `epochs.metadata`. Values shown are examples from the supplied file; levels may vary across participants.
 
-| Column | Example values / type | Meaning | Use for reproduction |
-|---|---|---|---|
-| `trigger` | `1` | Technical event identifier used during cue-locked epoch creation. In the provided metadata this is constant because epochs are anchored to cue onset. | Bookkeeping only. Use `exp`, `cueHz`, and `prior` for analysis coding. |
-| `participant` | `sub-001` | BIDS participant label. | Grouping variable for participant-level SDT, gDDM, EEG, and spectral summaries; merge key for questionnaire data. |
-| `exp` | `base`, `lowlevel`, `highlevel` | Experimental condition: baseline/no prior, implicit low-level prior, or explicit high-level prior. | Primary within-subject factor `prior condition` in behavioral and EEG analyses. |
-| `block_cond` | `base`, `test` | Analysis phase/block type. Baseline blocks are coded `base`; analyzed prior-condition test blocks are coded `test`. | Keep `base` and `test` rows for the main analyses; exclude learning blocks if present in other metadata files. |
-| `block_order` | e.g., `bhl` | Counterbalanced order of the three conditions. Letters denote baseline (`b`), high-level (`h`), and low-level (`l`). | Optional check for order effects; not a primary manuscript variable. |
-| `thisN` | `0`–`19` | Trial index within the current 20-trial block as generated by the task script. | Trial-order diagnostics and within-block checks. |
-| `cueAss` | e.g., `highleft` | Low-level tone-motion counterbalancing. `highleft` means the high tone predicted leftward motion and the low tone predicted rightward motion. | Reconstruct or validate `prior` in low-level prior trials from `cueHz`. |
-| `cueHz` | `600`, `750`, `900` | Auditory cue frequency in Hz. `750` is neutral/nonpredictive; `600` and `900` are predictive low-level prior cues. | Validate cue condition; reconstruct low-level prior direction together with `cueAss`. |
-| `motion_direction` | `left`, `right` | Physical net direction of RDK motion on the trial. | Stimulus direction for accuracy, SDT signal coding, and prior congruency. |
-| `prior` | `noprior`, `left`, `right` | Direction predicted by the current prior. `noprior` is used in baseline trials; `left`/`right` indicate the tone-predicted or glasses-predicted direction. | Defines prior-congruent versus prior-incongruent stimuli and responses. |
-| `response` | `left`, `right`, missing | Participant's reported perceived motion direction. | Behavioral choice variable for SDT and gDDM. Exclude missing responses for behavioral modeling. |
-| `corr` | `0`, `1` | Accuracy relative to physical RDK direction: `1` = response matches `motion_direction`; `0` = incorrect. | Performance checks and inclusion diagnostics. |
-| `rt` | seconds | Reaction time from RDK onset to button response. | gDDM response-time variable and RT outlier screening. |
-| `thresh75` | participant-specific proportion | Individual QUEST threshold targeting 75% correct discrimination. This is the participant's medium coherence. | Defines individualized sensory uncertainty; `medium = thresh75`, `low = 0.5 × thresh75`, `high = 2 × thresh75`. |
-| `BiasFirst` | e.g., `rightfirst`, `leftfirst` | Counterbalancing/order variable for the high-level glasses manipulation, indicating which glasses/prior direction was introduced or tested first. | Optional check for high-level prior order effects. |
-| `coh` | proportion, e.g., `0.0562`, `0.1124` | Trial-wise RDK motion coherence. | Continuous sensory-evidence strength; drift rate was modeled as a function of coherence in the gDDM. |
-| `coh_level` | `low`, `medium`, `high` | Categorical coherence level derived from `thresh75`. In analyzed test trials, low and medium coherence are expected. | Descriptive performance checks and model validation by coherence level. |
-| `filename` | e.g., `sub-001_RDKdeutsch_highleft` | Source behavioral/task-log identifier. Usually contains participant and counterbalancing information. | Provenance and debugging. |
-| `rt_flag` | `False`, `True` | Trial-level behavioral exclusion flag. `True` marks trials excluded because of missing responses or RT outlier criteria. | For behavioral SDT/gDDM reproduction, use `rt_flag == False` with nonmissing `rt` and `response`. |
-| `lowCoh_performance` | proportion correct | Participant-level accuracy at low coherence, repeated across rows for that participant. | Inclusion/performance diagnostics; used to verify monotonic performance across coherence levels. |
-| `medCoh_performance` | proportion correct | Participant-level accuracy at medium coherence, repeated across rows for that participant. | Inclusion/performance diagnostics. |
-| `highCoh_performance` | proportion correct | Participant-level accuracy at high coherence, repeated across rows for that participant. | Inclusion/performance diagnostics; should exceed medium and low coherence performance. |
-| `prior_dic` | `noprior`, `prior` | Binary prior grouping: baseline/no-prior versus any prior condition. | Convenience grouping only. Use `exp` to distinguish low-level from high-level priors. |
-| `response_prior` | `0`, `1`, missing | Response recoded relative to the prior-defined decision bound. In prior conditions, `1` = response in the prior-congruent direction and `0` = response in the prior-incongruent direction. In baseline trials, `1` = left response and `0` = right response. | Primary binary response variable for SDT and gDDM boundary coding. |
+
+| Column                | Example values / type                | Meaning                                                                                                                                                                                                                                                      | Use for reproduction                                                                                              |
+| --------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| `trigger`             | `1`                                  | Technical event identifier used during cue-locked epoch creation. In the provided metadata this is constant because epochs are anchored to cue onset.                                                                                                        | Bookkeeping only. Use `exp`, `cueHz`, and `prior` for analysis coding.                                            |
+| `participant`         | `sub-001`                            | BIDS participant label.                                                                                                                                                                                                                                      | Grouping variable for participant-level SDT, gDDM, EEG, and spectral summaries; merge key for questionnaire data. |
+| `exp`                 | `base`, `lowlevel`, `highlevel`      | Experimental condition: baseline/no prior, implicit low-level prior, or explicit high-level prior.                                                                                                                                                           | Primary within-subject factor `prior condition` in behavioral and EEG analyses.                                   |
+| `block_cond`          | `base`, `test`                       | Analysis phase/block type. Baseline blocks are coded `base`; analyzed prior-condition test blocks are coded `test`.                                                                                                                                          | Keep `base` and `test` rows for the main analyses; exclude learning blocks if present in other metadata files.    |
+| `block_order`         | e.g., `bhl`                          | Counterbalanced order of the three conditions. Letters denote baseline (`b`), high-level (`h`), and low-level (`l`).                                                                                                                                         | Optional check for order effects; not a primary manuscript variable.                                              |
+| `thisN`               | `0`–`19`                             | Trial index within the current 20-trial block as generated by the task script.                                                                                                                                                                               | Trial-order diagnostics and within-block checks.                                                                  |
+| `cueAss`              | e.g., `highleft`                     | Low-level tone-motion counterbalancing. `highleft` means the high tone predicted leftward motion and the low tone predicted rightward motion.                                                                                                                | Reconstruct or validate `prior` in low-level prior trials from `cueHz`.                                           |
+| `cueHz`               | `600`, `750`, `900`                  | Auditory cue frequency in Hz. `750` is neutral/nonpredictive; `600` and `900` are predictive low-level prior cues.                                                                                                                                           | Validate cue condition; reconstruct low-level prior direction together with `cueAss`.                             |
+| `motion_direction`    | `left`, `right`                      | Physical net direction of RDK motion on the trial.                                                                                                                                                                                                           | Stimulus direction for accuracy, SDT signal coding, and prior congruency.                                         |
+| `prior`               | `noprior`, `left`, `right`           | Direction predicted by the current prior. `noprior` is used in baseline trials; `left`/`right` indicate the tone-predicted or glasses-predicted direction.                                                                                                   | Defines prior-congruent versus prior-incongruent stimuli and responses.                                           |
+| `response`            | `left`, `right`, missing             | Participant's reported perceived motion direction.                                                                                                                                                                                                           | Behavioral choice variable for SDT and gDDM. Exclude missing responses for behavioral modeling.                   |
+| `corr`                | `0`, `1`                             | Accuracy relative to physical RDK direction: `1` = response matches `motion_direction`; `0` = incorrect.                                                                                                                                                     | Performance checks and inclusion diagnostics.                                                                     |
+| `rt`                  | seconds                              | Reaction time from RDK onset to button response.                                                                                                                                                                                                             | gDDM response-time variable and RT outlier screening.                                                             |
+| `thresh75`            | participant-specific proportion      | Individual QUEST threshold targeting 75% correct discrimination. This is the participant's medium coherence.                                                                                                                                                 | Defines individualized sensory uncertainty; `medium = thresh75`, `low = 0.5 × thresh75`, `high = 2 × thresh75`.   |
+| `BiasFirst`           | e.g., `rightfirst`, `leftfirst`      | Counterbalancing/order variable for the high-level glasses manipulation, indicating which glasses/prior direction was introduced or tested first.                                                                                                            | Optional check for high-level prior order effects.                                                                |
+| `coh`                 | proportion, e.g., `0.0562`, `0.1124` | Trial-wise RDK motion coherence.                                                                                                                                                                                                                             | Continuous sensory-evidence strength; drift rate was modeled as a function of coherence in the gDDM.              |
+| `coh_level`           | `low`, `medium`, `high`              | Categorical coherence level derived from `thresh75`. In analyzed test trials, low and medium coherence are expected.                                                                                                                                         | Descriptive performance checks and model validation by coherence level.                                           |
+| `filename`            | e.g., `sub-001_RDKdeutsch_highleft`  | Source behavioral/task-log identifier. Usually contains participant and counterbalancing information.                                                                                                                                                        | Provenance and debugging.                                                                                         |
+| `rt_flag`             | `False`, `True`                      | Trial-level behavioral exclusion flag. `True` marks trials excluded because of missing responses or RT outlier criteria.                                                                                                                                     | For behavioral SDT/gDDM reproduction, use `rt_flag == False` with nonmissing `rt` and `response`.                 |
+| `lowCoh_performance`  | proportion correct                   | Participant-level accuracy at low coherence, repeated across rows for that participant.                                                                                                                                                                      | Inclusion/performance diagnostics; used to verify monotonic performance across coherence levels.                  |
+| `medCoh_performance`  | proportion correct                   | Participant-level accuracy at medium coherence, repeated across rows for that participant.                                                                                                                                                                   | Inclusion/performance diagnostics.                                                                                |
+| `highCoh_performance` | proportion correct                   | Participant-level accuracy at high coherence, repeated across rows for that participant.                                                                                                                                                                     | Inclusion/performance diagnostics; should exceed medium and low coherence performance.                            |
+| `prior_dic`           | `noprior`, `prior`                   | Binary prior grouping: baseline/no-prior versus any prior condition.                                                                                                                                                                                         | Convenience grouping only. Use `exp` to distinguish low-level from high-level priors.                             |
+| `response_prior`      | `0`, `1`, missing                    | Response recoded relative to the prior-defined decision bound. In prior conditions, `1` = response in the prior-congruent direction and `0` = response in the prior-incongruent direction. In baseline trials, `1` = left response and `0` = right response. | Primary binary response variable for SDT and gDDM boundary coding.                                                |
+
 
 ## Reproducing the manuscript analyses from metadata
 
@@ -107,29 +125,31 @@ When using preprocessed MNE `Epochs`, the rows in `epochs.metadata` remain align
 
 ### 2. Manuscript variables and metadata columns
 
-| Manuscript variable / analysis concept | Metadata column(s) | Coding / transformation |
-|---|---|---|
-| Participant | `participant` | Group all first-level estimates by participant. |
-| Prior condition | `exp` | `base` = baseline/no prior; `lowlevel` = low-level prior; `highlevel` = high-level prior. |
-| Baseline/no-prior trials | `exp == 'base'`, `prior == 'noprior'`, `cueHz == 750` | Neutral tone, no directional prediction. |
-| Low-level prior trials | `exp == 'lowlevel'`, `cueHz in [600, 900]` | Tone direction mapping is encoded in `cueAss`; final predicted direction is already stored in `prior`. |
-| High-level prior trials | `exp == 'highlevel'`, `cueHz == 750`, `prior in ['left','right']` | Directional prediction comes from the alleged motion-enhancing glasses, not from the tone. |
-| Motion direction | `motion_direction` | Physical RDK direction: left or right. |
-| Prior direction | `prior` | Direction predicted by tone or glasses; `noprior` for baseline. |
-| Response direction | `response` | Participant's left/right report. |
-| Accuracy | `corr` | `1` if `response == motion_direction`, else `0`. |
-| RT | `rt` | Seconds from RDK onset to response. |
-| RT/response exclusion | `rt_flag`, `response`, `rt` | Exclude `rt_flag == True` and missing values. |
-| Sensory precision / motion coherence | `coh`, `coh_level`, `thresh75` | Use continuous `coh` for gDDM drift modulation; use `coh_level` for descriptive checks. |
-| Prior-congruent stimulus | `motion_direction`, `prior`, `exp` | Prior conditions: `motion_direction == prior`; baseline: `motion_direction == 'left'` for SDT coding. |
-| Prior-congruent response | `response_prior` | Prior conditions: `1` = response matches `prior`; baseline: `1` = left response. |
-| SDT signal-present trial | `motion_direction`, `prior`, `exp` | Prior conditions: prior-congruent motion; baseline: leftward motion. |
-| SDT signal response | `response_prior` | `response_prior == 1`. |
-| DDM response/boundary | `response_prior` | Prior conditions: prior-congruent vs. prior-incongruent response; baseline: left vs. right response. |
-| EEG condition contrast | `exp` | Compare `lowlevel` vs `base` and `highlevel` vs `base`. |
-| Spectral parameterization condition | `exp` | Estimate PSD/specparam measures separately for `base`, `lowlevel`, and `highlevel`. |
-| Psychosis proneness | external questionnaire data | Not in metadata. Merge PDI/CAPS composite scores by `participant`. |
-| High-level belief strength | external questionnaire data | Not in metadata. Merge VAS belief ratings by `participant`. |
+
+| Manuscript variable / analysis concept | Metadata column(s)                                                | Coding / transformation                                                                                |
+| -------------------------------------- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| Participant                            | `participant`                                                     | Group all first-level estimates by participant.                                                        |
+| Prior condition                        | `exp`                                                             | `base` = baseline/no prior; `lowlevel` = low-level prior; `highlevel` = high-level prior.              |
+| Baseline/no-prior trials               | `exp == 'base'`, `prior == 'noprior'`, `cueHz == 750`             | Neutral tone, no directional prediction.                                                               |
+| Low-level prior trials                 | `exp == 'lowlevel'`, `cueHz in [600, 900]`                        | Tone direction mapping is encoded in `cueAss`; final predicted direction is already stored in `prior`. |
+| High-level prior trials                | `exp == 'highlevel'`, `cueHz == 750`, `prior in ['left','right']` | Directional prediction comes from the alleged motion-enhancing glasses, not from the tone.             |
+| Motion direction                       | `motion_direction`                                                | Physical RDK direction: left or right.                                                                 |
+| Prior direction                        | `prior`                                                           | Direction predicted by tone or glasses; `noprior` for baseline.                                        |
+| Response direction                     | `response`                                                        | Participant's left/right report.                                                                       |
+| Accuracy                               | `corr`                                                            | `1` if `response == motion_direction`, else `0`.                                                       |
+| RT                                     | `rt`                                                              | Seconds from RDK onset to response.                                                                    |
+| RT/response exclusion                  | `rt_flag`, `response`, `rt`                                       | Exclude `rt_flag == True` and missing values.                                                          |
+| Sensory precision / motion coherence   | `coh`, `coh_level`, `thresh75`                                    | Use continuous `coh` for gDDM drift modulation; use `coh_level` for descriptive checks.                |
+| Prior-congruent stimulus               | `motion_direction`, `prior`, `exp`                                | Prior conditions: `motion_direction == prior`; baseline: `motion_direction == 'left'` for SDT coding.  |
+| Prior-congruent response               | `response_prior`                                                  | Prior conditions: `1` = response matches `prior`; baseline: `1` = left response.                       |
+| SDT signal-present trial               | `motion_direction`, `prior`, `exp`                                | Prior conditions: prior-congruent motion; baseline: leftward motion.                                   |
+| SDT signal response                    | `response_prior`                                                  | `response_prior == 1`.                                                                                 |
+| DDM response/boundary                  | `response_prior`                                                  | Prior conditions: prior-congruent vs. prior-incongruent response; baseline: left vs. right response.   |
+| EEG condition contrast                 | `exp`                                                             | Compare `lowlevel` vs `base` and `highlevel` vs `base`.                                                |
+| Spectral parameterization condition    | `exp`                                                             | Estimate PSD/specparam measures separately for `base`, `lowlevel`, and `highlevel`.                    |
+| Psychosis proneness                    | external questionnaire data                                       | Not in metadata. Merge PDI/CAPS composite scores by `participant`.                                     |
+| High-level belief strength             | external questionnaire data                                       | Not in metadata. Merge VAS belief ratings by `participant`.                                            |
+
 
 ### 3. Signal detection theory coding
 
@@ -161,13 +181,15 @@ Negative criterion values in the prior conditions indicate a bias toward the pri
 
 For each participant and condition, fit a gDDM using:
 
-| gDDM input | Metadata source |
-|---|---|
-| Response time | `rt` |
-| Binary response / bound | `response_prior` |
-| Condition | `exp` |
-| Motion coherence | `coh` or `coh_level` |
-| Trial exclusion | `rt_flag == False` |
+
+| gDDM input              | Metadata source      |
+| ----------------------- | -------------------- |
+| Response time           | `rt`                 |
+| Binary response / bound | `response_prior`     |
+| Condition               | `exp`                |
+| Motion coherence        | `coh` or `coh_level` |
+| Trial exclusion         | `rt_flag == False`   |
+
 
 In the prior conditions, the decision bounds are prior-congruent (`response_prior = 1`) versus prior-incongruent (`response_prior = 0`). In the baseline condition, the same column codes left (`1`) versus right (`0`) responses. The manuscript estimated drift rate (`d`), boundary separation (`a`), and starting point (`z`), with noise fixed to 1, nondecision time fixed to 200 ms, maximum RT set to 3000 ms, and drift modeled as a function of motion coherence.
 
@@ -175,17 +197,19 @@ In the prior conditions, the decision bounds are prior-congruent (`response_prio
 
 EEG analyses are cue-locked. Use the MNE epoch time axis rather than metadata onsets for time-resolved analyses.
 
-| EEG analysis step | Metadata / data source |
-|---|---|
-| Epoch anchor | cue onset; rows in `epochs.metadata` correspond to cue-locked epochs |
-| Epoch window | EEG time axis, -600 to 1500 ms relative to cue onset |
-| Baseline interval | EEG time axis, -600 to -100 ms |
-| Condition factor | `exp` |
-| Occipital channel cluster | O1, Oz, O2 from EEG data |
-| TFR contrasts | `lowlevel` vs `base`; `highlevel` vs `base` |
-| TFR frequency range | 5–40 Hz |
-| Spectral-parameterization window | 0–1500 ms relative to cue onset |
-| Spectral-parameterization grouping | average/fit spectra separately by `participant` and `exp` |
+
+| EEG analysis step                  | Metadata / data source                                               |
+| ---------------------------------- | -------------------------------------------------------------------- |
+| Epoch anchor                       | cue onset; rows in `epochs.metadata` correspond to cue-locked epochs |
+| Epoch window                       | EEG time axis, -600 to 1500 ms relative to cue onset                 |
+| Baseline interval                  | EEG time axis, -600 to -100 ms                                       |
+| Condition factor                   | `exp`                                                                |
+| Occipital channel cluster          | O1, Oz, O2 from EEG data                                             |
+| TFR contrasts                      | `lowlevel` vs `base`; `highlevel` vs `base`                          |
+| TFR frequency range                | 5–40 Hz                                                              |
+| Spectral-parameterization window   | 0–1500 ms relative to cue onset                                      |
+| Spectral-parameterization grouping | average/fit spectra separately by `participant` and `exp`            |
+
 
 Spectral parameterization outputs are not stored in `epochs.metadata`. They should be computed from the EEG signal and then summarized by participant and condition as aperiodic offset, aperiodic exponent, and periodic alpha power.
 

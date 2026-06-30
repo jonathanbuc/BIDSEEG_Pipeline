@@ -1,0 +1,5 @@
+# Ignore temporary files
+*.tmp
+.DS_Store
+__pycache__/
+/data/

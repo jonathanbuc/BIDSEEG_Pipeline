@@ -8,8 +8,6 @@
         "bids_root_in": "./data/BIDShierPriors",
         "bids_root_out": "./data/BIDShierPriors/derivatives",
         "get_chan_stats": true,
-        "n_jobs": -1,
-        "diagnostic_dpi": 150,
         "event_dict": {
             "": 0,
             "S_1": 1,
@@ -49,8 +47,7 @@
         "perform_cbpt_group": false,
         "compute_sdt": true,
         "compute_ddm": true,
-        "compute_fooof": true,
-        "compute_hssm": true
+        "compute_fooof": true
     },
     "preprocessing": {
         "samplingrate_down": 250,
@@ -64,7 +61,7 @@
         "line_method": "band_stop",
         "filter_method": "fir",
         "low_cutoff_freq": 0.1,
-        "high_cutoff_freq": 60,
+        "high_cutoff_freq": 40,
         "epoch_min": -0.6,
         "epoch_max": 1.5,
         "epoch_dict": {
@@ -117,14 +114,27 @@
             "contrast1": "prior",
             "contrast2": "noprior"
         },
-        "fmin": 3,
-        "fmax": 60,
+        "fmin": 5,
+        "fmax": 40,
         "alpha_freq_range": [
             7,
             14
         ],
+        "narrowband_freqs": {
+            "alpha": [
+                7,
+                14
+            ],
+            "beta": [
+                14,
+                30
+            ],
+            "gamma": [
+                30,
+                60
+            ]
+        },
         "tfr_method": "multitaper",
-        "time_bandwidth": 4.0,
         "time_res": 2,
         "freq_res": 65,
         "stat_model": "ANOVA",
@@ -139,23 +149,30 @@
             "threshold": null,
             "n_permutations": 10000,
             "alpha": 0.05,
-            "seed": 42
+            "seed": 42,
+            "perform_cbpt_Ftest": true,
+            "perform_cbpt_Ttest": true
         },
         "fooof": {
             "fooof_f_range": [
                 5,
                 40
             ],
-            "fooof_peak_threshold": 2
+            "fooof_peak_threshold": 2,
+            "max_n_peaks": 6,
+            "peak_width_limits": [
+                1.4,
+                8
+            ]
         },
         "comparisons": [
             [
-                "lowlevel",
-                "base"
+                "base",
+                "lowlevel"
             ],
             [
-                "highlevel",
-                "base"
+                "base",
+                "highlevel"
             ],
             [
                 "lowlevel",
@@ -184,26 +201,18 @@
         ],
         "brain_parameters_to_plot": [
             "relative_alpha_dB",
+            "total_theta_dB",
+            "relative_alpha_dB",
             "total_alpha_dB",
+            "relative_beta_dB",
+            "total_beta_dB",
+            "relative_gamma_dB",
+            "total_gamma_dB",
             "CF_Hz",
             "mean_alpha_cf",
             "PW_dB",
             "PW_dB_sum",
             "Aperiodic_Exponent"
-        ],
-        "hssm": {
-            "model_type": "ddm",
-            "sampler": "nuts_numpyro",
-            "draws": 500,
-            "tune": 500,
-            "chains": 2,
-            "cores": 2,
-            "target_accept": 0.9,
-            "prior_settings": "safe",
-            "link_settings": "log_logit",
-            "formula_v" : "v ~ 1 + coh_level * exp + (1|participant)",
-            "formula_z" : "z ~ 1 + exp + (1|participant)",
-            "t": 0.2
-        }
+        ]
     }
 }
