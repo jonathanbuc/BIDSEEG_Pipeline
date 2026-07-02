@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+title: "BIDS-EEG Pipeline in Computational Neuroscience"
+message: "If you use this pipeline, please cite both this software repository and the OpenNeuro dataset."
+type: software
+authors:
+  - family-names: "Buchholz"
+    given-names: "Jonathan"
+  - family-names: "Hesselmann"
+    given-names: "Guido"
+repository-code: "https://github.com/jonathanbuc/BIDSEEG_Pipeline.git"
+license: "MIT"
+references:
+  - type: data
+    title: "OpenNeuro dataset ds008083"
+    doi: "10.18112/openneuro.ds008083.v1.0.0"
+    url: "https://openneuro.org/datasets/ds008083"

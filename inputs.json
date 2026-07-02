@@ -159,10 +159,10 @@
                 40
             ],
             "fooof_peak_threshold": 2,
-            "max_n_peaks": 3,
+            "max_n_peaks": 6,
             "peak_width_limits": [
                 1.4,
-                8
+                4
             ]
         },
         "comparisons": [
