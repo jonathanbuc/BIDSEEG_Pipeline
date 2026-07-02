@@ -159,7 +159,7 @@
                 40
             ],
             "fooof_peak_threshold": 2,
-            "max_n_peaks": 6,
+            "max_n_peaks": 3,
             "peak_width_limits": [
                 1.4,
                 8
