@@ -1,5 +1,51 @@
-# Ignore temporary files
-*.tmp
+# ── PI's original delivery (kept locally as raw-data source, not tracked) ──
+HierarchicalPriors_pipeline/
+
+# ── OS / editor cruft ──
 .DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.tmp
+
+# ── Python ──
 __pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ipynb_checkpoints/
+
+# ── Virtual environments ──
+.venv/
+venv/
+env/
+
+# ── Data (local-only, never tracked) ──
+# Whole data tree stays local — matches main's `/data/` policy so PRs never
+# conflict on data. Demo BIDS data is regenerable via scripts/make_demo_data.py.
 /data/
+# Full 43-subject OpenNeuro download — far too large for git, lives locally only.
+openneuro data/
+
+# ── Private meeting transcripts (named individuals — keep local, never push) ──
+meetings/
+
+# ── Misc local artifacts ──
+*.log
+_env_probe.py
+# Stray Windows "/dev/null" path artifact (LFS hooks land here by accident)
+dev/
+# Generated doc exports only — the .md sources (ARCHITECTURE, learning notes) stay tracked
+# (**/ so IDE markdown-preview HTML in subfolders is ignored too)
+docs/**/*.html
+# Reference PDFs — unpublished preregistrations (sensitive) and third-party papers
+# (copyrighted). Kept locally for reference, never committed.
+docs/*.pdf
+# Meeting-prep briefing pack + local design specs — kept local, not shared upstream
+docs/briefing/
+docs/superpowers/
+
+# ── AI assistant rules (agent-specific, not tracked) ──
+AGENTS.md
+CLAUDE.md
+.bob/
