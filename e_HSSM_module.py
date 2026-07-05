@@ -105,7 +105,7 @@ def prep_hssm_data(df, cond_col, conditions, formula=None):
     # so grand-mean centering (_gc) blends within- and between-subject variation,
     # while subject-mean centering (_wc) isolates the trial-to-trial alpha shift --
     # the actual "does the alpha clock move evidence accumulation" question.
-    for acol in ('alpha_cf_fooof', 'alpha_cf_cog'):
+    for acol in ('alpha_cf_fooof', 'alpha_cf_cog', 'alpha_cf_hilbert'):
         if acol in df.columns:
             subj_mean = df.groupby('participant')[acol].transform('mean')
             df[f'{acol}_gc'] = df[acol] - df[acol].mean()

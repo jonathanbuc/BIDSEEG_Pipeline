@@ -70,8 +70,9 @@ to *model* it the way FOOOF does. That's the sense in which this is genuinely "F
 
 ## Follow-up
 
-`alpha_cf_hilbert` is produced and saved per trial; using it as the drift covariate is a one-liner in
-`inputs.json` (`"formula_v": "v ~ alpha_cf_hilbert + ..."`, which the hardened `e_HSSM` on the
-pipeline-hardening branch already supports via `load_group_data`). When this merges with that branch,
-add `'alpha_cf_hilbert'` to the alpha-centering tuple in `e_HSSM.prep_hssm_data` so it gets the same
-within/between-subject centering as the other alpha columns.
+`alpha_cf_hilbert` is produced and saved per trial, and `e_HSSM.prep_hssm_data` now includes it in
+the alpha-centering tuple, so it gets the same within/between-subject centering (`_gc` / `_wc` /
+`_subjmean`) as the other alpha columns. Using it as the drift covariate is then a one-liner in
+`inputs.json` — e.g. `"formula_v": "v ~ alpha_cf_hilbert_wc + (1|participant)"` for the pure
+trial-to-trial ("does the alpha clock move evidence accumulation") effect, which `load_group_data`
+resolves by loading the per-trial alpha table.
