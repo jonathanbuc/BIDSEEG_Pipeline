@@ -255,6 +255,7 @@ def erp_analysis(epochs_list, subjects, conditions, electrodes, tmin, tmax, resu
     results = [] 
     erp_result_dir = os.path.join(result_dir, 'erp_analysis_results')
     os.makedirs(erp_result_dir, exist_ok=True)   
+
     
     # extract experimental conditions
     cond_col, conditions = list(conditions.items())[0]
@@ -265,7 +266,10 @@ def erp_analysis(epochs_list, subjects, conditions, electrodes, tmin, tmax, resu
     # iterate through subjects and epochs
     for file, subject in zip(epochs_list, subjects):
         # Load epochs once per subject
-        epochs = mne.read_epochs(file, preload=True, verbose=False)
+        fpath = str(file)
+        if not fpath.endswith('.fif'):
+            fpath += '.fif'
+        epochs = mne.read_epochs(fpath, preload=True, verbose=False)
         
         for elec in electrodes:
             for cond in conditions:
@@ -325,6 +329,80 @@ def erp_analysis(epochs_list, subjects, conditions, electrodes, tmin, tmax, resu
     df.to_csv(os.path.join(erp_result_dir, 'erp_results.csv'), index=False)
     utils.log_msg(f'        ERP analysis completed.')   
     return df
+
+def extract_cpp_features(trial_amplitude, times, subject, cond, trial_idx):
+    peak_idx = np.argmax(trial_amplitude)
+    peak_latency = times[peak_idx]
+    peak_amplitude = trial_amplitude[peak_idx]
+    slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(times, trial_amplitude)
+
+    return {
+        "Subject": subject,
+        "Condition": cond,
+        "Trial": trial_idx + 1,
+        "Peak_Latency": peak_latency,
+        "Peak_Amplitude": peak_amplitude,
+        "CPP_Slope": slope
+    }
+
+
+def cpp_analysis(epochs_list, subjects, conditions, result_dir):
+    cpp_result_dir = os.path.join(result_dir, "cpp_analysis_results")
+    os.makedirs(cpp_result_dir, exist_ok=True)
+    cond_col, conditions = list(conditions.items())[0]
+    results = []
+    for file, subject in zip(epochs_list, subjects):
+        epochs = mne.read_epochs(file, preload=True, verbose=False)
+        for cond in conditions: 
+            epochs_cond = epochs[f"{cond_col} == '{cond}'"]
+            epochs_cpp = epochs_cond.copy().pick(cpp_electrodes)
+            epochs_cpp.crop(
+                tmin = cpp_slope_window[0], 
+                tmax = cpp_slope_window[1]
+            )
+            data = epochs_cpp.get_data() # returns trials x channels x time
+            cpp = data.mean(axis=1) #averaged over channels
+
+            # for trial_idx, trial_amplitude in enumerate(cpp):
+            #     results.append(
+            #         extract_cpp_features(trial_amplitude, epochs_cpp.times, subject, cond, trial_idx)
+            #     )
+            trial_results = [
+                extract_cpp_features(trial_amplitude, epochs_cpp.times, subject, cond, i)
+                for i, trial_amplitude in enumerate(cpp)
+            ]
+            results.extend(trial_results)
+
+            peak_times = [r["Peak_Latency"] for r in trial_results]
+            peak_amps = [r["Peak_Amplitude"] for r in trial_results]
+
+            plot_cpp(cpp, epochs_cpp.times, subject, cond, cpp_result_dir, peak_times, peak_amps)
+    df = pd.DataFrame(results) 
+    df.to_csv(os.path.join(cpp_result_dir, "cpp_results.csv"), index=False)
+    return df
+
+
+
+def plot_cpp(cpp, times, subject, condition, cpp_result_dir, peak_times, peak_amps):
+    #plt.figure(figsize=(10,6))
+    for trial_idx, trial in enumerate(cpp):
+        plt.figure(figsize=(8,5))
+        plt.plot(times,trial)
+        
+        peak_time = peak_times[trial_idx]
+        peak_amp = peak_amps[trial_idx]
+
+        plt.scatter(peak_time, peak_amp, color="red", label="Peak")
+        plt.axvline(0, color="black", linestyle="--")
+        plt.xlabel("Time (s)")
+        plt.ylabel("Amplitude (µV)")
+        plt.title(f"{subject} | {condition} | Trial {trial_idx+1}")
+        plt.legend()
+        plt.savefig(os.path.join(cpp_result_dir, f"{subject}_{condition}_Trial_{trial_idx+1}.png"), dpi=300, bbox_inches="tight")
+        plt.close()
+
+
+
 
 def plot_erp_comparison(evokeds, conditions, electrodes, result_dir):
     """
@@ -1633,6 +1711,11 @@ tfr_alpha_dfs = []
 fooof_alpha_dfs = []
 global_master_csv = os.path.join(bidspath.root, "results", "master_fooof_summary.csv")
 
+#CPP analysis 
+cpp_electrodes = inputs["Analysis"]["cpp_electrodes"]
+cpp_slope_window = inputs["Analysis"]["cpp_slope_window"]
+compute_cpp = inputs["perform"]["compute_cpp"]
+
 # _______________________________________________________________________________
   
   
@@ -1693,6 +1776,9 @@ if __name__ == '__main__':
 
         else:
             utils.log_msg(f'     -- Time-Frequency Analysis not performed')
+
+
+
 
     # ____________________ PSD & FOOOF Analysis ______________________
         if compute_fooof:
@@ -1793,6 +1879,10 @@ if __name__ == '__main__':
     else:
             utils.log_msg(f'     -- No ERP features extracted or statistical analysis performed')
 
+
+    if compute_cpp:
+        utils.log_msg("Running CPP Analysis")
+        cpp_df = cpp_analysis(bidspaths_epochs, subjects, condition_dict, result_dir)
     
     timepoint_end = utils.log_msg(f'DONE:   EEG Analysis Module - Group Level')
     utils.log_save(log_df,f'{bidspath.root}' ,'log_dataframe.csv')

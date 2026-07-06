@@ -43,11 +43,12 @@
         "compute_erp": false,
         "average_stim_trigger": true,
         "perform_tfr": true,
-        "perform_cbpt": true,
+        "perform_cbpt": false,
         "perform_cbpt_group": false,
         "compute_sdt": true,
         "compute_ddm": true,
-        "compute_fooof": true
+        "compute_fooof": true,
+        "compute_cpp": true
     },
     "preprocessing": {
         "samplingrate_down": 250,
@@ -216,6 +217,17 @@
             "PW_dB",
             "PW_dB_sum",
             "Aperiodic_Exponent"
+        ],
+        "cpp_electrodes": [
+            "CP1",
+            "CPz",
+            "CP2",
+            "Cz",
+            "Pz"
+        ],
+        "cpp_slope_window": [
+            -0.6,
+            1.5
         ]
     }
 }
