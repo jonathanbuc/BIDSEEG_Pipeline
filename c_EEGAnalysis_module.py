@@ -39,6 +39,7 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from fooof import FOOOF
 from fooof.plts.annotate import plot_annotated_model
+from frequency_sliding import instantaneous_alpha_frequency
 from plotting_module import (
     plot_and_save_cbpt_results,
     plot_full_fooof_model_detailed,
@@ -1306,6 +1307,34 @@ def extract_trial_alpha(epochs_clean, tmax, alpha_freq_range, f_range,
         cf_fooof.append(cf_f); pw_fooof.append(pw_f); exp_fooof.append(exponent); offset_fooof.append(offset); r2s.append(r2)
         peak_found.append(bool(np.isfinite(cf_f))); cf_cog.append(cg)
 
+    # --- (c) FOOOF-free instantaneous alpha frequency ("frequency sliding") ---
+    # Romei & Tarasi (2026): read alpha frequency straight out of the Hilbert
+    # phase in the time domain, so EVERY trial gets a value even when the
+    # per-trial FOOOF peak above fails. The band-pass is centred on this
+    # subject's alpha peak (IAF +/- 2 Hz), estimated from the far cleaner
+    # trial-averaged spectrum; if no peak is found it falls back to
+    # alpha_freq_range.
+    subject_iaf = np.nan
+    try:
+        fm_avg = FOOOF(aperiodic_mode='fixed', peak_threshold=peak_threshold,
+                       max_n_peaks=max_n_peaks, peak_width_limits=peak_width_limits, verbose=False)
+        fm_avg.fit(freqs, spectra.mean(axis=0), f_range)
+        avg_in_alpha = fm_avg.peak_params_[(fm_avg.peak_params_[:, 0] >= lo) &
+                                           (fm_avg.peak_params_[:, 0] <= hi)]
+        if len(avg_in_alpha):
+            subject_iaf = avg_in_alpha[np.argmax(avg_in_alpha[:, 1]), 0]
+    except Exception:
+        pass
+    sfreq = ep.info['sfreq']
+    if np.isfinite(subject_iaf):
+        band_lo, band_hi = subject_iaf - 2.0, subject_iaf + 2.0
+    else:
+        band_lo, band_hi = lo, hi
+    band_lo = max(band_lo, 1.0)
+    band_hi = min(band_hi, sfreq / 2.0 - 1.0)
+    ts = ep.get_data().mean(axis=1)          # ROI/channel-mean time series per epoch
+    cf_hilbert, if_sd_hilbert = instantaneous_alpha_frequency(ts, sfreq, band_lo, band_hi)
+
     #3) Attach the per-trial estimates to the trial metadata table (row order of
     #   compute_psd matches epochs order, so this aligns trial-for-trial).
     df = epochs_clean.metadata.copy()
@@ -1314,6 +1343,8 @@ def extract_trial_alpha(epochs_clean, tmax, alpha_freq_range, f_range,
     df['alpha_exp_fooof']  = np.round(exp_fooof, 4)
     df['alpha_offset_fooof'] = np.round(offset_fooof, 4)
     df['alpha_cf_cog']     = np.round(cf_cog, 4)
+    df['alpha_cf_hilbert'] = np.round(cf_hilbert, 4)
+    df['alpha_if_sd_hilbert'] = np.round(if_sd_hilbert, 4)
     df['fooof_r2']         = np.round(r2s, 4)
     df['alpha_peak_found'] = peak_found
 
@@ -1321,7 +1352,9 @@ def extract_trial_alpha(epochs_clean, tmax, alpha_freq_range, f_range,
     epochs_clean.metadata = df
 
     coverage = 100 * np.mean(peak_found)
-    utils.log_msg(f"        Per-trial alpha: {len(df)} trials, SpecParam peak on {coverage:.0f}% of them")
+    band_src = f"IAF {subject_iaf:.1f}Hz +/-2" if np.isfinite(subject_iaf) else "alpha_freq_range"
+    utils.log_msg(f"        Per-trial alpha: {len(df)} trials, SpecParam peak on {coverage:.0f}% of them; "
+                  f"frequency-sliding (Hilbert) on 100% (band {band_lo:.1f}-{band_hi:.1f}Hz, {band_src})")
     return epochs_clean, df
 
 # _____________________________Loading___________________________________________
