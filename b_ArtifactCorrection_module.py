@@ -1,6 +1,6 @@
 # _____________________________ArtifactCorrection_______________________________________
 # run with
-# python b_ArtifactCorrection_module.py inputs.json
+# python c_ArtifactCorrection_module.py inputs.json
 #
 # * Allgemeine und Biologische Psychologie - AG Hesselman
 # * Psychologische Hochschule
@@ -652,7 +652,7 @@ if __name__ == '__main__':
         ## rereference data
         if perform_rereferencing:
             epochs, log_df = rereferencing(epochs, rereference, log_df)
-            diagnostic_plots(raw_step, bidspath_processing_subject)
+            diagnostic_plots(epochs, bidspath_processing_subject)
             # utils.save_preprocessing_step(raw_step, '04rawreref')
         else:
             utils.log_msg(f'     -- Rereferencing not performed')

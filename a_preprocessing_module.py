@@ -367,7 +367,6 @@ if __name__ == '__main__':
         utils.log_msg(f"\n_______ Processing Subject-{subject}_______")
         ## update subject variable in inputs
         utils.update_inputs(sys.argv[1], 'basic','subject_ID', subject)
-        utils.update_inputs(sys.argv[1], 'basic','current_step', None)
         
         # define subject BIDS-path
         bidspath_processing_subject = bidspath_out.copy().update(subject=subject)

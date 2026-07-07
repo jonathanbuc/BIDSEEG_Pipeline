@@ -133,7 +133,26 @@ def load_preprocessing_step(bids_path_preprocessing, subject, file_format):
             if not step:
                 step = "  BIDSified"
             log_msg(f'        Loading raw data ({step[2:]}) from {bids_path_step.basename}')
-            raw = read_raw_bids(bids_path_step, verbose=False)
+            try:
+                raw = read_raw_bids(bids_path_step, verbose=False)
+            except FileNotFoundError:
+                fallback_steps = []
+                if step:
+                    fallback_steps.append(None)
+                if step != '01rawfilter':
+                    fallback_steps.append('01rawfilter')
+
+                for fallback_step in fallback_steps:
+                    fallback_path = bids_path_step.copy().update(processing=fallback_step)
+                    log_msg(f'        Attempting fallback load from {fallback_path.basename}')
+                    try:
+                        raw = read_raw_bids(fallback_path, verbose=False)
+                        bids_path_step = fallback_path
+                        break
+                    except FileNotFoundError:
+                        continue
+                else:
+                    raise
             raw.load_data(verbose=False)
         case 'from_fif':
             log_msg(f'        Loading epoched data from {bids_path_step.basename}')

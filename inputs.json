@@ -1,7 +1,7 @@
 {
     "basic": {
-        "sourcedata": "./data/sourcedata",
-        "subject_ID": "003",
+        "sourcedata": "./data",
+        "subject_ID": "033",
         "session": "01",
         "task": "HierPrior",
         "current_step": "04epochsCorr",
@@ -47,7 +47,8 @@
         "perform_cbpt_group": false,
         "compute_sdt": true,
         "compute_ddm": true,
-        "compute_fooof": true
+        "compute_fooof": true,
+        "compute_cpp": true
     },
     "preprocessing": {
         "samplingrate_down": 250,
@@ -202,7 +203,6 @@
         "brain_parameters_to_plot": [
             "relative_alpha_dB",
             "total_theta_dB",
-            "relative_alpha_dB",
             "total_alpha_dB",
             "relative_beta_dB",
             "total_beta_dB",
@@ -213,6 +213,17 @@
             "PW_dB",
             "PW_dB_sum",
             "Aperiodic_Exponent"
+        ],
+        "cpp_electrodes": [
+            "CP1",
+            "CPz",
+            "CP2",
+            "Cz",
+            "Pz"
+        ],
+        "cpp_slope_window": [
+            -0.6,
+            1.5
         ]
     }
 }

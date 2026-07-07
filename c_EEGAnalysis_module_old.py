@@ -23,9 +23,9 @@
 
 # _____________________________Imports___________________________________________
 # basic packages
+from configparser import NoSectionError #QUESTION: is this used again? 
 import sys
 import io
-from typing import Any
 import utils_module as utils
 import mne
 import scipy.stats
@@ -33,6 +33,9 @@ import numpy as np
 import os
 import warnings
 from contextlib import redirect_stdout, redirect_stderr
+#from utils_module import ttest_rel_wrapper
+
+
 
 # Plotting
 import matplotlib.pyplot as plt
@@ -45,8 +48,7 @@ from plotting_module import (
     raincloud_plot,
     paired_plot,
     tfr_plots_subjects,
-    grand_avg_tfr_plots,
-    plot_topomap
+    grand_avg_tfr_plots
 )
 
 
@@ -253,6 +255,7 @@ def erp_analysis(epochs_list, subjects, conditions, electrodes, tmin, tmax, resu
     results = [] 
     erp_result_dir = os.path.join(result_dir, 'erp_analysis_results')
     os.makedirs(erp_result_dir, exist_ok=True)   
+
     
     # extract experimental conditions
     cond_col, conditions = list(conditions.items())[0]
@@ -263,7 +266,10 @@ def erp_analysis(epochs_list, subjects, conditions, electrodes, tmin, tmax, resu
     # iterate through subjects and epochs
     for file, subject in zip(epochs_list, subjects):
         # Load epochs once per subject
-        epochs = mne.read_epochs(file, preload=True, verbose=False)
+        fpath = str(file)
+        if not fpath.endswith('.fif'):
+            fpath += '.fif'
+        epochs = mne.read_epochs(fpath, preload=True, verbose=False)
         
         for elec in electrodes:
             for cond in conditions:
@@ -323,6 +329,148 @@ def erp_analysis(epochs_list, subjects, conditions, electrodes, tmin, tmax, resu
     df.to_csv(os.path.join(erp_result_dir, 'erp_results.csv'), index=False)
     utils.log_msg(f'        ERP analysis completed.')   
     return df
+
+def extract_cpp_features(trial_amplitude, times, subject, cond, trial_idx):
+    peak_idx = np.argmax(trial_amplitude)
+    peak_latency = times[peak_idx]
+    peak_amplitude = trial_amplitude[peak_idx]
+    slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(times, trial_amplitude)
+
+    return {
+        "Subject": subject,
+        "Condition": cond,
+        "Trial": trial_idx + 1,
+        "Peak_Latency": peak_latency,
+        "Peak_Amplitude": peak_amplitude,
+        "CPP_Slope": slope,
+        "CPP_Slope_R2": r_value**2,
+        "CPP_Slope_p":p_value
+    }
+
+
+def cpp_analysis(epochs_list, subjects, conditions, result_dir, cpp_baseline=(-0.35, -0.25)):# this baseline is what Gastrell et. al. used.
+    #cpp_baseline = using everything at the start of epoch up to stimulus oneset as a baseline period 
+    cpp_result_dir = os.path.join(result_dir, "cpp_analysis_results")
+    os.makedirs(cpp_result_dir, exist_ok=True)
+    cond_col, conditions = list(conditions.items())[0]
+    results = []
+    for file, subject in zip(epochs_list, subjects):
+        epochs.apply_baseline(baseline=cpp_baseline, verbose=False)
+        #epochs = mne.read_epochs(file, preload=True, verbose=False)
+        for cond in conditions: 
+            epochs_cond = epochs[f"{cond_col} == '{cond}'"]
+            epochs_cpp = epochs_cond.copy().pick(cpp_electrodes)
+            epochs_cpp.crop(
+                tmin = cpp_slope_window[0], 
+                tmax = cpp_slope_window[1]
+            )
+            data = epochs_cpp.get_data() # returns trials x channels x time
+            cpp = data.mean(axis=1) #averaged over channels
+
+            # for trial_idx, trial_amplitude in enumerate(cpp):
+            #     results.append(
+            #         extract_cpp_features(trial_amplitude, epochs_cpp.times, subject, cond, trial_idx)
+            #     )
+            trial_results = [
+                extract_cpp_features(trial_amplitude, epochs_cpp.times, subject, cond, i)
+                for i, trial_amplitude in enumerate(cpp)
+            ]
+            results.extend(trial_results)
+
+            peak_times = [r["Peak_Latency"] for r in trial_results]
+            peak_amps = [r["Peak_Amplitude"] for r in trial_results]
+
+            plot_cpp(cpp, epochs_cpp.times, subject, cond, cpp_result_dir, peak_times, peak_amps)
+    df = pd.DataFrame(results) 
+    df.to_csv(os.path.join(cpp_result_dir, "cpp_results.csv"), index=False)
+    
+    #check to see if the trials have a clean line or too much noise
+    weak_fits = (df["CPP_Slope_R2"] < 0.3).mean() * 100
+    utils.log_msg(f"        CPP: {weak_fits:.1f}% of trials have weak slope fits (R² < 0.3)")
+
+    
+    return df
+
+
+# maybe split up this function!
+def cpp_drift_slope_correlation(cpp_df, drift_df, condition_order, result_dir):
+    #this function based off Thoksakis & Ester analysis: compute how CCP slope changes across conditions and how drift rate changes then correlate the two per particpant
+    #cpp_df: output of cpp analysis (pandas.DataFrame)
+    #drift_df: drift rate output 
+    #condition order: list of condition
+    
+    save_dir = os.path.join(result_dir, "cpp_drift_correlation")
+    os.makedirs(save_dir, exist_ok= True)
+
+    #collasping CPP data into 1 mean slope per subject x condition
+    cpp_summary = (cpp_df.groupby(["Subject", "Condition"])["CPP_Slope"].mean().reset_index())
+    #map conditions to actual values
+    cpp_summary["cond_level"] = cpp_summary["Condition"].map({cond: i for i, cond in enumerate(condition_order)})
+    #ccp slope
+    subject_cpp_slopes={}
+    for subject, sub_df in cpp_summary.groupby("Subject"):
+        sub_df = sub_df.sort_values("cond_level")
+        slope, *_ = scipy.stats.linregress(sub_df["cond_level"], sub_df["CPP_Slope"])
+        subject_cpp_slopes[subject] = slope
+
+
+    #drift rate 
+    drift_df = drift_df.copy()
+    drift_df["cond_level"] = drift_df["Condition"].map({cond:i for i, cond in enumerate(condition_order)})
+    subject_drift_slopes={}
+    for subject, sub_df in drift_df.groupby("Subject"):
+        sub_df = sub_df.sort_values("cond_level")
+        slope, *_ = scipy.stats.linregress(sub_df["cond_level"], sub_df["drift_rate"])
+        subject_drift_slopes[subject] = slope
+
+
+    #combine
+
+    merged = pd.DataFrame({
+        "Subject": list(subject_cpp_slopes.keys()),
+        "CPP_slope_across_conditions": list(subject_cpp_slopes.values()),
+    })
+    merged["Drift_slope_across_conditions"] = merged["Subject"].map(subject_drift_slopes)
+    merged = merged.dropna() #drop any subjects that are missing data for either slope
+
+    # across-participant Pearson correlation 
+    r, p = scipy.stats.pearsonr(merged["CPP_slope_across_conditions"], merged["Drift_slope_across_conditions"])
+    utils.log_msg(f"     CPP_drift slope correlatoion: r={r:.3f}, p={p:.4f}, n = {len(merged)}")
+    merged.to_csv(os.path.join(save_dir, "cpp_drift_slope_correlation.csv"), index=False)
+
+    #plotting
+    plt.figure(figsize=(6, 5))
+    plt.scatter(merged["CPP_slope_across_condition"], merged["Drift_slope_across_condition"])
+    plt.xlabel("CPP slope across conditions (per participant)")
+    plt.ylabel("Drift rate slope across conditions (per participant)")
+    plt.title(f"r = {r:.3f}, p = {p:.4f}, n = {len(merged)}")
+    plt.savefig(os.path.join(save_dir, "cpp_drift_slope_correlation.png"), dpi=300, bbox_inches="tight")
+    plt.close()
+
+    return merged
+
+
+
+def plot_cpp(cpp, times, subject, condition, cpp_result_dir, peak_times, peak_amps):
+    #plt.figure(figsize=(10,6))
+    for trial_idx, trial in enumerate(cpp):
+        plt.figure(figsize=(8,5))
+        plt.plot(times,trial)
+        
+        peak_time = peak_times[trial_idx]
+        peak_amp = peak_amps[trial_idx]
+
+        plt.scatter(peak_time, peak_amp, color="red", label="Peak")
+        plt.axvline(0, color="black", linestyle="--")
+        plt.xlabel("Time (s)")
+        plt.ylabel("Amplitude (µV)")
+        plt.title(f"{subject} | {condition} | Trial {trial_idx+1}")
+        plt.legend()
+        plt.savefig(os.path.join(cpp_result_dir, f"{subject}_{condition}_Trial_{trial_idx+1}.png"), dpi=300, bbox_inches="tight")
+        plt.close()
+
+
+
 
 def plot_erp_comparison(evokeds, conditions, electrodes, result_dir):
     """
@@ -412,81 +560,6 @@ def plot_joint_erp(evokeds, conditions, result_dir, times='peaks'):
         fig.savefig(os.path.join(erp_result_dir, f"joint_erp_{cond}.png"), dpi=300, bbox_inches='tight')
         plt.close(fig)
         utils.log_msg(f'        Joint ERP plot saved for condition: {cond}')
-
-
-def extract_cpp_features(trial_amplitude, times, subject, cond, trial_idx):
-    peak_idx = np.argmax(trial_amplitude)
-    peak_latency = times[peak_idx]
-    peak_amplitude = trial_amplitude[peak_idx]
-    slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(times, trial_amplitude)
-
-    return {
-        "Subject": subject,
-        "Condition": cond,
-        "Trial": trial_idx + 1,
-        "Peak_Latency": peak_latency,
-        "Peak_Amplitude": peak_amplitude,
-        "CPP_Slope": slope
-    }
-
-
-def cpp_analysis(epochs_list, subjects, conditions, result_dir):
-    cpp_result_dir = os.path.join(result_dir, "cpp_analysis_results")
-    os.makedirs(cpp_result_dir, exist_ok=True)
-    cond_col, conditions = list(conditions.items())[0]
-    results = []
-    for file, subject in zip(epochs_list, subjects):
-        epochs = mne.read_epochs(file, preload=True, verbose=False)
-        for cond in conditions: 
-            epochs_cond = epochs[f"{cond_col} == '{cond}'"]
-            epochs_cpp = epochs_cond.copy().pick(cpp_electrodes)
-            epochs_cpp.crop(
-                tmin = cpp_slope_window[0], 
-                tmax = cpp_slope_window[1]
-            )
-            data = epochs_cpp.get_data() # returns trials x channels x time
-            cpp = data.mean(axis=1) #averaged over channels
-
-            # for trial_idx, trial_amplitude in enumerate(cpp):
-            #     results.append(
-            #         extract_cpp_features(trial_amplitude, epochs_cpp.times, subject, cond, trial_idx)
-            #     )
-            trial_results = [
-                extract_cpp_features(trial_amplitude, epochs_cpp.times, subject, cond, i)
-                for i, trial_amplitude in enumerate(cpp)
-            ]
-            results.extend(trial_results)
-
-            peak_times = [r["Peak_Latency"] for r in trial_results]
-            peak_amps = [r["Peak_Amplitude"] for r in trial_results]
-
-            plot_cpp(cpp, epochs_cpp.times, subject, cond, cpp_result_dir, peak_times, peak_amps)
-    df = pd.DataFrame(results) 
-    df.to_csv(os.path.join(cpp_result_dir, "cpp_results.csv"), index=False)
-    return df
-
-
-
-def plot_cpp(cpp, times, subject, condition, cpp_result_dir, peak_times, peak_amps):
-    #plt.figure(figsize=(10,6))
-    for trial_idx, trial in enumerate(cpp):
-        plt.figure(figsize=(8,5))
-        plt.plot(times,trial)
-        
-        peak_time = peak_times[trial_idx]
-        peak_amp = peak_amps[trial_idx]
-
-        plt.scatter(peak_time, peak_amp, color="red", label="Peak")
-        plt.axvline(0, color="black", linestyle="--")
-        plt.xlabel("Time (s)")
-        plt.ylabel("Amplitude (µV)")
-        plt.title(f"{subject} | {condition} | Trial {trial_idx+1}")
-        plt.legend()
-        plt.savefig(os.path.join(cpp_result_dir, f"{subject}_{condition}_Trial_{trial_idx+1}.png"), dpi=300, bbox_inches="tight")
-        plt.close()
-
-
-
 
 def collect_evokeds_roi(epochs_list, conditions, electrodes, cond_col):
     """ 
@@ -760,6 +833,7 @@ def subject_tfr(epochs_clean, baseline, tmin, tmax, fmin, fmax, time_res, freq_r
     power_df = pd.concat(power_df_list, ignore_index=True, sort=False)     
        
     return tfr_dict_avg, tfr_dict_epochs, power_df, log_df
+    #return tfr_dict_avg, power_df, log_df #tfr_dict_epochs,
 
 # Group TFR Analysis
 def group_tfr(tfr_dict_subjects, condition_dict, eeg_dir):
@@ -787,6 +861,13 @@ def group_tfr(tfr_dict_subjects, condition_dict, eeg_dir):
     This function computes the grand-average TFR across subjects for each condition
     and saves the results to the specified output directory.
     """
+
+    # Paths to output CSVs
+    # subject_csv = os.path.join(tfr_dir, f"{datatype}_summary.csv")
+    # master_csv = os.path.join(tfr_dir, "all_subjects_cluster_summary.csv")
+
+    # # List to accumulate cluster-level summary rows for CSV
+    # rows = []
 
     # make plot path 
     tfr_dir = os.path.join(eeg_dir, 'groupTFR')
@@ -829,7 +910,6 @@ def _find_cue_onset(sample_tfr, estimated_cue_onset):
         return 0.0
     cue_onset = sample_tfr.times[np.argmin(np.abs(sample_tfr.times - estimated_cue_onset))]
     return max(cue_onset, sample_tfr.times.min())
-
 
 # Data Extraction from TFR Function for CBPT
 def cbpt_tfr_prep(tfr_dict, cond1, cond2, datatype, epochs_min, log_df):
@@ -1032,10 +1112,114 @@ def CBPT(tfr_dict, datatype, comparisons, roi, bidspath_out, log_df, epochs_min,
                 data_1, data_2, freqs, times_ms, T_obs, clusters, cluster_p_values,
                 cond1, cond2, roi, datatype, alpha, tfr_dir
             )
+
+                
+            
+
     return log_df
 
 
-def cbpt_Ftest(f_test_array, n_permutations, alpha, seed, chn_adjacency):
+alpha = 0.05
+def plot_cbpt_results(cluster_p_values, clusters, T_obs, alpha, component, comparison, epochs_info, save_dir):
+    """
+    Plot topographic maps for all significant clusters identified by
+    the cluster-based permutation test (CBPT).
+
+    Parameters
+    ----------
+    cluster_p_values : array
+        P-values for each detected cluster.
+    clusters : array
+        Boolean masks indicating which channels belong to each cluster.
+    T_obs : array
+        Observed test statistic (e.g., t-values) for each channel.
+    alpha : float
+        Significance threshold for determining significant clusters.
+    component : str
+        ERP component name used for labeling outputs.
+    comparison : str
+        Condition comparison name used for labeling outputs.
+    epochs_info : mne.Info
+        Channel information required for topographic plotting.
+    save_dir : str
+        Directory where figures will be saved.
+    """
+
+
+    # Find indices of clusters whose p-values survive the significance threshold
+    sig_clusters = np.where(cluster_p_values < alpha)[0]
+    utils.log_msg(f"Found {len(sig_clusters)} significant clusters")
+
+    #Topoplot for each significant cluster 
+    for clu_idx in sig_clusters:
+        utils.log_msg(f"Cluster {clu_idx}: p = {cluster_p_values[clu_idx]:.4f}, n_channels = {clusters[clu_idx].sum()}")
+        plot_topomap_generic(
+            values=T_obs, info=epochs_info,
+            save_path=os.path.join(save_dir, f"{component}_{comparison}_cluster{clu_idx}_cbpt_topoplot.png"),
+            label=f'{component} {comparison} T Values',
+            title=f"Cluster {clu_idx}\np = {cluster_p_values[clu_idx]:.4f}",
+            mask=clusters[clu_idx], cmap='viridis'
+        )
+
+
+def test_arrays(data, component, cond_names):
+    """
+    Reorganizes fooof_bands_total sample into arrays for cluster analysis for repeated measures.
+
+    Parameters
+    ----------
+    data = pandas.DataFrame 
+        with columns ['participant', 'exp', 'channels', component]
+    component : str
+        Name of the component to analyze, e.g. 'Aperiodic_Exponent'
+    cond_names : list of str
+        List of condition names.
+
+    Returns
+    -------
+    f_test_array : numpy.ndarray
+        Array for the f test across all conditions.
+    t_test_arrays : dict
+        Dictionary containing arrays for each t-test comparison.
+    """
+    average_rows = data[data["channels"] == "average"].index
+    data = data.drop(average_rows, inplace=False)
+
+    participants = sorted(data["participant"].unique())
+
+    condition_arrays = {}
+
+    for cond in cond_names:
+        pivot = (
+            data.loc[data["exp"] == cond, ["participant", "channels", component]]
+                .groupby(["participant", "channels"])[component]
+                .mean()
+                .unstack("channels")
+                .reindex(index=participants, columns=sorted(data["channels"].unique()))
+        )
+
+        if pivot.isna().any().any():
+            missing = pivot.isna().sum()
+            #raise ValueError(f"Missing values in condition {cond}:\n{missing}")
+            utils.log_msg(f"Missing values in condition {cond}:\n{missing}")
+
+        condition_arrays[cond] = pivot.to_numpy()
+
+    f_test_array = np.stack([condition_arrays[cond] for cond in cond_names], axis=1)
+
+    utils.log_msg(f"f_test_array.shape: {f_test_array.shape}")
+
+    t_test_arrays = {}
+
+    t_test_arrays["base_lowlevel"] = condition_arrays["base"] - condition_arrays["lowlevel"]
+    t_test_arrays["base_highlevel"] = condition_arrays["base"] - condition_arrays["highlevel"]
+    t_test_arrays["low_highlevel"] = condition_arrays["lowlevel"] - condition_arrays["highlevel"]
+
+    utils.log_msg(f"t_test_arrays['base_lowlevel'].shape: {t_test_arrays['base_lowlevel'].shape}")
+
+    return f_test_array, t_test_arrays
+
+def cbpt_global(f_test_array, n_permutations, alpha, seed, chn_adjacency):
     """Performs a cluster-based permutation test for the global F-test across all conditions.
     
     Parameters
@@ -1068,25 +1252,22 @@ def cbpt_Ftest(f_test_array, n_permutations, alpha, seed, chn_adjacency):
         effects = 'A',
         pvalue = alpha
     )
-    utils.log_msg(f"        Running global CBPT for F-test across all conditions...")
+    utils.log_msg(f"Running global CBPT for F-test across all conditions...")
 
-    # ______________________Run CBPT for F-test across all conditions_____________________
-    stdout_buffer = io.StringIO() 
-    with redirect_stdout(stdout_buffer):  
-        F_obs, clusters, cluster_p_values, H0 = mne.stats.permutation_cluster_test(
-            X = f_test_array,
-            threshold = threshold, 
-            n_permutations= n_permutations, 
-            tail=1, # 0 = two-tailed (undirected) test, 1 = right-tailed test, -1 = left-tailed test
-            stat_fun= None,
-            adjacency=chn_adjacency,
-            n_jobs=-1, # might be unnecessary 
-            seed=seed, 
-            out_type="mask"
-        )
+    F_obs, clusters, cluster_p_values, H0 = mne.stats.permutation_cluster_test(
+        X = f_test_array,
+        threshold = threshold, 
+        n_permutations= n_permutations, 
+        tail=1, # 0 = two-tailed (undirected) test, 1 = right-tailed test, -1 = left-tailed test
+        stat_fun= None,
+        adjacency=chn_adjacency,
+        n_jobs=-1, # might be unnecessary 
+        seed=seed, 
+        out_type="mask"
+    )
 
     if cluster_p_values is not None:
-        utils.log_msg(f"        --- Global CBPT cluster p values: {cluster_p_values}")
+        utils.log_msg(f"  --- Global CBPT cluster p values: {cluster_p_values}")
     
     results = {}
 
@@ -1099,7 +1280,7 @@ def cbpt_Ftest(f_test_array, n_permutations, alpha, seed, chn_adjacency):
     
     return results
 
-def cbpt_Ttest(t_test_arrays, n_permutations, seed, chn_adjacency):
+def cbpt_local(t_test_arrays, n_permutations, seed, chn_adjacency):
     """Performs cluster-based permutation tests for local t-tests.
     
     Parameters
@@ -1122,22 +1303,20 @@ def cbpt_Ttest(t_test_arrays, n_permutations, seed, chn_adjacency):
     results = {}
 
     for comp, arr in t_test_arrays.items():
-        utils.log_msg(f"        Running CBPT for {comp}")
-
-        stdout_buffer = io.StringIO() 
-        with redirect_stdout(stdout_buffer):
-            T_obs, clusters, cluster_p_values, H0 = mne.stats.permutation_cluster_1samp_test(
-                X = arr,
-                threshold= None, 
-                n_permutations = n_permutations, 
-                tail=0, # 0 = two-tailed (undirected) test, 1 = right-tailed test, -1 = left-tailed test
-                stat_fun=None, 
-                adjacency=chn_adjacency,
-                n_jobs=-1, # might be unnecessary, alt None
-                seed=seed,
-                out_type="mask", 
-                )
-        utils.log_msg(f"        --- Cluster p_vals for {comp}: {cluster_p_values}")
+        utils.log_msg(f"Running CBPT for {comp}")
+    
+        T_obs, clusters, cluster_p_values, H0 = mne.stats.permutation_cluster_1samp_test(
+            X = arr,
+            threshold= None, 
+            n_permutations = n_permutations, 
+            tail=0, # 0 = two-tailed (undirected) test, 1 = right-tailed test, -1 = left-tailed test
+            stat_fun=None, 
+            adjacency=chn_adjacency,
+            n_jobs=-1, # might be unnecessary, alt None
+            seed=seed,
+            out_type="mask", 
+            )
+        utils.log_msg(f"  --- Cluster p_vals for {comp}: {cluster_p_values}")
 
         results[comp] = {
             'T_obs':      T_obs,
@@ -1148,7 +1327,9 @@ def cbpt_Ttest(t_test_arrays, n_permutations, seed, chn_adjacency):
 
     return results
 
-def cbpt_spectral_parameterization(condition_dict, cbpt_n_permutations, cbpt_alpha, cbpt_seed, epochs_info, csv_path, save_dir):
+
+
+def run_fooof_cbpt(condition_dict, cbpt_n_permutations, cbpt_alpha, cbpt_seed, epochs_info, csv_path, save_dir):
 
     """
     Run cluster-based permutation testing (CBPT) on FOOOF-derived
@@ -1162,66 +1343,59 @@ def cbpt_spectral_parameterization(condition_dict, cbpt_n_permutations, cbpt_alp
     """
 
     # Compute channel adjacency matrix required by cluster-based statistics
-    stdout_buffer = io.StringIO() 
-    with redirect_stdout(stdout_buffer):  
-        chn_adjacency, _ = mne.channels.find_ch_adjacency(epochs_info, ch_type='eeg')
-
+    chn_adjacency, _ = mne.channels.find_ch_adjacency(epochs_info, ch_type='eeg')
     # Extract experimental conditions from configuration dictionary
     cond_col, conditions = list(condition_dict.items())[0]
 
-    # Extract CBPT configuration
-    cbpt_cfg = inputs['Analysis']['cbpt']
-    perform_cbpt_Ftest = cbpt_cfg['perform_cbpt_Ftest']
-    perform_cbpt_Ttest = cbpt_cfg['perform_cbpt_Ttest']
-    comparisons = inputs["Analysis"]["comparisons"]#list of [str, str]
+    run_global = inputs['Analysis']['cbpt'].get('run_global', True)
+    run_local = inputs['Analysis']['cbpt'].get('run_local', True)
+
     
     data = pd.read_csv(csv_path, delimiter=',')
     
     components_cbpt = [
-        "exponent",
-        "offset",
-        "beta_PW_dB_Maxpeak",
-        "alpha_PW_dB_Maxpeak"
+        "Aperiodic_Exponent",
+        "Aperiodic_Offset",
+        "total_delta_dB",
+        "total_theta_dB",
+        "total_alpha_dB",
+        "total_beta_dB",
+        "total_gamma_dB",
+        "alpha_CF_Hz_peak"
     ]
 
     global_cbpt_results = {}
     local_cbpt_results = {}
     
     
-    # ______________________Run CBPT for selected spectral feature_____________________
+    # Run CBPT separately for each spectral feature
+   
     for component in components_cbpt:
-        utils.log_msg(f"        ==== Testing {component}... ====")
-        f_test_array, t_test_arrays = utils._test_arrays(data, component, conditions, comparisons)
-        if perform_cbpt_Ftest:
-            global_cbpt_results[component] = cbpt_Ftest(f_test_array, cbpt_n_permutations, cbpt_alpha, cbpt_seed, chn_adjacency)
-        if perform_cbpt_Ttest:
-            local_cbpt_results[component] = cbpt_Ttest(t_test_arrays, cbpt_n_permutations, cbpt_seed, chn_adjacency)
-    
-    # ______________________Plot topomap of significant T-test CBPT clusters_____________________
-    if perform_cbpt_Ttest: 
+        utils.log_msg(f"   ==== Testing {component}... ====")
+        f_test_array, t_test_arrays = test_arrays(data, component, conditions)
+        if run_global:
+            global_cbpt_results[component] = cbpt_global(f_test_array, cbpt_n_permutations, cbpt_alpha, cbpt_seed, chn_adjacency)
+        if run_local:
+            local_cbpt_results[component] = cbpt_local(t_test_arrays, cbpt_n_permutations, cbpt_seed, chn_adjacency)
+    if run_local: 
         for component in components_cbpt:
             for comparison_key in local_cbpt_results[component]:
-                res = local_cbpt_results[component][comparison_key]
-                # Identify significant clusters from pairwise t-tests
-                sig_clusters = np.where(res['cluster_pv'] < cbpt_alpha)[0]
-                for clu_idx in sig_clusters:
-                    plot_topomap(
-                        values=res['T_obs'],
-                        info=epochs_info,
-                        save_path=os.path.join(save_dir, f"{component}_{comparison_key}_cluster{clu_idx}_cbpt_topoplot.png"),
-                        label=f'{component} {comparison_key} T Values',
-                        title=f"Cluster {clu_idx}\np = {res['cluster_pv'][clu_idx]:.4f}",
-                        mask=res['clusters'][clu_idx],
-                        cmap='viridis'
-                    )
-
-    # ______________________Plot topomap of significant F-test CBPT clusters_____________________
-    if perform_cbpt_Ftest:
-        for component, label in [('offset', 'Aperiodic Offset F Values'), ('exponent', 'Aperiodic Exponent F Values')]:
+                plot_cbpt_results(
+                    local_cbpt_results[component][comparison_key]['cluster_pv'],
+                    local_cbpt_results[component][comparison_key]['clusters'],
+                    local_cbpt_results[component][comparison_key]['T_obs'],
+                    cbpt_alpha, component, comparison_key, epochs_info, save_dir
+                
+                )
+                
+        
+    # Generate topoplots for significant global CBPT clusters.
+    if run_global:
+        for component, label in [('Aperiodic_Offset', 'Aperiodic Offset F Values'), ('total_alpha_dB', 'Alpha F Values')]:
             # Identify significant clusters from omnibus F-tests
             sig_clusters = np.where(global_cbpt_results[component]['cluster_pv'] < cbpt_alpha)[0]
             for clu_idx in sig_clusters:
-                plot_topomap(
+                plot_topomap_generic(
                     values=global_cbpt_results[component]['F_obs'],
                     info=epochs_info,
                     save_path=os.path.join(save_dir, f"{component}_global_cluster{clu_idx}_cbpt_topoplot.png"),
@@ -1231,173 +1405,306 @@ def cbpt_spectral_parameterization(condition_dict, cbpt_n_permutations, cbpt_alp
                     cmap='viridis'
                 )
                 
-    return global_cbpt_results if perform_cbpt_Ftest else None, local_cbpt_results if perform_cbpt_Ttest else None
+    return global_cbpt_results if run_global else None, local_cbpt_results if run_local else None
 
 
 
-#_____________Spectral Parameterization______________
+#_____________FOOOF______________
 
-def spectral_parameterization(epochs_clean, condition_dict, tmax, baseline, f_range, peak_threshold, max_n_peaks, peak_width_limits, narrowband_freqs, bidspath_out_subject, subject, ):
+
+
+def run_fooof_analysis(epochs_clean, condition_dict, subject, bidspath_out_subject, tmax, narrowband_freqs, baseline, f_range, peak_threshold, log_df): #removed roi and added log_df
     """
-    Whole-head spectral parameterization (FOOOF): fit a single FOOOF model to the PSD averaged across all
-    channels, per condition. Returns the aperiodic exponent per condition
-    (NaN if the global fit fails QC).
+    Fits a FOOOF model to the power spectrum, saves results (JSON), plots (basic + full), and summary CSVs.
+
+    Parameters
+    ----------
+    freqs : array-like
+        Frequencies from the power spectrum.
+    spectrum : array-like
+        Power spectrum values.
+    subject : str
+        Subject ID.
+    condition : str
+        Condition label.
+    roi : str
+        Channel name (e.g., 'Oz').
+    bidspath_out_subject : mne_bids.BIDSPath
+        BIDSPath object with .directory set to subject output.
+    global_master_csv : str or None
+        Path to master summary CSV (appended if provided).
+    f_range : tuple
+        Frequency range for FOOOF fitting.
+    peak_threshold : float
+        Threshold for peak detection.
+
+    Returns
+    -------
+    fm : FOOOF
+        The fitted FOOOF model.
     """
-    save_dir = os.path.join(bidspath_out_subject.directory, 'SpectralParameterization')
+
+        # ----- Define paths -----
+    save_dir = os.path.join(bidspath_out_subject.directory, 'FOOOF')
     os.makedirs(save_dir, exist_ok=True)
+    summary_dir = os.path.join(save_dir, 'summaries')
+    os.makedirs(summary_dir, exist_ok=True)
 
+    # extract conditions
     cond_col, conditions = list(condition_dict.items())[0]
-    epochs_clean.apply_baseline(baseline=baseline, verbose=False)
-    
 
-    df_spectral_global_list = []
-    df_spectral_local_list = []
+    # epochs_clean.apply_baseline(baseline=[-0.3, -0.1], verbose=False)
+    epochs_clean.apply_baseline(baseline=baseline, verbose=False)
+
+    df_fooofsum_list = []
+    df_bandpeaks_list = []
+
+    utils.log_msg(f"        fitting SpecParam with the following parameters: peak_threshold={peak_threshold}, max_n_peaks=6, peak_width_limits=(1.5, 4), f_range={f_range}")
+    
     for condition in conditions:
-        psd = utils._compute_condition_psd(epochs_clean, cond_col, condition, tmax)
+
+        epochs_cond = epochs_clean[f"{cond_col} == '{condition}'"]
+
+        # Pick the specified roi and crop to prediction window
+        epochs_cond = epochs_cond.crop(tmin=0, tmax=tmax) #prediction window: tmin=0, tmax=tmax
+
+        # Compute PSD
+        psd = epochs_cond.compute_psd(method='welch', verbose=False)# whole epoch: n_fft=326, prestim interval: n_fft=251  fmin=f_range[0], fmax=f_range[1],
+       
 
         # Get PSD data and freqs
         freqs = psd.freqs
-        psd_data = psd.get_data()
-        all_channels = psd.ch_names
-
-        #__________Fit global SpecParam Model__________
+        all_channels = psd.ch_names 
+        psd_data = psd.get_data()  # extract once, pass as plain numpy array
+        
+        # mean PSD across all channels
         mean_psd = psd_data.mean(axis=(0, 1))
         fm_global = FOOOF(aperiodic_mode='fixed', peak_threshold=peak_threshold,
-                          max_n_peaks=max_n_peaks, peak_width_limits=peak_width_limits)
+                  max_n_peaks=6, peak_width_limits=(1.4, 8))
         fm_global.fit(freqs, mean_psd, f_range)
+        global_exp = fm_global.aperiodic_params_[1]
+        global_r2 = fm_global.r_squared_ 
 
-        # extract global spectral features
-        df_spectral_global = utils._extract_spectral_features(fm_global, condition, subject, narrowband_freqs, channels=None)
-        df_spectral_global_list.append(df_spectral_global)
+        if global_r2 < 0.9 or global_exp < 0: 
+            global_exp = np.nan 
 
-        #__________Fit and extract local SpecParam Models__________
-        # results is a list with one df_spectral_local per channel
+        #for parallel processing 
         results = Parallel(n_jobs=-1, backend='loky')( # n_jobs = -1 uses every CPU on computer, loky = default 
-        delayed(utils._fit_channel)(  
-            channels, psd_data, psd.ch_names, freqs, condition, subject,
-            save_dir, f_range, peak_threshold, narrowband_freqs
-        )
-        for channels in all_channels # loop through all channels parallel processing
-        )
-        
-        
-        #__________Plot topomap of local spectral features__________
-        df_cond_local = pd.concat(results, ignore_index=True)
-        for param in ['offset', 'exponent']:
-            plot_topomap(
-                info=psd.info,
-                df=df_cond_local,
-                param=param,
-                channel_col='channel',
-                save_path=os.path.join(save_dir, f"sub-{subject}_{condition}_{param}_topomap.png"),
-                label=param,
+            delayed(_fit_channel)(  
+                channels, psd_data, psd.ch_names, freqs, condition, subject,
+                save_dir, f_range, peak_threshold, narrowband_freqs
             )
+            for channels in all_channels
+        )
 
-        # concatenate individual local spectral features across channels
-        for df_spectral_local in results:
-            df_spectral_local_list.append(df_spectral_local)
+        for fm, df_fooofsum_cond, df_bandpeaks_cond in results:
+            df_fooofsum_cond['global_Aperiodic_Exponent'] = global_exp 
+            df_fooofsum_list.append(df_fooofsum_cond)
+            df_bandpeaks_list.append(df_bandpeaks_cond)
+        
+    df_fooofsum = pd.concat(df_fooofsum_list, ignore_index=True)
+    df_bandpeaks = pd.concat(df_bandpeaks_list, ignore_index=True)
 
-    # concatenate local spectral features across conditions
-    df_spectral_local = pd.concat(df_spectral_local_list, ignore_index=True) #type: ignore
-    df_spectral_local.to_csv(os.path.join(save_dir, f"sub-{subject}_spectral_local.csv"), index=False)
+   
+    
+    
+    #discard negative aperiodic_exponents and r^2 filtering
+    df_bandpeaks.loc[df_bandpeaks['Aperiodic_Exponent'] < 0, 'Aperiodic_Exponent'] = float('nan')
+    df_bandpeaks.loc[df_bandpeaks['R_squared'] < 0.9, 'Aperiodic_Exponent'] = float('nan')
 
-    # concatenate global spectral features across conditions
-    df_spectral_global = pd.concat(df_spectral_global_list, ignore_index=True)
-    df_spectral_global.to_csv(os.path.join(save_dir, f"sub-{subject}_spectral_global.csv"), index=False)
+    
+    #topoplot of aperiodic exponents 
+    ch_orders = psd.ch_names
+    exponent_by_ch = df_bandpeaks.groupby('channels')['Aperiodic_Exponent'].mean() #improve speed, grouping and scanning 64 times instead of doing it indivudally  
+    avg_exponents = np.array([exponent_by_ch.get(ch, np.nan) for ch in ch_orders])
+    avg_exponents_plot = np.nan_to_num(avg_exponents, nan=0.0)
+    mask = ~np.isnan(avg_exponents)
+    plot_topomap_generic(
+        values=avg_exponents_plot,
+        info=psd.info,
+        save_path=os.path.join(save_dir, f"sub-{subject}_aperiodic_topomap.png"),
+        label='Aperiodic Exponent',
+        mask=mask,
+        mask_params=dict(marker='o', markerfacecolor='grey', markersize=2)
+    )
 
-    return df_spectral_global, df_spectral_local
 
-# _____________ Per-trial individual alpha frequency (IAF) _____________
-def extract_trial_alpha(epochs_clean, tmax, alpha_freq_range, f_range,
-                        peak_threshold, subject, max_n_peaks, peak_width_limits):
+    utils.log_update(log_df, 'max_n_peaks', 6) # logs the parameters used
+
+    
+    return fm, df_fooofsum, df_bandpeaks
+
+def plot_topomap_generic(values, info, save_path, label, title=None, mask=None, mask_params=None, cmap="viridis", colorbar_label="Value", extrapolate='head'):
     """
-    Estimate the individual alpha centre frequency for EACH trial (epoch).
+    Create and save an EEG topographic map.
 
-    run_fooof_analysis() above averages the spectrum across all trials of a
-    condition and fits ONE FOOOF model per condition. This function instead keeps
-    every epoch separate, so each trial gets its own alpha-frequency value — the
-    quantity Jonathan wants as a trial-by-trial covariate in the drift model.
-
-    Two estimates are produced per epoch:
-
-      alpha_cf_fooof : centre frequency of the strongest FOOOF peak inside the
-                       alpha band (the parametric "peak" estimate). NaN when FOOOF
-                       finds no alpha peak on that trial — this NaN rate is the
-                       reliability we are measuring on these short epochs.
-      alpha_cf_cog   : power-weighted mean frequency ("centre of gravity") inside
-                       the alpha band, computed AFTER removing the 1/f background.
-                       Always defined, so it is the robust fallback.
-
-    Returns epochs.metadata with the per-trial alpha columns appended, and writes
-    it to sub-<subject>_trial_alpha.csv.
+    Parameters
+    ----------
+    values : array
+        Channel-wise values to visualize.
+    info : mne.Info
+        EEG channel metadata.
+    mask : array | None
+        Boolean mask used to highlight significant channels.
+    save_path : str
+        Output path for the saved figure.
     """
-    lo, hi = alpha_freq_range
-    # 1) Restrict to the post-stimulus prediction window and the occipital ROI.
-    #    .copy() so the caller's epochs are never mutated; crop/pick keep all epochs.
-    ep = epochs_clean.copy().crop(tmin=0, tmax=tmax)#.pick(roi)
+    fig, ax = plt.subplots(figsize=(6,5))
+    im, _ = mne.viz.plot_topomap(
+        values,
+        info,
+        mask=mask,
+        mask_params=mask_params,
+        axes=ax,
+        show=False,
+        extrapolate=extrapolate,
+        cmap=cmap 
+    )
+    if title:
+        ax.set_title(title) 
+    colorbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
+    colorbar.set_label(label)  
+    fig.savefig(save_path, dpi=300, bbox_inches='tight')
+    plt.close()
 
-    # 2) One power spectrum PER EPOCH. n_per_seg = full window => a single Welch
-    #    segment, i.e. the finest frequency resolution this ~1.5 s window allows
-    #    (~1/1.5 ≈ 0.67 Hz). Shorter segments would average down noise but blur the
-    #    resolution to ~2 Hz — too coarse to locate an alpha peak per trial.
-    n_times = ep.get_data().shape[-1]
-    psd = ep.compute_psd(method='welch', fmin=f_range[0], fmax=f_range[1],
-                        n_fft=n_times, n_per_seg=n_times, n_jobs=1, verbose=False)
-    freqs = psd.freqs
-    spectra = psd.get_data().mean(axis=1)          # (n_epochs, n_channels, n_freqs) -> mean over ROI
-    alpha_mask = (freqs >= lo) & (freqs <= hi)
 
-    cf_fooof, pw_fooof, exp_fooof, offset_fooof, r2s, peak_found, cf_cog = [], [], [], [], [], [], []
-    for spectrum in spectra:
-        # --- (a) parametric alpha peak via FOOOF ---
-        fm = FOOOF(aperiodic_mode='fixed', peak_threshold=peak_threshold,
-                max_n_peaks=max_n_peaks, peak_width_limits=peak_width_limits, verbose=False)
-        cf_f, pw_f, r2 = np.nan, np.nan, np.nan
-        try:
-            fm.fit(freqs, spectrum, f_range)
-            r2 = fm.r_squared_
-            offset, exponent = fm.aperiodic_params_
-            peaks = fm.peak_params_                 # rows of (CF, PW, BW)
-            in_alpha = peaks[(peaks[:, 0] >= lo) & (peaks[:, 0] <= hi)]
-            if len(in_alpha):
-                cf_f, pw_f = in_alpha[np.argmax(in_alpha[:, 1])][:2]  # extract highest Gaussian fit as power peak
-        except Exception:
-            pass
 
-        # --- (b) robust centre of gravity, with 1/f removed ---
-        # Rebuild the aperiodic (1/f) background from FOOOF's fitted params and
-        # subtract it, so the weighting reflects true oscillatory power rather than
-        # the low-frequency tilt of the background. Fall back to the raw spectrum
-        # if the FOOOF fit itself failed.
-        if np.isfinite(r2):
-            offset, exponent = fm.aperiodic_params_
-            aperiodic_lin = 10 ** (offset - exponent * np.log10(freqs))
-            periodic = spectrum - aperiodic_lin
+
+def _fit_channel(channels, psd_data, ch_names, freqs, condition, subject, save_dir, f_range, peak_threshold, narrowband_freqs):
+    """
+    Fit a FOOOF model to the average PSD of a single EEG channel,
+    save model outputs/figures, and extract spectral features for
+    downstream statistical analysis.
+
+    Returns
+    -------
+    fm : FOOOF
+        Fitted FOOOF model.
+    df_fooofsum_cond : DataFrame
+        Peak-level summary table.
+    DataFrame
+        Channel-level band-power summary table.
+
+    Seperate function purpose for parallel processing 
+
+    """
+
+    ch_idx = ch_names.index(channels) #to reduce redundancy with copying and so forth 
+    spectrum = psd_data[:, ch_idx, :].mean(axis=0)
+    
+    model_path = os.path.join(save_dir, f"sub-{subject}_{condition}_{channels}_fooof_model.json")
+    fig_path_basic = os.path.join(save_dir, f"sub-{subject}_{condition}_{channels}_fooof_basic.png")
+    fig_path_full = os.path.join(save_dir, f"sub-{subject}_{condition}_{channels}_fooof_full.png") 
+                
+    # ----- Fit model -----
+    fm = FOOOF(aperiodic_mode='fixed', peak_threshold=peak_threshold,
+            max_n_peaks=6, peak_width_limits=(1.4, 8)) 
+    fm.fit(freqs, spectrum, f_range)
+
+    # ----- Save model JSON -----
+    fm.save(model_path, save_results=True)
+
+    # Detailed full iterative model
+    plot_full_fooof_model_detailed(
+        fm,
+        subject=subject,
+        condition=condition,
+        save_path=fig_path_full,
+        log_log=True
+    )
+
+    fm.plot()
+    plt.savefig(fig_path_basic, dpi=300)
+    plt.close()
+
+    
+    # ----- Extract and save summary -----
+    rows_fooofsum = []
+    for idx, (cf, pw, bw) in enumerate(fm.peak_params_, start=1):
+        rows_fooofsum.append({
+            "participant": f'sub-{subject}',
+            "exp": condition,
+            "Peak #": idx,
+            "CF_Hz": cf,
+            "PW_log10": pw,
+            "PW_dB": 10 * pw,
+            "BW_Hz": bw,
+            "Aperiodic_Offset": fm.aperiodic_params_[0],
+            "Aperiodic_Exponent": fm.aperiodic_params_[1],
+            "R_squared": fm.r_squared_,
+            "Error": fm.error_,
+            "channels": channels
+        })
+    
+    #discard negative aperiodic_exponents and r^2 filtering
+
+    df_fooofsum_cond = pd.DataFrame(rows_fooofsum).round(6)
+    if not df_fooofsum_cond.empty: #to prevent crash when checing for validity if it is empty/no peaks
+        df_fooofsum_cond.loc[df_fooofsum_cond['Aperiodic_Exponent'] < 0, 'Aperiodic_Exponent'] = np.nan
+        df_fooofsum_cond.loc[df_fooofsum_cond['R_squared'] < 0.9, 'R_squared'] = np.nan
+        df_fooofsum_cond['Channels_Validity'] = (
+            df_fooofsum_cond['Aperiodic_Exponent'].notna() &
+            df_fooofsum_cond['R_squared'].notna()
+        )
+    
+
+        # #aperiodic exponent over entire head
+        # global_exponent = (
+        #     df_fooofsum_cond
+        #     .groupby(['participant', 'exp'])['Aperiodic_Exponent']
+        #     .transform('mean')
+        # )
+        # df_fooofsum_cond['global_Aperiodic_Exponent'] = global_exponent
+        
+   
+    
+
+
+
+    # ----- Extract Delta, Theta, Alpha, Beta and Gamma Peak and save summary -----
+    # initializing single row (dict instead of list) with model params                
+    rows_bandpeaks_dict = {
+        "participant": f'sub-{subject}',
+        "exp": condition,
+        "channels": channels,
+        "Aperiodic_Offset": fm.aperiodic_params_[0],
+        "Aperiodic_Exponent": fm.aperiodic_params_[1],
+        "R_squared": fm.r_squared_,
+        "Error": fm.error_
+        }
+    
+    
+    #Loop through all bands 
+    for band_name, freq_range in narrowband_freqs.items():
+        band_peaks = fm.peak_params_[(fm.peak_params_[:, 0] > freq_range[0]) & (fm.peak_params_[:, 0] < freq_range[1])]
+        if len(band_peaks) > 0:
+            # extract peak with highest power
+            max_band_peak = np.argmax(band_peaks[:, 1]) # if you leave this out, you get all peaks within the theta range. With averaging alpha_peak[1] you get the average power of all true oscillations within the alpha range.
+            band_peak = band_peaks[max_band_peak]
+            # extract sum of all peaks within narrowband range
+            mean_band_cf = band_peaks[:, 0].mean() 
+            sum_band_pw = band_peaks[:, 1].sum() #
+            sum_band_bw = band_peaks[:, 2].sum()
         else:
-            periodic = spectrum
-        w = np.clip(periodic[alpha_mask], 0, None)   # weights must be non-negative
-        cg = np.average(freqs[alpha_mask], weights=w) if w.sum() > 0 else np.nan
+            band_peak = [0, 0, 0]
+            mean_band_cf = 0
+            sum_band_pw = 0
+            sum_band_bw = 0
+        rows_bandpeaks_dict.update({
+            f"{band_name}_CF_Hz_peak": band_peak[0],
+            f"mean_{band_name}_cf": mean_band_cf,
+            f"{band_name}_PW_dB_peak": 10 * band_peak[1],
+            f"{band_name}_PW_dB_sum": 10 * sum_band_pw,
+            f"{band_name}_BW_Hz_peak": band_peak[2],
+            f"{band_name}_BW_Hz_sum": sum_band_bw
+            })
+        utils.log_msg(f"            - {condition}{channels}: CF: {band_peak[0]}, PW_dB {10 * band_peak[1]}")
 
-        cf_fooof.append(cf_f); pw_fooof.append(pw_f); exp_fooof.append(exponent); offset_fooof.append(offset); r2s.append(r2)
-        peak_found.append(bool(np.isfinite(cf_f))); cf_cog.append(cg)
 
-    #3) Attach the per-trial estimates to the trial metadata table (row order of
-    #   compute_psd matches epochs order, so this aligns trial-for-trial).
-    df = epochs_clean.metadata.copy()
-    df['alpha_cf_fooof']   = np.round(cf_fooof, 4)
-    df['alpha_pw_fooof']   = np.round(pw_fooof, 4)
-    df['alpha_exp_fooof']  = np.round(exp_fooof, 4)
-    df['alpha_offset_fooof'] = np.round(offset_fooof, 4)
-    df['alpha_cf_cog']     = np.round(cf_cog, 4)
-    df['fooof_r2']         = np.round(r2s, 4)
-    df['alpha_peak_found'] = peak_found
+    return fm, df_fooofsum_cond, pd.DataFrame([rows_bandpeaks_dict]).round(6)
+        
 
-    # add trial_wise df to epochs.metadata
-    epochs_clean.metadata = df
 
-    coverage = 100 * np.mean(peak_found)
-    utils.log_msg(f"        Per-trial alpha: {len(df)} trials, SpecParam peak on {coverage:.0f}% of them")
-    return epochs_clean, df
 
 # _____________________________Loading___________________________________________
 ## load inputs
@@ -1439,13 +1746,11 @@ cbpt_alpha = inputs['Analysis']['cbpt']['alpha']
 cbpt_seed = inputs['Analysis']['cbpt']['seed']
 
 
-# Spectral Parameterization
+# FOOOF
 fooof_f_range = inputs['Analysis']['fooof']['fooof_f_range']
 fooof_peak_threshold = inputs['Analysis']['fooof']['fooof_peak_threshold']
 compute_fooof = inputs ['perform']['compute_fooof']
 narrowband_freq_ranges = inputs['Analysis']['narrowband_freqs']
-max_n_peaks = inputs['Analysis']['fooof']['max_n_peaks']
-peak_width_limits = inputs['Analysis']['fooof']['peak_width_limits']
 
 # ERP
 compute_erp = inputs['perform']['compute_erp']
@@ -1456,19 +1761,23 @@ times = inputs['Analysis']['times']
 ## extract subject list
 subjects = utils.find_subjects(bidspath.root)
 
+# process from subjex x onwards
+# subjects = [sub for sub in subjects if int(sub) > 28]
+
+# subjects to exclude
+# subjects_to_exclude = ['028']
+# subjects = [item for item in subjects if item not in subjects_to_exclude]
+
 # statistics
 stat_model = inputs['Analysis']['stat_model']
 metric = inputs['Analysis']['metric']
 comparisons = inputs['Analysis']['comparisons']
 
 # fooof summaries dfs and save_dir
-global_specparam_dfs = []
-local_specparam_dfs = []
 global_fooof_dfs = []  
 tfr_alpha_dfs = []
-iaf_dfs = []
+fooof_alpha_dfs = []
 global_master_csv = os.path.join(bidspath.root, "results", "master_fooof_summary.csv")
-
 
 #CPP analysis 
 cpp_electrodes = inputs["Analysis"]["cpp_electrodes"]
@@ -1506,11 +1815,13 @@ if __name__ == '__main__':
         # update subject  BIDSpath
         bidspath_processing_subject = bidspath.copy().update(subject=subject)
 
+        
         #_________________Time-Frequency Analysis_________________
         # Compute time-frequency representation
         if perform_tfr:
             tfr_dict_sub[subject] = {}
             timepoint_start = utils.log_msg(f'        *** Time-Frequency Analysis ***')
+            #tfr_dict_avg, power_df, log_df = subject_tfr(epochs, baseline, tmin, tmax, fmin, fmax, time_res, freq_res, alpha_freq_range, condition_dict, roi, bidspath_processing_subject, subject, log_df) #tfr_dict_epochs, 
             tfr_dict_avg, tfr_dict_epochs, power_df, log_df = subject_tfr(epochs, baseline, tmin, tmax, fmin, fmax, time_res, freq_res, alpha_freq_range, condition_dict, roi, bidspath_processing_subject, subject, log_df)
             # store TFR dict in dictionary as: dict[subject][condition] = tfr
             tfr_dict_sub[subject] = tfr_dict_avg
@@ -1518,52 +1829,61 @@ if __name__ == '__main__':
             tfr_alpha_dfs.append(power_df)
             utils.save_preprocessing_step(tfr_dict_avg, '05tfr', bidspath, subject) # save TFRs
 
+            #_________Cluster-Based Permutation Tests - Logging_________
+            if perform_cbpt:
+                utils.log_update(log_df, 'cbpt_threshold', cbpt_threshold)
+                utils.log_update(log_df, 'cbpt_n_permutations', cbpt_n_permutations)
+                utils.log_update(log_df, 'cbpt_alpha', cbpt_alpha)
+                utils.log_update(log_df, 'cbpt_seed', cbpt_seed)
+                utils.log_update(log_df, 'cbpt_comparisons', comparisons)
+                utils.log_update(log_df, 'cbpt_roi', roi)
+
+                log_df = CBPT(tfr_dict_epochs, subject, comparisons, roi, bidspath_processing_subject, log_df, tmin,
+                  threshold=cbpt_threshold, n_permutations=cbpt_n_permutations,
+                  alpha=cbpt_alpha, seed=cbpt_seed)
+
         else:
             utils.log_msg(f'     -- Time-Frequency Analysis not performed')
 
+
+
+
     # ____________________ PSD & FOOOF Analysis ______________________
         if compute_fooof:
-            utils.log_msg(f'        *** Spectral Parameterization ***')
-            df_spectral_global, df_spectral_local = spectral_parameterization(epochs, condition_dict, tmax, baseline, f_range=fooof_f_range, peak_threshold=fooof_peak_threshold, max_n_peaks=max_n_peaks, peak_width_limits=peak_width_limits, narrowband_freqs=narrowband_freq_ranges, bidspath_out_subject=bidspath_processing_subject, subject= subject)
-            # append global and local spectral parameterization to lists
-            global_specparam_dfs.append(df_spectral_global)
-            local_specparam_dfs.append(df_spectral_local)
-
-            # per-trial individual alpha frequency (future trial-by-trial HSSM covariate)
-            epochs, df_iaf = extract_trial_alpha(epochs, tmax=tmax, alpha_freq_range=alpha_freq_range,
-                                f_range=fooof_f_range, peak_threshold=fooof_peak_threshold,
-                                subject=subject, max_n_peaks=max_n_peaks, peak_width_limits=peak_width_limits)
-            iaf_dfs.append(df_iaf)
+            utils.log_msg(f'        Computing FOOOF')
+        # psd_dict = subject_psd(epochs, fmin, fmax, condition_dict, 'Oz', bidspath_processing_subject, subject)
+            fm, df_fooofsum, df_fooofalpha  = run_fooof_analysis(epochs, condition_dict, subject=subject, bidspath_out_subject=bidspath_processing_subject, tmax=tmax, narrowband_freqs=narrowband_freq_ranges, baseline=baseline, f_range=fooof_f_range, peak_threshold=fooof_peak_threshold,log_df=log_df)
+            global_fooof_dfs.append(df_fooofsum)
+            fooof_alpha_dfs.append(df_fooofalpha)
 
         timepoint_end = utils.log_msg(f'DONE:   EEG Analysis Module - Subject Level')
         utils.log_msg(f'        Time elapsed: {str(timepoint_end-timepoint_start)}\n\n')
     # __________________________________Run CBPT FOOOF _________________________________
 
-        # ________________________Saving & Plotting - Subject Level ________________________
-    # concatenating Wavelet (TFR) and FOOOF Alpha Frequency measures
-    fooof_cbpt_save_dir = os.path.join(result_dir, 'SpectralParameterization')
-    os.makedirs(fooof_cbpt_save_dir, exist_ok=True)
-    tfr_alpha = pd.concat(tfr_alpha_dfs, ignore_index=True)
-
-    #concatenate per-trial individual alpha frequency
-    iaf = pd.concat(iaf_dfs, ignore_index=True)
-    iaf.to_csv(f'{fooof_cbpt_save_dir}/EEG_iaf.csv', index=False)
-
-    #concatenate local spectral parameterization
-    local_specparam = pd.concat(local_specparam_dfs, ignore_index=True)
-    local_specparam_file = f'{fooof_cbpt_save_dir}/EEG_local_specparam.csv'
-    local_specparam.to_csv(local_specparam_file, index=False)
-
-    #concatenate global spectral parameterization and TFR
-    global_specparam = pd.concat(global_specparam_dfs, ignore_index=True)
-    global_specparam_tfr = pd.merge(tfr_alpha, global_specparam, on=['participant', 'exp'], how='left')#merge SpecParam with TFR on participant and condition
-    global_specparam_tfr.to_csv(f'{fooof_cbpt_save_dir}/EEG_global_specparam_tfr.csv', index=False)
-
-
-    # ________________________Cluster-Based Permutation Tests - Spectral Parameterization ______________________
     epochs_info = epochs.info
-    global_cbpt_results, local_cbpt_results = cbpt_spectral_parameterization(condition_dict, cbpt_n_permutations, cbpt_alpha, cbpt_seed, epochs_info, local_specparam_file, fooof_cbpt_save_dir)      
+    csv_path = os.path.join(result_dir, 'EEG_bands_hierprior.csv')
+    fooof_cbpt_save_dir = os.path.join(result_dir, 'FOOOF_CBPT')
+    os.makedirs(fooof_cbpt_save_dir, exist_ok=True)
+
+    global_cbpt_results, local_cbpt_results = run_fooof_cbpt(condition_dict, cbpt_n_permutations, cbpt_alpha, cbpt_seed, epochs_info, csv_path, fooof_cbpt_save_dir)      
     
+
+    # ________________________Saving & Plotting - Subject Level ________________________
+    # concatenating Wavelet (TFR) and FOOOF Alpha Frequency measures
+    tfr_alpha = pd.concat(tfr_alpha_dfs, ignore_index=True)
+    fooof_alpha = pd.concat(fooof_alpha_dfs, ignore_index=True)
+    power_df = pd.merge(tfr_alpha, fooof_alpha, on=['participant', 'exp'], how='left')
+    
+    
+    # added for different band names 
+    band_rename = {}
+    for band in narrowband_freq_ranges:
+        band_rename[f"{band}_PW_dB_sum"] = f"total_{band}_dB"
+        band_rename[f"{band}_PW_dB_peak"] = f"relative_{band}_dB"
+    power_df = power_df.rename(columns=band_rename)
+    power_df = power_df.loc[:, ~power_df.columns.duplicated(keep='first')]  #to deduplicate 
+    power_file = f'{result_dir}/EEG_bands_hierprior.csv'
+    power_df.to_csv(power_file, index=False)
 
     # Plot results
     #changed for variable naming purposes 
@@ -1571,6 +1891,10 @@ if __name__ == '__main__':
     paired_plot(power_df, condition_dict, eeg_parameters_valid, eeg_dir)
     tfr_plots_subjects(tfr_dict_sub, condition_dict, fmin, fmax, tmin, tmax, eeg_dir)
 
+
+    # Saving FOOF summary
+    global_df = pd.concat(global_fooof_dfs, ignore_index=True)
+    global_df.to_csv(global_master_csv, index=False)
     
     utils.log_msg(f"        Global FOOOF summary written to: {global_master_csv}")
 
@@ -1622,6 +1946,7 @@ if __name__ == '__main__':
             statistical_analysis(erp_results, result_dir)
     else:
             utils.log_msg(f'     -- No ERP features extracted or statistical analysis performed')
+
 
     if compute_cpp:
         utils.log_msg("Running CPP Analysis")
