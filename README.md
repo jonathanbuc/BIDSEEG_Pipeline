@@ -1,8 +1,18 @@
 # BIDS-EEG Processing Pipeline - J.Buchholz
 
-This pipeline enables easy-use, semi-automated processing of EEG-data from **BIDSraw** up to statistical analysis, including **preprocessing**, **artifact correction/rejection** and **conventional** and **parameterized frequency analysis**. The behavioral module further provides code for **generlized drift diffusion modelling**. All input can be provided via a single .json file, wherefore *no extensive coding expertise is required!*
+This pipeline enables easy-use, semi-automated processing of EEG-data from **BIDSraw** up to statistical analysis, including **preprocessing**, **artifact correction/rejection** and **conventional** and **parameterized frequency analysis**. The behavioral modules further enable **generlized and hierarchical drift diffusion modelling (g/hDDM)**. The implemented HSSM-package enables analysis of DDM-parameter with trial-by-trial covariates (i.e. expectations, ERPs, frequency measures.) All input can be provided via a single .json file, wherefore *no extensive coding expertise is required!*
 
-The pipeline implements 4 modules:
+This repository contains the analysis pipeline for the BIDS EEG dataset hosted on [OpenNeuro](https://openneuro.org/datasets/ds008083/versions/1.0.0):
+
+- OpenNeuro accession: `ds008083`
+- Dataset page: https://openneuro.org/datasets/ds008083/versions/1.0.0
+- Dataset version used in this pipeline: `v1.0.0`
+- Dataset DOI: `10.18112/openneuro.ds008083.v1.0.0`
+
+The raw BIDS dataset is not stored in this GitHub repository. It should be downloaded from [here](https://openneuro.org/datasets/ds008083/versions/1.0.0) OpenNeuro before running the pipeline.
+
+
+The pipeline implements **4 modules**:
 
 1 *Preprocessing*:
     - Preprocessing BIDSified EEG data including downsampling, rereferencing, linenoise removal and filtering.
@@ -44,19 +54,31 @@ that way you have access to your conda environments in the terminal within VS Co
 
 **For Mac-Users:** Just open `VS Code` from your applications.
 
-**Clone the Repository**
+### 1.3 Clone the Repository and the Data (OpenNeuro)
 After creating and activating the environment, clone the pipeline repository:
 ```bash
 git clone https://github.com/jonathanbuc/BIDSEEG_Pipeline.git
 ```
 
+Next, install the OpenNeuro CLI, handling data down- and upload in OpenNeuro from out your terminal.
+```bash
+deno install -A --global jsr:@openneuro/cli -n openneuro
+```
+
+executing the `download_openneuro.sh` file like the following will download the raw BIDS data to `./data/BIDShierPriors` of your repository clone.
+```bash
+cd /path/to/BIDSEEG_Pipeline
+./scripts/download_openneuro.sh
+```
+
+
 -> Now simply open a new terminal `Terminal/New Terminal` and proceed with steps 1.3 and 1.4
 
-### 1.3 Setup conda in Anaconda Prompt (windows) or terminal (Mac)
+### 1.4 Setup conda in Anaconda Prompt (windows) or terminal (Mac)
 In your terminal, check if you are in your repository **BIDSEEG_pipeline*
 If not, navigate to the eeg pipeline via `cd path/to/BIDSEEG_pipeline` i.e., `cd C:\Users\YourName\Research\EEGresearch\BIDSEEG_pipeline`
 
-### 1.4 Create a conda environment in your terminal (*anaconda prompt* = windows / *terminal* = Mac)
+### 1.5 Create a conda environment in your terminal (*anaconda prompt* = windows / *terminal* = Mac)
 
 Install the provided conda environment via the .yml file. Be sure to execute the command within the *EEGpipeline* directory.
 
@@ -77,7 +99,7 @@ To **deactivate** your conda environment, run:
 conda deactivate
 ```
 
-### 1.5 Explore inputs.json
+### 1.6 Explore inputs.json
 --> **IMPORTANT:** Consult the [ExperimentGuide_HierarchicalPriors.md](ExperimentGuide_HierarchicalPriors.md) file to gain a better understanding of the input structure.
 - *inputs.json* is the dictionary that provides values for each of the subsequent steps (preprocessing, artifact correction, analysis)
 - while exploring the pipeline, you may change the values in this file to see differences across different changes (i.e., change "samplingrate_down": 250 --> 500).
@@ -120,4 +142,12 @@ To perform behavioral analysis, run:
 
 ```bash
 python d_BehavAnalysis_module.py inputs.json
+```
+
+### 2.5 - Module 4: HSSM Analysis
+
+To perform HSSM analysis, run:
+
+```bash
+python e_HSSM_module.py inputs.json
 ```

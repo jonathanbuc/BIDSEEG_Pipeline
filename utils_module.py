@@ -11,7 +11,6 @@ import h5py
 
 #import statistics_module as stat
 
-
 import pandas as pd
 import numpy as np
 import scipy.stats
@@ -23,6 +22,7 @@ import mne
 from mne_bids import read_raw_bids, write_raw_bids, BIDSPath
 # from mne.minimum_norm import write_inverse_operator
 from autoreject import read_auto_reject, read_reject_log
+from fooof import FOOOF
 
 
 #import autoreject
@@ -384,6 +384,205 @@ def rt_cleansing(df, log_df):
     
     return df, log_df
 
+# _____________________________SpecParam Helper Functions_____________________________
+def _compute_condition_psd(epochs_clean, cond_col, condition, tmax):
+    """Crop to the prediction window and compute the Welch PSD for one condition."""
+    epochs_cond = epochs_clean[f"{cond_col} == '{condition}'"]
+    epochs_cond = epochs_cond.crop(tmin=0, tmax=tmax)  # prediction window
+    return epochs_cond.compute_psd(method='welch', verbose=False)
+
+# extract spectral features from a FOOOF model
+def _extract_spectral_features(fm, condition, subject, narrowband_freqs, channels=None):
+    """
+    Extract spectral features from a FOOOF model.
+    """
+    
+    # quality control: only include offset and exponent if r_squared is >= 0.9 and exponent is > 0
+    qc_ok = fm.r_squared_ >= 0.9 #and fm.aperiodic_params_[1] > 0
+
+    # ----- Extract spectral features and save summary -----
+    # initializing single row (dict instead of list) with model params                
+    rows_spectral_dict = {
+        "participant": f'sub-{subject}',
+        **({"channel": channels} if channels is not None else {}),
+        "exp": condition,
+        "offset": fm.aperiodic_params_[0] if qc_ok else np.nan,
+        "exponent": fm.aperiodic_params_[1] if qc_ok else np.nan,
+        "r_squared": fm.r_squared_,
+        "error": fm.error_
+        }
+    
+    #Loop through all bands 
+    for band_name, freq_range in narrowband_freqs.items():
+        band_peaks = fm.peak_params_[(fm.peak_params_[:, 0] > freq_range[0]) & (fm.peak_params_[:, 0] < freq_range[1])]
+        if len(band_peaks) > 0:
+            # extract peak with highest power
+            max_band_peak = np.argmax(band_peaks[:, 1]) # if you leave this out, you get all peaks within the theta range. 
+            # With averaging alpha_peak[1] you get the average power of all true oscillations within the alpha range.
+            band_peak = band_peaks[max_band_peak]
+            # extract sum of all peaks within narrowband range
+            #mean_band_cf = band_peaks[:, 0].mean() 
+            sum_band_pw = band_peaks[:, 1].sum()
+            #sum_band_bw = band_peaks[:, 2].sum()
+        else:
+            band_peak = [0, 0, 0]
+            #mean_band_cf = 0
+            sum_band_pw = 0
+            # sum_band_bw = 0
+        rows_spectral_dict.update({
+            f"{band_name}_CF_Hz_Maxpeak": band_peak[0],
+            #f"mean_{band_name}_cf": mean_band_cf,
+            f"{band_name}_PW_dB_Maxpeak": 10 * band_peak[1],
+            f"{band_name}_PW_dB_sum": 10 * sum_band_pw,
+            #f"{band_name}_BW_Hz_peak": band_peak[2],
+            #f"{band_name}_BW_Hz_sum": sum_band_bw
+            })
+
+    return pd.DataFrame([rows_spectral_dict]).round(6)
+
+#_____________________Local SpecParam_____________________
+def _fit_channel(channels, psd_data, ch_names, freqs, condition, subject, save_dir, f_range, peak_threshold, narrowband_freqs):
+    """
+    Fit a FOOOF model to the average PSD of a single EEG channel,
+    save model outputs/figures, and extract spectral features for
+    downstream statistical analysis.
+
+    Returns
+    -------
+    fm : FOOOF
+        Fitted FOOOF model.
+    df_fooofsum_cond : DataFrame
+        Peak-level summary table.
+    DataFrame
+        Channel-level band-power summary table.
+
+    Seperate function purpose for parallel processing 
+
+    """
+
+    ch_idx = ch_names.index(channels) #to reduce redundancy with copying and so forth 
+    spectrum = psd_data[:, ch_idx, :].mean(axis=0)
+    
+    #model_path = os.path.join(save_dir, f"sub-{subject}_{condition}_{channels}_fooof_model.json")
+    fig_path_basic = os.path.join(save_dir, f"sub-{subject}_{condition}_{channels}_fooof_basic.png")
+    #fig_path_full = os.path.join(save_dir, f"sub-{subject}_{condition}_{channels}_fooof_full.png") 
+                
+    # ----- Fit model -----
+    fm = FOOOF(aperiodic_mode='fixed', peak_threshold=peak_threshold,
+            max_n_peaks=6, peak_width_limits=(1.4, 8)) 
+    fm.fit(freqs, spectrum, f_range)
+
+    # extract spectral features
+    df_spectral_local = _extract_spectral_features(fm, condition, subject, narrowband_freqs, channels=channels)
+
+    return df_spectral_local
+
+def _test_arrays(data, component, cond_names, comparisons):
+    """
+    Reorganizes spectral feature samples into arrays for repeated-measures cluster analysis.
+    Parameters
+    ----------
+    data : pandas.DataFrame
+        with columns ['participant', 'exp', 'channel', component]
+    component : str
+        Name of the component to analyze, e.g. 'exponent'
+    cond_names : list of str
+        List of condition names.
+    comparisons : list of [str, str]
+        Pairwise condition comparisons, e.g. inputs["Analysis"]["comparisons"].
+    Returns
+    -------
+    f_test_array : numpy.ndarray
+        Array for the f test across all conditions.
+    t_test_arrays : dict
+        Dictionary containing one difference array per comparison.
+    """
+    data = data[data["channel"] != "average"]
+    participants = sorted(data["participant"].unique())
+    channels = sorted(data["channel"].unique())
+    
+    # create condition arrays for each condition
+    condition_arrays = {}
+    for cond in cond_names:
+        pivot = (
+            data.loc[data["exp"] == cond, ["participant", "channel", component]]
+                .groupby(["participant", "channel"])[component]
+                .mean()
+                .unstack("channel")
+                .reindex(index=participants, columns=channels)
+        )
+        condition_arrays[cond] = pivot.to_numpy()
+    
+    f_test_array = np.stack([condition_arrays[cond] for cond in cond_names], axis=1)
+    # log_msg(f"f_test_array.shape: {f_test_array.shape}")
+    
+    # create difference arrays for each comparison
+    t_test_arrays = {
+        f"{cond_a}_{cond_b}": condition_arrays[cond_a] - condition_arrays[cond_b]
+        for cond_a, cond_b in comparisons
+    }
+    # for key, arr in t_test_arrays.items():
+    #     log_msg(f"t_test_arrays['{key}'].shape: {arr.shape}")
+    
+    return f_test_array, t_test_arrays
+
+def _test_arrays_backup(data, component, cond_names):
+    """
+    Reorganizes fooof_bands_total sample into arrays for cluster analysis for repeated measures.
+
+    Parameters
+    ----------
+    data = pandas.DataFrame 
+        with columns ['participant', 'exp', 'channels', component]
+    component : str
+        Name of the component to analyze, e.g. 'Aperiodic_Exponent'
+    cond_names : list of str
+        List of condition names.
+
+    Returns
+    -------
+    f_test_array : numpy.ndarray
+        Array for the f test across all conditions.
+    t_test_arrays : dict
+        Dictionary containing arrays for each t-test comparison.
+    """
+    average_rows = data[data["channel"] == "average"].index
+    data = data.drop(average_rows, inplace=False)
+
+    participants = sorted(data["participant"].unique())
+
+    condition_arrays = {}
+
+    for cond in cond_names:
+        pivot = (
+            data.loc[data["exp"] == cond, ["participant", "channel", component]]
+                .groupby(["participant", "channel"])[component]
+                .mean()
+                .unstack("channel")
+                .reindex(index=participants, columns=sorted(data["channel"].unique()))
+        )
+
+        if pivot.isna().any().any():
+            missing = pivot.isna().sum()
+            print(type(missing))
+            #raise ValueError(f"Missing values in condition {cond}:\n{missing}")
+            #utils.log_msg(f"    Missing values in condition {cond}:\n{missing}")
+
+        condition_arrays[cond] = pivot.to_numpy()
+
+    f_test_array = np.stack([condition_arrays[cond] for cond in cond_names], axis=1)
+
+    log_msg(f"f_test_array.shape: {f_test_array.shape}")
+
+    t_test_arrays = {}
+
+    t_test_arrays["base_lowlevel"] = condition_arrays["base"] - condition_arrays["lowlevel"]
+    t_test_arrays["base_highlevel"] = condition_arrays["base"] - condition_arrays["highlevel"]
+    t_test_arrays["low_highlevel"] = condition_arrays["lowlevel"] - condition_arrays["highlevel"]
+
+    log_msg(f"t_test_arrays['base_lowlevel'].shape: {t_test_arrays['base_lowlevel'].shape}")
+
+    return f_test_array, t_test_arrays
 # _____________________________Statistical Helper Functions_____________________________
         # Define wrapper function for paired t-test that returns t-statistic array
 def ttest_rel_wrapper(x, y):

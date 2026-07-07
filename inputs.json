@@ -47,8 +47,7 @@
         "perform_cbpt_group": false,
         "compute_sdt": true,
         "compute_ddm": true,
-        "compute_fooof": true,
-        "compute_cpp": true
+        "compute_fooof": true
     },
     "preprocessing": {
         "samplingrate_down": 250,
@@ -122,13 +121,9 @@
             14
         ],
         "narrowband_freqs": {
-            "delta": [
-                1,
-                4
-            ],
-            "theta": [
-                4,
-                7
+            "alpha": [
+                7,
+                14
             ],
             "beta": [
                 14,
@@ -136,11 +131,7 @@
             ],
             "gamma": [
                 30,
-                80
-            ],
-            "alpha": [
-                7,
-                14
+                60
             ]
         },
         "tfr_method": "multitaper",
@@ -159,24 +150,29 @@
             "n_permutations": 10000,
             "alpha": 0.05,
             "seed": 42,
-            "run_global": false,
-            "run_local": true
+            "perform_cbpt_Ftest": true,
+            "perform_cbpt_Ttest": true
         },
         "fooof": {
             "fooof_f_range": [
                 5,
                 40
             ],
-            "fooof_peak_threshold": 2
+            "fooof_peak_threshold": 2,
+            "max_n_peaks": 6,
+            "peak_width_limits": [
+                1.4,
+                4
+            ]
         },
         "comparisons": [
             [
-                "lowlevel",
-                "base"
+                "base",
+                "lowlevel"
             ],
             [
-                "highlevel",
-                "base"
+                "base",
+                "highlevel"
             ],
             [
                 "lowlevel",
@@ -217,17 +213,6 @@
             "PW_dB",
             "PW_dB_sum",
             "Aperiodic_Exponent"
-        ],
-        "cpp_electrodes": [
-            "CP1",
-            "CPz",
-            "CP2",
-            "Cz",
-            "Pz"
-        ],
-        "cpp_slope_window": [
-            -0.6,
-            1.5
         ]
     }
 }

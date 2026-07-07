@@ -1,2 +1,10 @@
+<<<<<<< HEAD
 .DS_Store
 **/.DS_Store
+=======
+# Ignore temporary files
+*.tmp
+.DS_Store
+__pycache__/
+/data/
+>>>>>>> origin/main
