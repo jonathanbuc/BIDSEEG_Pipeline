@@ -72,16 +72,26 @@ def behavdata_prep(sourcedata_dir, subject, log_df):
         if csv_file_found:
             break
     
-    # select and rename columns
-    cols = ['exp', 'block_cond', 'block_order', 'thisN', 'cueAss', 'cueHz', 'motionDir', 'prior', 'keyMotionResp_2.keys', 
-            'keyMotionResp_2.corr', 'keyMotionResp_2.rt', 'thresh75', 'BiasFirst', 'trialCoh', 'trialCoh_level', 'participant', 'filename']#'prior',
-    df = df[cols]
-    df = df.rename(columns={'keyMotionResp_2.keys': 'response', 
-                            'keyMotionResp_2.corr': 'corr', 
-                            "motionDir": "motion_direction", 
-                            'keyMotionResp_2.rt': 'rt',
-                            'trialCoh' : 'coh',
-                            'trialCoh_level' : 'coh_level'})
+    # Select the canonical columns. Two input shapes exist: the raw PsychoPy export
+    # (bundled 3-subject demo) and the OpenNeuro release, whose per-subject files already
+    # arrive in the renamed/processed schema. For the processed files we keep only the
+    # canonical inputs and drop any precomputed derived columns (rt_flag, *_performance,
+    # prior_dic, response_prior) so the derivations below recompute them the same way.
+    canonical = ['exp', 'block_cond', 'block_order', 'thisN', 'cueAss', 'cueHz',
+                 'motion_direction', 'prior', 'response', 'corr', 'rt',
+                 'thresh75', 'BiasFirst', 'coh', 'coh_level', 'participant', 'filename']
+    if 'keyMotionResp_2.keys' in df.columns:  # raw PsychoPy log
+        raw_cols = ['exp', 'block_cond', 'block_order', 'thisN', 'cueAss', 'cueHz', 'motionDir', 'prior',
+                    'keyMotionResp_2.keys', 'keyMotionResp_2.corr', 'keyMotionResp_2.rt', 'thresh75',
+                    'BiasFirst', 'trialCoh', 'trialCoh_level', 'participant', 'filename']
+        df = df[raw_cols].rename(columns={'keyMotionResp_2.keys': 'response',
+                                          'keyMotionResp_2.corr': 'corr',
+                                          "motionDir": "motion_direction",
+                                          'keyMotionResp_2.rt': 'rt',
+                                          'trialCoh': 'coh',
+                                          'trialCoh_level': 'coh_level'})
+    else:  # already-processed schema (OpenNeuro)
+        df = df[canonical]
     # repeat thresh75
     thresh75 = df['thresh75'].dropna().unique()[0]  # get 75% motion coherence threshold
     df['thresh75'] = thresh75  # repeat it across the column
@@ -101,8 +111,9 @@ def behavdata_prep(sourcedata_dir, subject, log_df):
         coh_means.get('medium', None),
         coh_means.get('high', None)
         ]
-    # logg
-    utils.log_msg(f"        Detection rate according to motion coherence level: low {coh_means['low']}, medium: {coh_means['medium']}, high: {coh_means['high']})")
+    # logg -- .get so datasets with only some coherence levels (the OpenNeuro sample is
+    # QUEST-thresholded to two levels, low/medium) don't crash this diagnostic line
+    utils.log_msg(f"        Detection rate according to motion coherence level: low {coh_means.get('low', 'n/a')}, medium: {coh_means.get('medium', 'n/a')}, high: {coh_means.get('high', 'n/a')})")
 
     # Accuracy (detection rate) and mean reaction time according to prior condition
     # df['prior_accuracy'] = df.groupby('exp')['corr'].transform('mean')
@@ -639,15 +650,18 @@ if __name__ == '__main__':
     ### Trait Variables - Psychosis Proneness and Psychological Flexibility
     utils.log_msg(f'        *** Trait Variables - Psychosis Proneness and Psychological Flexibility ***')
     trait_data_file = f'{sourcedata_dir}/hierPrior_traitVariables.csv'
-    trait_data = pd.read_csv(trait_data_file, header = 0, sep =',')
-    trait_data = psych_prone(trait_data)
-
-
-    ### Merge and save results
-    df_total = pd.merge(df_results_total, trait_data, on='participant', how='left')
-
-    df_total_file = f'{result_dir}/traits&results_hierprior.csv'
-    df_total.to_csv(df_total_file, index=False)
+    # The trait/psychosis-proneness thread is separate from the DDM/HSSM deliverable. Skip it
+    # (rather than crash the whole module) when the trait file is absent or in a schema that
+    # psych_prone can't consume -- e.g. the OpenNeuro trait_variables.csv, which lacks the
+    # score_mpfi_* / age / handedness columns psych_prone selects.
+    try:
+        trait_data = pd.read_csv(trait_data_file, header = 0, sep =',')
+        trait_data = psych_prone(trait_data)
+        df_total = pd.merge(df_results_total, trait_data, on='participant', how='left')
+        df_total_file = f'{result_dir}/traits&results_hierprior.csv'
+        df_total.to_csv(df_total_file, index=False)
+    except (FileNotFoundError, KeyError) as e:
+        utils.log_msg(f'        -- Trait analysis skipped (trait file missing or schema mismatch: {e})')
 
     # logging
     timepoint_end = utils.log_msg(f'DONE:   Behavioral Analysis Module - Group Level')

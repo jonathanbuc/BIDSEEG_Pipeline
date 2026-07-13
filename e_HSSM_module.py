@@ -105,7 +105,10 @@ def prep_hssm_data(df, cond_col, conditions, formula=None):
     # so grand-mean centering (_gc) blends within- and between-subject variation,
     # while subject-mean centering (_wc) isolates the trial-to-trial alpha shift --
     # the actual "does the alpha clock move evidence accumulation" question.
-    for acol in ('alpha_cf_fooof', 'alpha_cf_cog', 'alpha_cf_hilbert'):
+    # Same within/between split for the aperiodic (1/f) components -- exponent and
+    # offset -- which are the other up-and-coming per-trial EEG markers.
+    for acol in ('alpha_cf_fooof', 'alpha_cf_cog', 'alpha_cf_hilbert',
+                 'alpha_exp_fooof', 'alpha_offset_fooof'):
         if acol in df.columns:
             subj_mean = df.groupby('participant')[acol].transform('mean')
             df[f'{acol}_gc'] = df[acol] - df[acol].mean()
@@ -113,10 +116,11 @@ def prep_hssm_data(df, cond_col, conditions, formula=None):
             df[f'{acol}_subjmean'] = subj_mean - df[acol].mean()
     # keep only conditions of interest
     df = df[df[cond_col].isin(conditions)].reset_index(drop=True)
-    # drop trials missing an alpha covariate the formula uses (centering means above
+    # drop trials missing a neural covariate the formula uses (centering means above
     # are computed first, on all available trials, so they're unaffected by this)
     if formula is not None:
-        need = [c for c in df.columns if c.startswith('alpha_cf_') and c in formula]
+        need = [c for c in df.columns
+                if c.startswith(('alpha_cf_', 'alpha_exp_', 'alpha_offset_')) and c in formula]
         if need:
             before = len(df)
             df = df.dropna(subset=need).reset_index(drop=True)
@@ -208,28 +212,26 @@ def load_group_data(behav_file, formula_v, inputs):
     Pick the trial table the drift formula needs.
 
     If the formula references a per-trial alpha covariate, load the per-trial alpha
-    derivatives written by c_EEGAnalysis_module.py (extract_trial_alpha). Those CSVs
-    are epochs.metadata with alpha columns appended, so they already carry every
-    behavioural field -- no key-merge onto behavioraldata_hierprior.csv is needed
-    (and that merge is unsafe anyway: block_cond/block_order/thisN are not a unique
+    table written by c_EEGAnalysis_module.py (extract_trial_alpha -> EEG_iaf.csv). That
+    file is epochs.metadata with the per-trial alpha columns appended, so it already
+    carries every behavioural field -- no key-merge onto behavioraldata_hierprior.csv is
+    needed (and that merge is unsafe anyway: block_cond/block_order/thisN are not a unique
     trial key). Otherwise fall back to the group behavioural CSV.
     """
     if 'alpha' not in formula_v:
         return pd.read_csv(behav_file)
 
-    import glob
     proc = utils.get_bidspath(inputs, 'bids_proc')
-    alpha_dir = os.path.join(proc.root, 'results', 'groupEEG', 'trial_alpha')
-    files = sorted(glob.glob(os.path.join(alpha_dir, 'sub-*_trial_alpha.csv')))
-    if not files:
+    iaf_file = os.path.join(proc.root, 'results', 'SpectralParameterization', 'EEG_iaf.csv')
+    if not os.path.exists(iaf_file):
         raise FileNotFoundError(
-            f'Formula uses an alpha covariate but no per-trial alpha CSVs were found '
-            f'in {alpha_dir}.\nRun c_EEGAnalysis_module.py with compute_fooof = true first.'
+            f'Formula uses an alpha covariate but the per-trial alpha table was not found '
+            f'at {iaf_file}.\nRun c_EEGAnalysis_module.py with compute_fooof = true first.'
         )
-    df = pd.concat([pd.read_csv(f) for f in files], ignore_index=True)
+    df = pd.read_csv(iaf_file)
     utils.log_msg(
         f'        Alpha covariate requested -> using per-trial alpha table '
-        f'({len(df)} trials from {len(files)} subjects)'
+        f'({len(df)} trials from {df["participant"].nunique()} subjects)'
     )
     return df
 

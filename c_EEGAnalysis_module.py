@@ -1254,13 +1254,15 @@ def extract_trial_alpha(epochs_clean, tmax, alpha_freq_range, f_range,
                        the alpha band, computed AFTER removing the 1/f background.
                        Always defined, so it is the robust fallback.
 
-    Returns epochs.metadata with the per-trial alpha columns appended, and writes
-    it to sub-<subject>_trial_alpha.csv.
+    Returns epochs.metadata with the per-trial alpha columns appended; the caller
+    concatenates each subject's frame and writes results/SpectralParameterization/EEG_iaf.csv.
     """
     lo, hi = alpha_freq_range
-    # 1) Restrict to the post-stimulus prediction window and the occipital ROI.
-    #    .copy() so the caller's epochs are never mutated; crop/pick keep all epochs.
-    ep = epochs_clean.copy().crop(tmin=0, tmax=tmax)#.pick(roi)
+    # 1) Restrict to the post-stimulus prediction window; use the WHOLE SCALP (no ROI
+    #    pick) so each per-trial spectrum has maximal power to locate an alpha peak.
+    #    Buchholz (6/29): whole-scalp IAF lowers the per-trial miss rate vs occipital-only.
+    #    .copy() so the caller's epochs are never mutated; crop keeps all epochs.
+    ep = epochs_clean.copy().crop(tmin=0, tmax=tmax)  # whole scalp (ROI pick intentionally off)
 
     # 2) One power spectrum PER EPOCH. n_per_seg = full window => a single Welch
     #    segment, i.e. the finest frequency resolution this ~1.5 s window allows
@@ -1314,6 +1316,9 @@ def extract_trial_alpha(epochs_clean, tmax, alpha_freq_range, f_range,
     # subject's alpha peak (IAF +/- 2 Hz), estimated from the far cleaner
     # trial-averaged spectrum; if no peak is found it falls back to
     # alpha_freq_range.
+    # This (alpha_cf_hilbert) is the CANONICAL per-trial IAF covariate for the HSSM
+    # drift formula, pre-committed on the Romei & Tarasi precedent. alpha_cf_cog /
+    # alpha_cf_fooof are kept as robustness diagnostics only (see docs/learning/19).
     subject_iaf = np.nan
     try:
         fm_avg = FOOOF(aperiodic_mode='fixed', peak_threshold=peak_threshold,
