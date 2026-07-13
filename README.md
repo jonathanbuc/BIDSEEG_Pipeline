@@ -211,3 +211,52 @@ table.
 
 > For the statistics behind this module (Bayesian vs. MLE, NUTS, partial pooling, and what each DDM
 > parameter means), see `docs/learning/03-hssm-integration.md` and `04-hssm-explained.md`.
+
+#### 2.5.1 - Optional: run the HSSM fit on a GPU
+
+MCMC over the full sample is the pipeline's slowest step. The per-trial DDM likelihood is
+data-parallel, so a GPU helps **once the dataset is large** — on the 42-subject / ~18.6k-trial
+model the fit drops from a multi-hour CPU run to **~10 minutes** (it was *slower* than CPU at n=3,
+so this is a scale effect; benchmark before assuming). JAX has **no GPU wheels for native
+Windows**, so the GPU fit runs under **WSL2**.
+
+**One-time setup (WSL2 + NVIDIA driver already installed):** create a Linux conda env with the
+GPU JAX build, pinned to the Windows `mne-env` versions:
+
+```bash
+conda create -n hssm-gpu python=3.11 -y && conda activate hssm-gpu
+pip install hssm==0.2.10 "jax[cuda12]==0.6.2" arviz pandas
+python -c "import jax; print(jax.devices())"   # -> [CudaDevice(id=0)]
+```
+
+**Run it.** Module 5 itself imports the full pipeline (`mne`, `fooof`) which the slim GPU env
+doesn't carry, so the GPU path uses a **standalone runner** (`hssm_gpu_runner.py`) that mirrors
+module 5's data prep and model spec but imports only the HSSM/JAX/ArviZ stack. Run module 4 first
+(on the normal `mne-env`) to produce the group behavioral table, then, from the project root:
+
+```bash
+wsl bash run_hssm_gpu.sh inputs.json          # reads Analysis.hssm from the config
+```
+
+It reads the same `Analysis.hssm` block, resolves the same input table (group behavioral CSV, or
+the per-trial alpha derivatives when `formula_v` names an alpha covariate), and writes
+`hssm_posterior_summary_<tag>.csv` + `hssm_idata_<tag>.nc` next to module 5's outputs (`<tag>`
+defaults to the active backend, `gpu`/`cpu`). For a same-environment CPU baseline:
+
+```bash
+JAX_PLATFORMS=cpu wsl bash run_hssm_gpu.sh inputs.json cpu
+```
+
+**Plots.** The GPU runner only writes the posterior summary + InferenceData; the plotting
+functions need the full env (`mne`), so draw the figures in a second step back on `mne-env`:
+
+```bash
+python plot_hssm.py inputs.json <tag>     # tag matches hssm_idata_<tag>.nc
+```
+
+This produces the same figures `e_HSSM_module` makes (trace, Fig 4C coefficient histograms,
+v/z ridgelines, DDM schematic), suffixed by `<tag>`. When you run module 5 on CPU instead, the
+plots are generated automatically and this step isn't needed.
+
+> Setup and benchmark details are in `docs/learning/10-gpu-wsl-hssm.md` and
+> `18-full-sample-hssm-on-gpu.md`.
