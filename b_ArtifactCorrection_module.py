@@ -97,6 +97,7 @@ def epoching(raw, df, epoch_dict, tmin, tmax, log_df, baseline=None):
         ### Include metadata from behavioral df
         analyzed_blocks = inputs['basic']['analyzed_blocks']
         metadata = df[df['block_cond'].isin(analyzed_blocks)].reset_index(drop=True)
+        metadata = metadata.iloc[epochs.selection].reset_index(drop=True) #for cpp epoch, too many epoch getting dropped due to time winodw, this prevents crashing
         metadata.insert(0, 'trigger', epochs.events[:, 2])
 
         utils.log_msg(f"        Behavioral data is included as metadata for each epoch. Including: {list(metadata.columns)[:8]}")
@@ -533,6 +534,13 @@ tmin = inputs['preprocessing']['epoch_min']
 tmax = inputs['preprocessing']['epoch_max']
 baseline = inputs['preprocessing']['baseline_correction']
 
+# ccp epoching
+perform_baseline = inputs['perform']['baseline']
+cpp_epoch_dict = inputs['preprocessing']['cpp_epoch_dict']
+cpp_tmin = inputs['preprocessing']['cpp_epoch_min']
+cpp_tmax = inputs['preprocessing']['cpp_epoch_max']
+cpp_baseline = inputs['preprocessing']['cpp_baseline_correction']
+
 # Independent Component Analysis
 mask_ICA = inputs['perform']['mask_ICA']
 perform_ica = inputs['perform']['ICA']
@@ -604,10 +612,13 @@ if __name__ == '__main__':
         # prepare behavioral data
         df, log_df = behavdata_prep(sourcedata_dir, subject, log_df)
 
-        # # perform epoching
+        # perform epoching
         epochs, log_df = epoching(raw_filt, df, epoch_dict, tmin, tmax, log_df)# >>> IMPORTANT: currently no baseline correction performed here <<<
         diagnostic_plots(epochs, bidspath_processing_subject)
         
+        # perform cpp epoching 
+        cpp_epochs, log_df = epoching(raw_filt, df, cpp_epoch_dict, cpp_tmin, cpp_tmax, log_df, baseline=cpp_baseline)# >>> 
+
         if epochs is None or not bool(epochs):  # If none, events for epoching do not exist in raw.annotations
             utils.log_msg(f'      X ERROR: None of the following events were found in raw.annotations: {list(epoch_dict.keys())}. Continuing with Subject {int(subject) + 1}')
             continue  # Skip to the next subject
@@ -680,6 +691,7 @@ if __name__ == '__main__':
               
         ## save continuous data
         utils.save_preprocessing_step(epochs, '04epochsCorr', bidspath_processing, subject)
+        utils.save_preprocessing_step(cpp_epochs, '04cppEpochsCorr', bidspath_processing, subject)
         
         
         # _____________________________logging________________________________________________

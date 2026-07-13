@@ -354,33 +354,42 @@ def cpp_analysis(epochs_list, subjects, conditions, result_dir, cpp_baseline=(-0
     os.makedirs(cpp_result_dir, exist_ok=True)
     cond_col, conditions = list(conditions.items())[0]
     results = []
+    trial_data_by_subject = {}  # (subject, trial_idx) -> {cond: {...}}
+
     for file, subject in zip(epochs_list, subjects):
         epochs.apply_baseline(baseline=cpp_baseline, verbose=False)
-        #epochs = mne.read_epochs(file, preload=True, verbose=False)
+
         for cond in conditions: 
             epochs_cond = epochs[f"{cond_col} == '{cond}'"]
             epochs_cpp = epochs_cond.copy().pick(cpp_electrodes)
-            epochs_cpp.crop(
-                tmin = cpp_slope_window[0], 
-                tmax = cpp_slope_window[1]
-            )
+            epochs_cpp.crop(tmin = cpp_slope_window[0],tmax = cpp_slope_window[1])
             data = epochs_cpp.get_data() # returns trials x channels x time
             cpp = data.mean(axis=1) #averaged over channels
 
-            # for trial_idx, trial_amplitude in enumerate(cpp):
-            #     results.append(
-            #         extract_cpp_features(trial_amplitude, epochs_cpp.times, subject, cond, trial_idx)
-            #     )
             trial_results = [
                 extract_cpp_features(trial_amplitude, epochs_cpp.times, subject, cond, i)
                 for i, trial_amplitude in enumerate(cpp)
             ]
             results.extend(trial_results)
 
-            peak_times = [r["Peak_Latency"] for r in trial_results]
-            peak_amps = [r["Peak_Amplitude"] for r in trial_results]
+            for i, trial_amplitude in enumerate(cpp):
+                key = (subject, i + 1)
+                trial_data_by_subject.setdefault(key, {})
+                trial_data_by_subject[key][cond] = {
+                    "times": epochs_cpp.times,
+                    "signal": trial_amplitude,
+                    "peak_time": trial_results[i]["Peak_Latency"],
+                    "peak_amp": trial_results[i]["Peak_Amplitude"],
+            }
 
-            plot_cpp(cpp, epochs_cpp.times, subject, cond, cpp_result_dir, peak_times, peak_amps)
+            #peak_times = [r["Peak_Latency"] for r in trial_results]
+            #peak_amps = [r["Peak_Amplitude"] for r in trial_results]
+
+            #plot_cpp(cpp, epochs_cpp.times, subject, cond, cpp_result_dir, peak_times, peak_amps)
+    # Plot one figure per subject/trial with all conditions overlaid
+    for (subject, trial_idx), cond_data in trial_data_by_subject.items():
+        plot_cpp_combined(subject, trial_idx, cond_data, cpp_result_dir)
+
     df = pd.DataFrame(results) 
     df.to_csv(os.path.join(cpp_result_dir, "cpp_results.csv"), index=False)
     
@@ -450,27 +459,64 @@ def cpp_drift_slope_correlation(cpp_df, drift_df, condition_order, result_dir):
     return merged
 
 
-
-def plot_cpp(cpp, times, subject, condition, cpp_result_dir, peak_times, peak_amps):
-    #plt.figure(figsize=(10,6))
-    for trial_idx, trial in enumerate(cpp):
-        plt.figure(figsize=(8,5))
-        plt.plot(times,trial)
+#plotting cpp for each trial and subject and conditions
+# def plot_cpp(cpp, times, subject, condition, cpp_result_dir, peak_times, peak_amps):
+#     #plt.figure(figsize=(10,6))
+#     for trial_idx, trial in enumerate(cpp):
+#         plt.figure(figsize=(8,5))
+#         plt.plot(times,trial)
         
-        peak_time = peak_times[trial_idx]
-        peak_amp = peak_amps[trial_idx]
+#         peak_time = peak_times[trial_idx]
+#         peak_amp = peak_amps[trial_idx]
 
-        plt.scatter(peak_time, peak_amp, color="red", label="Peak")
-        plt.axvline(0, color="black", linestyle="--")
-        plt.xlabel("Time (s)")
-        plt.ylabel("Amplitude (µV)")
-        plt.title(f"{subject} | {condition} | Trial {trial_idx+1}")
-        plt.legend()
-        plt.savefig(os.path.join(cpp_result_dir, f"{subject}_{condition}_Trial_{trial_idx+1}.png"), dpi=300, bbox_inches="tight")
-        plt.close()
+#         plt.scatter(peak_time, peak_amp, color="red", label="Peak")
+#         plt.axvline(0, color="black", linestyle="--")
+#         plt.xlabel("Time (s)")
+#         plt.ylabel("Amplitude (µV)")
+#         plt.title(f"{subject} | {condition} | Trial {trial_idx+1}")
+#         plt.legend()
+#         plt.savefig(os.path.join(cpp_result_dir, f"{subject}_{condition}_Trial_{trial_idx+1}.png"), dpi=300, bbox_inches="tight")
+#         plt.close()
 
 
+def plot_cpp_combined(subject, trial_idx, cond_data, cpp_result_dir):
+    fig, ax = plt.subplots(figsize=(8, 5))
 
+    colors = {
+        "base": "C0",
+        "lowlevel": "C1",
+        "highlevel": "C2",
+    }
+
+    for cond, info in cond_data.items():
+        ax.plot(
+            info["times"],
+            info["signal"],
+            label=cond,
+            color=colors.get(cond, None),
+            linewidth=1.5
+        )
+        ax.scatter(
+            info["peak_time"],
+            info["peak_amp"],
+            color=colors.get(cond, None),
+            s=35,
+            zorder=3
+        )
+
+    ax.axvline(0, color="black", linestyle="--", alpha=0.7)
+    ax.set_xlabel("Time (s)")
+    ax.set_ylabel("Amplitude (µV)")
+    ax.set_title(f"{subject} | Trial {trial_idx}")
+    ax.legend()
+    fig.tight_layout()
+
+    fig.savefig(
+        os.path.join(cpp_result_dir, f"{subject}_Trial_{trial_idx}.png"),
+        dpi=300,
+        bbox_inches="tight"
+    )
+    plt.close(fig)
 
 def plot_erp_comparison(evokeds, conditions, electrodes, result_dir):
     """

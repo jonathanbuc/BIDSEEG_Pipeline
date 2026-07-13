@@ -73,14 +73,23 @@ def get_bidspath(inputs, option=None, subjects=None, processingstep=None):
             bidspath_list = []
             for subject in subjects:
                 bidspath_sub = bidspath.update(subject = subject)
-                bidspath_list.append(bidspath_sub.fpath)
+                #bidspath_list.append(bidspath_sub.fpath)
+                bidspath_list.append(f"{bidspath_sub.fpath}.fif")
+            bidspath = bidspath_list
+        case 'cpp_epochs_list':# store BIDSpaths of CPP Epochs of all subjects in a list
+            bidspath = bidspath.update(root = inputs['basic']['bids_root_out']+'/BIDSprocessed', processing = '04cppEpochsCorr')
+            bidspath_list = []
+            for subject in subjects:
+                bidspath_sub = bidspath.update(subject = subject)
+                bidspath_list.append(f"{bidspath_sub.fpath}.fif")
             bidspath = bidspath_list
         case 'tfr_list':# reads BIDSpaths of subject TFRs into a list
             bidspath = bidspath.update(root = inputs['basic']['bids_root_out']+'/BIDSprocessed', processing = '05tfr')
             bidspath_list = []
             for subject in subjects:
                 bidspath_sub = bidspath.update(subject = subject)
-                bidspath_list.append(bidspath_sub.fpath)
+                #bidspath_list.append(bidspath_sub.fpath)
+                bidspath_list.append(f"{bidspath_sub.fpath}.fif")
             
             bidspath = bidspath_list
 

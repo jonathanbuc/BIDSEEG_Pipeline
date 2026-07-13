@@ -1,7 +1,7 @@
 {
     "basic": {
         "sourcedata": "./data",
-        "subject_ID": "033",
+        "subject_ID": "003",
         "session": "01",
         "task": "HierPrior",
         "current_step": "04epochsCorr",
@@ -48,7 +48,8 @@
         "compute_sdt": true,
         "compute_ddm": true,
         "compute_fooof": true,
-        "compute_cpp": true
+        "compute_cpp": true,
+        "compute_hssm": true
     },
     "preprocessing": {
         "samplingrate_down": 250,
@@ -56,6 +57,10 @@
         "baseline_correction": [
             -0.6,
             -0.1
+        ],
+        "cpp_baseline_correction": [
+            -0.35,
+            -0.25
         ],
         "notch": 50,
         "notch_width": 2,
@@ -69,7 +74,13 @@
             "S_1": 1,
             "S_2": 2,
             "S_4": 4
-        }
+        },
+        "cpp_epoch_dict": {
+            "R_1": 101,
+            "R_2": 102
+        },
+        "cpp_epoch_min": -1.0,
+        "cpp_epoch_max": 0.5
     },
     "datarejection": {
         "rejection_method": "autoreject"
@@ -104,10 +115,9 @@
             "O2"
         ],
         "conditions": {
-            "exp": [
-                "base",
-                "lowlevel",
-                "highlevel"
+            "coh_level": [
+                "medium",
+                "low"
             ]
         },
         "eeg_contrasts": {
@@ -168,16 +178,8 @@
         },
         "comparisons": [
             [
-                "base",
-                "lowlevel"
-            ],
-            [
-                "base",
-                "highlevel"
-            ],
-            [
-                "lowlevel",
-                "highlevel"
+                "medium",
+                "low"
             ]
         ],
         "ddm": {
@@ -216,14 +218,30 @@
         ],
         "cpp_electrodes": [
             "CP1",
-            "CPz",
             "CP2",
             "Cz",
             "Pz"
         ],
         "cpp_slope_window": [
-            -0.6,
-            1.5
-        ]
+            -1.0,
+            0.5
+        ],
+        "hssm": {
+            "model_type": "ddm",
+            "sampler": "nuts_numpyro",
+            "draws": 1000,
+            "tune": 1000,
+            "chains": 2,
+            "cores": 2,
+            "target_accept": 0.9,
+            "prior_settings": "safe",
+            "link_settings": "log_logit",
+            "formula_v": "v ~ 1 + exp * coh_level + alpha_cf_cog_wc + (1|participant)",
+            "formula_z": "z ~ 1 + exp + (1|participant)",
+            "formula_t": "",
+            "fix_t": 0.2,
+            "t": 0.2,
+            "formula_a": "a ~ 1 + (1|participant)"
+        }
     }
 }
