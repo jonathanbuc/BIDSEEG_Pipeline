@@ -209,9 +209,11 @@ def ICA_mne(epochs, n_components, max_iter, rd_state, method, log_df):
 
     return epochs_ICA, ica, log_df
 
-def autoICLabel(epochs, ica, reject_labels, rej_threshold, bidspath_processing, log_df):
+def autoICLabel(epochs, ica, reject_labels, rej_thresholds, bidspath_processing, log_df):
     '''
-    Automatically identifies delete artifactual ICs before back-projection into electrode space.  
+    Automatically identifies delete artifactual ICs before back-projection into electrode space.
+    rej_thresholds is a dict of per-label ICLabel probability cutoffs
+    (e.g. {"eye blink": 0.25, "muscle artifact": 0.6}).
     '''
     # labelling all ICs
     ic_labels = label_components(epochs, ica, method="iclabel")
@@ -263,10 +265,12 @@ def autoICLabel(epochs, ica, reject_labels, rej_threshold, bidspath_processing, 
         fig.savefig(f"{brainIC_dir}/IC{idx}_{include_dict[idx]}_Prob{prob[idx]:.4f}.png", format = "png", dpi=diag_dpi)
         fig.clf()  # Clear each figure to free memory
 
-    # only keep artefact labels above rejection threshold (90%)
+    # only keep artefact labels above their label-specific rejection threshold
+    default_threshold = rej_thresholds.get('default', 0.9)
     exclude_tmp = exclude_dict.copy()
     for idx in exclude_tmp.keys():
-        if prob[idx] < rej_threshold:
+        label_threshold = rej_thresholds.get(labels[idx], default_threshold)
+        if prob[idx] < label_threshold:
             exclude_dict.pop(idx, None)
 
     # remove artifactual components and project data back to electrode space
@@ -274,7 +278,7 @@ def autoICLabel(epochs, ica, reject_labels, rej_threshold, bidspath_processing, 
     ica.apply(reconst_epochs, exclude=list(exclude_dict.keys()), verbose=False)
 
     # logging 
-    utils.log_msg(f'        {len(exclude_dict)} ICs exceed artifact threshold ({rej_threshold}) and are removed before back-projection:')
+    utils.log_msg(f'        {len(exclude_dict)} ICs exceed their label-specific artifact thresholds ({rej_thresholds}) and are removed before back-projection:')
     utils.log_msg(f'            {exclude_dict}')
     utils.log_update(log_df, 'n_ICs_removed', len(exclude_dict))
     utils.log_update(log_df, 'ICs_removed', exclude_dict)
@@ -284,7 +288,7 @@ def autoICLabel(epochs, ica, reject_labels, rej_threshold, bidspath_processing, 
 
     # logging
     utils.log_update(log_df, 'ic_removal_method', str('automatic'))
-    utils.log_update(log_df, 'ic_removal_threshold', rej_threshold)
+    utils.log_update(log_df, 'ic_removal_threshold', rej_thresholds)
     utils.log_update(log_df, 'n_ics_removed', len(exclude_dict))
     utils.log_update(log_df, 'label_ics_removed', list(exclude_dict.values()))
     utils.log_update(log_df, 'idx_ics_removed', list(exclude_dict.keys()))
@@ -638,7 +642,7 @@ if __name__ == '__main__':
 
                 match ic_labeling:
                     case 'automatic':
-                        epochs, ica, log_df = autoICLabel(epochs, ica, reject_labels, rej_threshold, bidspath_processing_subject, log_df)
+                        epochs, ica, log_df = autoICLabel(epochs, ica, reject_labels, rej_thresholds, bidspath_processing_subject, log_df)
                         diagnostic_plots(epochs, bidspath_processing_subject)
                         
                     case 'manual':
