@@ -457,9 +457,8 @@ def plot_cpp_averaged_trials(trial_data_by_subject, cpp_result_dir):
     
     # Plot averaged CPP per subject
     colors = {
-        "base": "C0",
-        "lowlevel": "C1",
-        "highlevel": "C2",
+        "medium": "C0",
+        "low": "C1"
     }
     
     for subject, cond_signals in subject_cond_signals.items():
@@ -1807,9 +1806,9 @@ if __name__ == '__main__':
 
     if compute_cpp:
         utils.log_msg(f'        *** CPP_ERP - extracting features ***')
-        cpp_erp_results = erp_analysis(bidspaths_epochs, subjects, condition_dict, roi, tmin, tmax, result_dir)
+        cpp_erp_results = erp_analysis(bidspaths_epochs, subjects, condition_dict, cpp_electrodes, tmin, tmax, result_dir)
         # utils.log_msg("Running CPP Analysis")
-        # cpp_df = cpp_analysis(bidspaths_cpp_epochs, subjects, condition_dict, result_dir)
+        cpp_df = cpp_analysis(bidspaths_cpp_epochs, subjects, condition_dict, result_dir)
         # extract ERP features and save to csv
         # perform statistical analysis and save to csv
         utils.log_msg(f'        *** CPP_ERP - performing statistical analysis ***')
