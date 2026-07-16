@@ -323,6 +323,16 @@ def save_preprocessing_step(file, step, bidspath_preprocessing, subject=None):
                 f"(step '{step}', type {type(file)}). Add a matching case rather than "
                 f"letting the save silently fail."
             )
+# _____________________________Plotting helper functions_____________________________
+def _maximize_figure(fig):
+    '''Maximize matplotlib figure window when supported by the backend.'''
+    try:
+        fig.canvas.manager.window.showMaximized()
+    except AttributeError:
+        try:
+            fig.canvas.manager.window.state('zoomed')  # TkAgg
+        except AttributeError:
+            pass
 # _____________________________TFR helper functions_____________________________
 def make_roi_channel(epochs, roi):
     """

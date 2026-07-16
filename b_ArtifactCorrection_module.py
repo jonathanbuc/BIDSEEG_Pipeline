@@ -35,6 +35,7 @@ import shutil
 # module specifics
 from a_preprocessing_module import diagnostic_plots, rereferencing
 from d_BehavAnalysis_module import behavdata_prep
+from x_ica_preprocessing_module import apply_pretrained_ica, load_pretrained_ica, load_ica_metadata
 from autoreject import AutoReject, Ransac, RejectLog
 from mne_icalabel import label_components
 from mne_icalabel.gui import label_ica_components
@@ -295,7 +296,7 @@ def autoICLabel(epochs, ica, reject_labels, rej_threshold, bidspath_processing, 
     return reconst_epochs, ica, log_df
 
 
-def manualICLabel(epochs, ica, bidspath_processing, log_df):
+def manualICLabel(epochs, ica, reject_labels, bidspath_processing, log_df):
     '''
     Requires experimentor to manually identify artifactual ICs to delete them before back-projection into electrode space.  
     '''
@@ -310,14 +311,6 @@ def manualICLabel(epochs, ica, bidspath_processing, log_df):
                 warnings.simplefilter("ignore")
                 # open GUI to flag artifactual ICs 
                 gui = label_ica_components(epochs_ICA, ica, show=True, block=True)
-
-    # reject labels aligned with ica.labels_ object (deviant from labels returned by label_components())
-    reject_labels = [
-            "muscle",
-            "eog",
-            "ch_noise",
-            "ecg",
-            "line_noise"]
     
     #individually extracts idx and labels of artifactual components (defined by reject_labels) and save it as dict 
     exclude_dict = {
@@ -541,8 +534,10 @@ method = inputs['ArtifactCorrection']['ICA_method']
 max_iter = inputs['ArtifactCorrection']['max_iter']
 keep_labels = inputs['ArtifactCorrection']['keep_labels']
 reject_labels = inputs['ArtifactCorrection']['reject_labels']
-rej_threshold = inputs['ArtifactCorrection']['rej_threshold']
 ic_labeling = inputs['ArtifactCorrection']['ic_labeling']
+rej_thresholds = inputs['ArtifactCorrection']['rej_thresholds']
+ic_labeling = inputs['ArtifactCorrection']['ic_labeling']
+use_pretrained_ica = inputs['ICA_preprocessing']['apply_pretrained_weights']
 
 # Interpolation
 rd_state = inputs['ArtifactCorrection']['random_state_seed']
@@ -614,7 +609,6 @@ if __name__ == '__main__':
         if epochs is None or not bool(epochs):  # events for epoching are absent from raw.annotations
             utils.log_msg(f'      X ERROR: None of the following events were found in raw.annotations: {list(epoch_dict.keys())}. Continuing with Subject {int(subject) + 1}')
             continue  # Skip to the next subject
-
         diagnostic_plots(epochs, bidspath_processing_subject)
 
         # identify bad channels to mask before ICA
@@ -626,21 +620,31 @@ if __name__ == '__main__':
 
         # perform ICA
         if perform_ica:
-            utils.log_msg(f'        *** Independent Component Analysis ***')
-            epochs, ica, log_df = ICA_mne(epochs, n_components, max_iter, rd_state, method, log_df)
+            if use_pretrained_ica:
+                utils.log_msg(f'        *** Independent Component Analysis (ICA-weights from pretrained ICA) ***')
+                ica = load_pretrained_ica(bidspath_processing, subject)
+                ica_metadata = load_ica_metadata(bidspath_processing, subject)
+                exclude_indices = ica_metadata['exclude_indices']
+                bad_channels = ica_metadata.get('bad_channels', [])
+                epochs, ica, log_df = apply_pretrained_ica(
+                    epochs, ica, exclude_indices, bad_channels, log_df
+                )
+                diagnostic_plots(epochs, bidspath_processing_subject)
+                utils.save_preprocessing_step(ica, '02ICA', bidspath_processing, subject)
+                utils.update_inputs(sys.argv[1], 'basic', 'current_step', '02ICA')
+            else:
+                utils.log_msg(f'        *** Independent Component Analysis (fit on analysis data with new ICA weights) ***')
+                epochs, ica, log_df = ICA_mne(epochs, n_components, max_iter, rd_state, method, log_df)
 
-            match ic_labeling:
-                case 'automatic':
-                    # if subject == '003':
-                    #    epochs, ica = manualICLabel(epochs, ica, bidspath_processing_subject)
-                    #else:
-                    epochs, ica, log_df = autoICLabel(epochs, ica, reject_labels, rej_threshold, bidspath_processing_subject, log_df)
-                    diagnostic_plots(epochs, bidspath_processing_subject)
-                    
-                case 'manual':
-                    epochs, ica, log_df = manualICLabel(epochs, ica, bidspath_processing_subject, log_df)
-                    diagnostic_plots(epochs, bidspath_processing_subject)
-            
+                match ic_labeling:
+                    case 'automatic':
+                        epochs, ica, log_df = autoICLabel(epochs, ica, reject_labels, rej_threshold, bidspath_processing_subject, log_df)
+                        diagnostic_plots(epochs, bidspath_processing_subject)
+                        
+                    case 'manual':
+                        epochs, ica, log_df = manualICLabel(epochs, ica, reject_labels, bidspath_processing_subject, log_df)
+                        diagnostic_plots(epochs, bidspath_processing_subject)
+                
             # save ICA
             utils.save_preprocessing_step(ica, '02ICA', bidspath_processing, subject)
             utils.update_inputs(sys.argv[1], 'basic','current_step', '02ICA')

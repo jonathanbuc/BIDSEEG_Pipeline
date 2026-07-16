@@ -1,10 +1,10 @@
 {
     "basic": {
         "sourcedata": "./data/sourcedata",
-        "subject_ID": "001",
+        "subject_ID": "003",
         "session": "01",
         "task": "HierPrior",
-        "current_step": null,
+        "current_step": "04epochsCorr",
         "bids_root_in": "./data/BIDShierPriors",
         "bids_root_out": "./data/BIDShierPriors/derivatives",
         "get_chan_stats": true,
@@ -60,7 +60,7 @@
             -0.1
         ],
         "notch": 50,
-        "notch_width": 2,
+        "notch_width": 0.5,
         "line_method": "band_stop",
         "filter_method": "fir",
         "low_cutoff_freq": 0.1,
@@ -72,9 +72,6 @@
             "S_2": 2,
             "S_4": 4
         }
-    },
-    "datarejection": {
-        "rejection_method": "autoreject"
     },
     "ArtifactCorrection": {
         "mask_ICA": true,
@@ -94,10 +91,55 @@
             "brain",
             "other"
         ],
-        "rej_threshold": 0.9,
+        "rej_thresholds": {
+            "muscle artifact": 0.6,
+            "eye blink": 0.25,
+            "heart beat": 0.6,
+            "line noise": 0.75,
+            "channel noise": 0.75
+        },
         "ic_labeling": "automatic",
         "n_components": 20,
-        "epoch_rejection_type": "auto"
+        "epoch_rejection_type": "auto",
+        "interpolation_method": "spline"
+    },
+    "ICA_preprocessing": {
+        "perform": true,
+        "apply_pretrained_weights": true,
+        "low_cutoff": 1,
+        "high_cutoff": 60,
+        "filter_method": "fir",
+        "line_method": "band_stop",
+        "high_cutoff_notch": 100,
+        "downsample_to": 250,
+        "neighbor_corr_threshold": 0.8,
+        "rereference": "average",
+        "drop_ref_channel": null,
+        "reject_amplitude_uv": 1000,
+        "ICA_method": "infomax",
+        "n_components": 20,
+        "max_iter": 200,
+        "random_state_seed": 1943,
+        "ch_interpolation_method": "none",
+        "epoch_dict": {
+            "S_1": 1,
+            "S_2": 2,
+            "S_4": 4
+        },
+        "tmin": -1.0,
+        "tmax": 2.5,
+        "rej_thresholds": {
+            "muscle artifact": 0.6,
+            "eye blink": 0.25,
+            "heart beat": 0.6,
+            "line noise": 0.75,
+            "channel noise": 0.75
+        },
+        "parallel": true,
+        "n_jobs": -1
+    },
+    "datarejection": {
+        "rejection_method": "autoreject"
     },
     "Analysis": {
         "ROI": [
