@@ -1,12 +1,14 @@
 cff-version: 1.2.0
-title: "BIDS-EEG Pipeline in Computational Neuroscience"
+title: "Semi-automated BIDS-EEG Pipeline for Computational Neuroscience/Psychiatry"
 message: "If you use this pipeline, please cite both this software repository and the OpenNeuro dataset."
 type: software
 authors:
   - family-names: "Buchholz"
     given-names: "Jonathan"
-  - family-names: "Hesselmann"
-    given-names: "Guido"
+  - family-names: "Chaudari"
+    given-names: "Aniket"
+  - family-names: "Wang"
+    given-names: "Cenjing"
 repository-code: "https://github.com/jonathanbuc/BIDSEEG_Pipeline.git"
 license: "MIT"
 references:
