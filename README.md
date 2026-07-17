@@ -1,6 +1,6 @@
-# BIDS-EEG Processing Pipeline - J.Buchholz
+# BIDS-EEG Processing Pipeline for Computational Psychiatry/Neuroscience - J.Buchholz
 
-This pipeline enables easy-use, semi-automated processing of EEG-data from **BIDSraw** up to statistical analysis, including **preprocessing**, **artifact correction/rejection** and **conventional** and **parameterized frequency analysis**. The behavioral modules further enable **generlized and hierarchical drift diffusion modelling (g/hDDM)**. The implemented HSSM-package enables analysis of DDM-parameter with trial-by-trial covariates (i.e. expectations, ERPs, frequency measures.) All input can be provided via a single .json file, wherefore *no extensive coding expertise is required!*
+This pipeline enables easy-use, semi-automated processing of EEG-data from **BIDSraw** up to statistical analysis, including **preprocessing**, **artifact correction/rejection** (i.e. optimized ICA fitting), **conventional frequency analysis** and **spectral parameterization (FOOOF)**, trial-by-trial **ERP-** and **instantaneous alpha frequency (IAF)** analysis. We further provide modules enabling **generlized and hierarchical drift diffusion modelling (g/hDDM)**. The implemented **Hierachical Sequential Sampling Modeling (HSSM)** functions enables analysis of DDM-parameter with trial-by-trial covariates (i.e. expectations, ERPs, frequency measures, etc.) All input can be provided via a single .json file, wherefore *no extensive coding expertise is required!*
 
 This repository contains the analysis pipeline for the BIDS EEG dataset hosted on [OpenNeuro](https://openneuro.org/datasets/ds008083/versions/1.0.0):
 
