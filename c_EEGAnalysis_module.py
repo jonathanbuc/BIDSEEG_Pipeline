@@ -39,7 +39,8 @@ import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 from fooof import FOOOF
 from fooof.plts.annotate import plot_annotated_model
-from frequency_sliding import instantaneous_alpha_frequency
+from frequency_sliding import instantaneous_alpha_frequency, select_max_alpha_roi_cluster
+from iaf_corcorane import corcoran_iaf_from_psd, subject_iaf_hz
 from plotting_module import (
     plot_and_save_cbpt_results,
     plot_full_fooof_model_detailed,
@@ -1235,7 +1236,8 @@ def spectral_parameterization(epochs_clean, condition_dict, tmax, baseline, f_ra
 
 # _____________ Per-trial individual alpha frequency (IAF) _____________
 def extract_trial_alpha(epochs_clean, tmax, alpha_freq_range, f_range,
-                        peak_threshold, subject, max_n_peaks, peak_width_limits):
+                        peak_threshold, max_n_peaks, peak_width_limits,
+                        iaf_method='fooof', iaf_estimate='paf'):
     """
     Estimate the individual alpha centre frequency for EACH trial (epoch).
 
@@ -1254,10 +1256,20 @@ def extract_trial_alpha(epochs_clean, tmax, alpha_freq_range, f_range,
                        the alpha band, computed AFTER removing the 1/f background.
                        Always defined, so it is the robust fallback.
 
+    Subject-level IAF (for the Hilbert band-pass) is estimated from the
+    trial-averaged spectrum via ``iaf_method``:
+
+      'corcoran' : Corcoran et al. (2018) SGF peak / CoG (FOOOF-free)
+      'fooof'    : strongest FOOOF alpha peak on the averaged spectrum
+
     Returns epochs.metadata with the per-trial alpha columns appended, and writes
     it to sub-<subject>_trial_alpha.csv.
     """
     lo, hi = alpha_freq_range
+    iaf_method = str(iaf_method).lower()
+    # if iaf_method not in ('corcoran', 'fooof'):
+    #     raise ValueError(f"iaf_method must be 'corcoran' or 'fooof', got {iaf_method!r}")
+
     # 1) Restrict to the post-stimulus prediction window and the occipital ROI.
     #    .copy() so the caller's epochs are never mutated; crop/pick keep all epochs.
     ep = epochs_clean.copy().crop(tmin=0, tmax=tmax)#.pick(roi)
@@ -1279,6 +1291,7 @@ def extract_trial_alpha(epochs_clean, tmax, alpha_freq_range, f_range,
         fm = FOOOF(aperiodic_mode='fixed', peak_threshold=peak_threshold,
                 max_n_peaks=max_n_peaks, peak_width_limits=peak_width_limits, verbose=False)
         cf_f, pw_f, r2 = np.nan, np.nan, np.nan
+        offset, exponent = np.nan, np.nan
         try:
             fm.fit(freqs, spectrum, f_range)
             r2 = fm.r_squared_
@@ -1307,24 +1320,33 @@ def extract_trial_alpha(epochs_clean, tmax, alpha_freq_range, f_range,
         cf_fooof.append(cf_f); pw_fooof.append(pw_f); exp_fooof.append(exponent); offset_fooof.append(offset); r2s.append(r2)
         peak_found.append(bool(np.isfinite(cf_f))); cf_cog.append(cg)
 
-    # --- (c) FOOOF-free instantaneous alpha frequency ("frequency sliding") ---
-    # Romei & Tarasi (2026): read alpha frequency straight out of the Hilbert
-    # phase in the time domain, so EVERY trial gets a value even when the
-    # per-trial FOOOF peak above fails. The band-pass is centred on this
-    # subject's alpha peak (IAF +/- 2 Hz), estimated from the far cleaner
-    # trial-averaged spectrum; if no peak is found it falls back to
-    # alpha_freq_range.
+    # --- Individual alpha frequency from SGF peak (Corcoran) or FOOOF ---
+    mean_spectrum = spectra.mean(axis=0)
     subject_iaf = np.nan
-    try:
-        fm_avg = FOOOF(aperiodic_mode='fixed', peak_threshold=peak_threshold,
-                       max_n_peaks=max_n_peaks, peak_width_limits=peak_width_limits, verbose=False)
-        fm_avg.fit(freqs, spectra.mean(axis=0), f_range)
-        avg_in_alpha = fm_avg.peak_params_[(fm_avg.peak_params_[:, 0] >= lo) &
-                                           (fm_avg.peak_params_[:, 0] <= hi)]
-        if len(avg_in_alpha):
-            subject_iaf = avg_in_alpha[np.argmax(avg_in_alpha[:, 1]), 0]
-    except Exception:
-        pass
+    if iaf_method == 'corcoran':
+        try:
+            cor = corcoran_iaf_from_psd(
+                freqs, mean_spectrum,
+                wa=(lo, hi),
+                freq_trim=(f_range[0], f_range[1]),
+                c_min=1,
+            )
+            subject_iaf = subject_iaf_hz(cor, prefer=iaf_estimate)
+        except Exception:
+            pass
+    elif iaf_method == 'fooof':
+        try:
+            fm_avg = FOOOF(aperiodic_mode='fixed', peak_threshold=peak_threshold,
+                           max_n_peaks=max_n_peaks, peak_width_limits=peak_width_limits, verbose=False)
+            fm_avg.fit(freqs, mean_spectrum, f_range)
+            avg_in_alpha = fm_avg.peak_params_[(fm_avg.peak_params_[:, 0] >= lo) &
+                                               (fm_avg.peak_params_[:, 0] <= hi)]
+            if len(avg_in_alpha):
+                subject_iaf = avg_in_alpha[np.argmax(avg_in_alpha[:, 1]), 0]
+        except Exception:
+            pass
+    
+    # compute individual bandwidth (IAF +/- 2 Hz)
     sfreq = ep.info['sfreq']
     if np.isfinite(subject_iaf):
         band_lo, band_hi = subject_iaf - 2.0, subject_iaf + 2.0
@@ -1332,7 +1354,23 @@ def extract_trial_alpha(epochs_clean, tmax, alpha_freq_range, f_range,
         band_lo, band_hi = lo, hi
     band_lo = max(band_lo, 1.0)
     band_hi = min(band_hi, sfreq / 2.0 - 1.0)
-    ts = ep.get_data().mean(axis=1)          # ROI/channel-mean time series per epoch
+
+    # --- Maximum alpha power electrode cluster ---
+    roi = ['O1', 'O2', 'Oz', 'Pz', 'P3', 'P4', 'P7', 'P8']
+    max_alpha_roi_cluster, powers = select_max_alpha_roi_cluster(ep, roi, n_electrodes=4, alpha_band=alpha_freq_range, 
+    method="fooof", tmin=0, tmax=tmax, freqs=None, n_cycles=None, decim=1)
+    utils.log_msg(f"        Electrode cluster: {max_alpha_roi_cluster} → Average power: {powers.mean():.2f} ")
+    
+    
+    # --- (c) Instantaneous alpha frequency ("frequency sliding") ---
+    # Romei & Tarasi (2026): read alpha frequency from Hilbert phase so EVERY
+    # trial gets a value. The band-pass is centred on this subject's IAF
+    # (± 2 Hz), estimated from the trial-averaged spectrum (Corcoran SGF or
+    # FOOOF); if no peak is found it falls back to alpha_freq_range.
+   
+    ts = ep.pick(max_alpha_roi_cluster).get_data().mean(axis=1) # ROI/channel-mean time series per epoch
+    utils.log_msg(f"        IAF ({iaf_method}) → Hilbert band {band_lo:.1f}-{band_hi:.1f}Hz "
+                  f"for {len(ts)} trials")
     cf_hilbert, if_sd_hilbert = instantaneous_alpha_frequency(ts, sfreq, band_lo, band_hi)
 
     #3) Attach the per-trial estimates to the trial metadata table (row order of
@@ -1352,7 +1390,10 @@ def extract_trial_alpha(epochs_clean, tmax, alpha_freq_range, f_range,
     epochs_clean.metadata = df
 
     coverage = 100 * np.mean(peak_found)
-    band_src = f"IAF {subject_iaf:.1f}Hz +/-2" if np.isfinite(subject_iaf) else "alpha_freq_range"
+    if np.isfinite(subject_iaf):
+        band_src = f"{iaf_method} IAF {subject_iaf:.1f}Hz +/-2"
+    else:
+        band_src = "alpha_freq_range"
     utils.log_msg(f"        Per-trial alpha: {len(df)} trials, SpecParam peak on {coverage:.0f}% of them; "
                   f"frequency-sliding (Hilbert) on 100% (band {band_lo:.1f}-{band_hi:.1f}Hz, {band_src})")
     return epochs_clean, df
@@ -1484,7 +1525,7 @@ if __name__ == '__main__':
             # per-trial individual alpha frequency (future trial-by-trial HSSM covariate)
             epochs, df_iaf = extract_trial_alpha(epochs, tmax=tmax, alpha_freq_range=alpha_freq_range,
                                 f_range=fooof_f_range, peak_threshold=fooof_peak_threshold,
-                                subject=subject, max_n_peaks=max_n_peaks, peak_width_limits=peak_width_limits)
+                                max_n_peaks=max_n_peaks, peak_width_limits=peak_width_limits, iaf_method='fooof')
             iaf_dfs.append(df_iaf)
 
         timepoint_end = utils.log_msg(f'DONE:   EEG Analysis Module - Subject Level')
