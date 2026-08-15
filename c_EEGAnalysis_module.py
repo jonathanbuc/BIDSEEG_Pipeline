@@ -64,6 +64,15 @@ from pathlib import Path
 # _______________________________________________________________________________
 
 
+#Global
+
+# Shared color mapping for condition plots
+COND_COLORS = {
+    "medium": "C0",
+    "low": "C1",
+}
+
+
 # _____________________________Functions_________________________________________
 
 def plot_epochs_timeseries(epochs, electrodes, subject, save_dir,
@@ -414,7 +423,7 @@ def plot_joint_erp(evokeds, conditions, result_dir, times='peaks'):
         utils.log_msg(f'        Joint ERP plot saved for condition: {cond}')
 
 
-def extract_cpp_features(trial_amplitude, times, subject, cond, trial_idx):
+def extract_cpp_features(trial_amplitude, times, subject, cond, trial_idx, trial_id=None):
     peak_idx = np.argmax(trial_amplitude)
     peak_latency = times[peak_idx]
     peak_amplitude = trial_amplitude[peak_idx]
@@ -427,6 +436,7 @@ def extract_cpp_features(trial_amplitude, times, subject, cond, trial_idx):
         "Peak_Latency": peak_latency,
         "Peak_Amplitude": peak_amplitude,
         "CPP_Slope": slope,
+        "thisN": trial_id, 
         "CPP_Slope_R2": r_value**2,
         "CPP_Slope_p":p_value
     }
@@ -455,11 +465,7 @@ def plot_cpp_averaged_trials(trial_data_by_subject, cpp_result_dir):
         for cond, info in cond_data.items():
             subject_cond_signals[subject][cond].append(info["signal"])
     
-    # Plot averaged CPP per subject
-    colors = {
-        "medium": "C0",
-        "low": "C1"
-    }
+    
     
     for subject, cond_signals in subject_cond_signals.items():
         fig, ax = plt.subplots(figsize=(8, 5))
@@ -473,7 +479,7 @@ def plot_cpp_averaged_trials(trial_data_by_subject, cpp_result_dir):
             if len(signals) > 0:
                 # Average across trials
                 avg_signal = np.mean(signals, axis=0)
-                ax.plot(times, avg_signal, label=cond, color=colors[cond], linewidth=2)
+                ax.plot(times, avg_signal, label=cond, color=COND_COLORS[cond], linewidth=2)
         
         ax.axvline(0, color="black", linestyle="--", alpha=0.7)
         ax.set_xlabel("Time (s)")
@@ -489,25 +495,123 @@ def plot_cpp_averaged_trials(trial_data_by_subject, cpp_result_dir):
         )
         plt.close(fig)
 
-def cpp_analysis(epochs_list, subjects, conditions, result_dir):# this baseline is what Gastrell et. al. used.
-    cpp_result_dir = os.path.join(result_dir, "cpp_analysis_results")
+def compare_cpp_amplitude(cpp_df, cond1, cond2, result_dir):
+    """
+    Compare mean CPP peak amplitude between two conditions across subjects.
+    Averages trials down to one value per subject per condition, then runs
+    a paired t-test (same subjects experienced both conditions).
+    """
+    save_dir = os.path.join(result_dir, "cpp_analysis_results")
+    os.makedirs(save_dir, exist_ok=True)
+
+    # one mean peak amplitude per subject per condition
+    subj_means = (
+        cpp_df.groupby(["Subject", "Condition"])["Peak_Amplitude"]
+        .mean()
+        .reset_index()
+    )
+
+    # reshape so each subject is one row: [cond1 amplitude, cond2 amplitude]
+    wide = subj_means.pivot(index="Subject", columns="Condition", values="Peak_Amplitude")
+    wide = wide.dropna(subset=[cond1, cond2])  # keep only subjects who have both conditions
+
+    t_stat, p_val = scipy.stats.ttest_rel(wide[cond1], wide[cond2])
+    mean_diff = (wide[cond1] - wide[cond2]).mean()
+
+    result = pd.DataFrame([{
+        "Condition_1": cond1,
+        "Condition_2": cond2,
+        "Mean_Amplitude_Cond1": wide[cond1].mean(),
+        "Mean_Amplitude_Cond2": wide[cond2].mean(),
+        "Mean_Difference": mean_diff,
+        "t_stat": t_stat,
+        "p_value": p_val,
+        "n_subjects": len(wide)
+    }])
+    result.to_csv(os.path.join(save_dir, f"peak_amplitude_{cond1}vs{cond2}.csv"), index=False)
+    utils.log_msg(f"        Peak amplitude {cond1} vs {cond2}: mean diff={mean_diff:.3f}, t={t_stat:.3f}, p={p_val:.4f}, n={len(wide)}")
+    return result
+
+def plot_cpp_grand_average(trial_data_by_subject, cpp_result_dir):
+    """
+    Plot the grand-average CPP waveform (averaged across all subjects),
+    one line per condition, with shaded standard error across subjects.
+    """
+    # Step 1: average across trials WITHIN each subject, per condition
+    subject_cond_avg = {}
+    times_ref = None
+    for (subject, trial_idx), cond_data in trial_data_by_subject.items():
+        for cond, info in cond_data.items():
+            subject_cond_avg.setdefault(subject, {}).setdefault(cond, []).append(info["signal"])
+            if times_ref is None:
+                times_ref = info["times"]
+    for subject, cond_signals in subject_cond_avg.items():
+        for cond, signals in cond_signals.items():
+            subject_cond_avg[subject][cond] = np.mean(signals, axis=0)
+
+    # Step 2: average those per-subject curves ACROSS subjects, per condition
+    conditions = {c for cs in subject_cond_avg.values() for c in cs}
+    grand_avg, grand_sem = {}, {}
+    for cond in conditions:
+        subj_curves = [subject_cond_avg[s][cond] for s in subject_cond_avg if cond in subject_cond_avg[s]]
+        min_len = min(len(c) for c in subj_curves)
+        subj_signals = np.array([c[:min_len] for c in subj_curves])
+
+        # NEW: truncate to shortest length across subjects before stacking
+        min_len = min(len(c) for c in subj_curves)
+        subj_signals = np.array([c[:min_len] for c in subj_curves])
+        times_plot = times_ref[:min_len]  # use this instead of times_ref below
+
+        grand_avg[cond] = subj_signals.mean(axis=0)
+        grand_sem[cond] = subj_signals.std(axis=0, ddof=1) / np.sqrt(subj_signals.shape[0])
+
+    # Step 3: plot
+    fig, ax = plt.subplots(figsize=(8, 5))
+    for cond in conditions:
+        ax.plot(times_ref, grand_avg[cond], label=cond, color=COND_COLORS.get(cond), linewidth=2)
+        ax.fill_between(times_ref, grand_avg[cond] - grand_sem[cond], grand_avg[cond] + grand_sem[cond],
+                         color=COND_COLORS.get(cond), alpha=0.2)
+    ax.axvline(0, color="black", linestyle="--", alpha=0.7)
+    ax.set_xlabel("Time (s)")
+    ax.set_ylabel("Amplitude (µV)")
+    ax.set_title(f"Grand Average CPP (n={len(subject_cond_avg)} subjects)")
+    ax.legend()
+    fig.tight_layout()
+    fig.savefig(os.path.join(cpp_result_dir, "grand_average_CPP.png"), dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
+def cpp_analysis(epochs_list, subjects, conditions, result_dir,slope_window=None,output_subdir="cpp_analysis_results"):
+    if slope_window is None: 
+        slope_window = cpp_slope_window #for response lock 
+    cpp_result_dir = os.path.join(result_dir, output_subdir)
     os.makedirs(cpp_result_dir, exist_ok=True)
-    cond_col, conditions = list(conditions.items())[0]
+    #cond_col, conditions = list(conditions.items())[0]
+    cond_col = "coh_level"
+    conditions = conditions[cond_col]
     results = []
     trial_data_by_subject = {}  # (subject, trial_idx) -> {cond: {...}}
 
     for file, subject in zip(epochs_list, subjects):
         epochs = mne.read_epochs(file, preload=True, verbose=False)
-
+        #just do baseline
+        epochs = epochs[f"exp == '{inputs['Analysis']['conditions']['exp'][0]}'"
+]
         for cond in conditions: 
             epochs_cond = epochs[f"{cond_col} == '{cond}'"]
             epochs_cpp = epochs_cond.copy().pick(cpp_electrodes)
-            epochs_cpp.crop(tmin = cpp_slope_window[0],tmax = cpp_slope_window[1])
+            epochs_cpp.crop(tmin = slope_window[0],tmax = slope_window[1])
             data = epochs_cpp.get_data() # returns trials x channels x time
             cpp = data.mean(axis=1) #averaged over channels
+            trial_ids = epochs_cpp.metadata['thisN'].values
+
+            # trial_results = [
+            #     extract_cpp_features(trial_amplitude, epochs_cpp.times, subject, cond, i)
+            #     for i, trial_amplitude in enumerate(cpp)
+            # ]
 
             trial_results = [
-                extract_cpp_features(trial_amplitude, epochs_cpp.times, subject, cond, i)
+                extract_cpp_features(trial_amplitude, epochs_cpp.times, subject, cond, i, trial_id=trial_ids[i])
                 for i, trial_amplitude in enumerate(cpp)
             ]
             results.extend(trial_results)
@@ -531,11 +635,12 @@ def cpp_analysis(epochs_list, subjects, conditions, result_dir):# this baseline 
     #     plot_cpp_combined(subject, trial_idx, cond_data, cpp_result_dir)
 
 
-    for (subject, trial_idx), cond_data in trial_data_by_subject.items():
-        plot_cpp_combined(subject, trial_idx, cond_data, cpp_result_dir)
+    #for (subject, trial_idx), cond_data in trial_data_by_subject.items():
+        #plot_cpp_combined(subject, trial_idx, cond_data, cpp_result_dir)
     
     # Plot averaged CPP over trials per subject
     plot_cpp_averaged_trials(trial_data_by_subject, cpp_result_dir)
+    plot_cpp_grand_average(trial_data_by_subject, cpp_result_dir)
 
     df = pd.DataFrame(results) 
     df.to_csv(os.path.join(cpp_result_dir, "cpp_results.csv"), index=False)
@@ -596,7 +701,7 @@ def cpp_drift_slope_correlation(cpp_df, drift_df, condition_order, result_dir):
 
     #plotting
     plt.figure(figsize=(6, 5))
-    plt.scatter(merged["CPP_slope_across_condition"], merged["Drift_slope_across_condition"])
+    plt.scatter(merged["CPP_slope_across_conditions"], merged["Drift_slope_across_conditions"])
     plt.xlabel("CPP slope across conditions (per participant)")
     plt.ylabel("Drift rate slope across conditions (per participant)")
     plt.title(f"r = {r:.3f}, p = {p:.4f}, n = {len(merged)}")
@@ -606,47 +711,25 @@ def cpp_drift_slope_correlation(cpp_df, drift_df, condition_order, result_dir):
     return merged
 
 
-#plotting cpp for each trial and subject and conditions
-# def plot_cpp(cpp, times, subject, condition, cpp_result_dir, peak_times, peak_amps):
-#     #plt.figure(figsize=(10,6))
-#     for trial_idx, trial in enumerate(cpp):
-#         plt.figure(figsize=(8,5))
-#         plt.plot(times,trial)
-        
-#         peak_time = peak_times[trial_idx]
-#         peak_amp = peak_amps[trial_idx]
-
-#         plt.scatter(peak_time, peak_amp, color="red", label="Peak")
-#         plt.axvline(0, color="black", linestyle="--")
-#         plt.xlabel("Time (s)")
-#         plt.ylabel("Amplitude (µV)")
-#         plt.title(f"{subject} | {condition} | Trial {trial_idx+1}")
-#         plt.legend()
-#         plt.savefig(os.path.join(cpp_result_dir, f"{subject}_{condition}_Trial_{trial_idx+1}.png"), dpi=300, bbox_inches="tight")
-#         plt.close()
 
 
 def plot_cpp_combined(subject, trial_idx, cond_data, cpp_result_dir):
     fig, ax = plt.subplots(figsize=(8, 5))
 
-    colors = {
-        "base": "C0",
-        "lowlevel": "C1",
-        "highlevel": "C2",
-    }
+   
 
     for cond, info in cond_data.items():
         ax.plot(
             info["times"],
             info["signal"],
             label=cond,
-            color=colors.get(cond, None),
+            color=COND_COLORS.get(cond, None),
             linewidth=1.5
         )
         ax.scatter(
             info["peak_time"],
             info["peak_amp"],
-            color=colors.get(cond, None),
+            color=COND_COLORS.get(cond, None),
             s=35,
             zorder=3
         )
@@ -664,6 +747,53 @@ def plot_cpp_combined(subject, trial_idx, cond_data, cpp_result_dir):
         bbox_inches="tight"
     )
     plt.close(fig)
+
+
+def cpp_statistical_analysis(df, result_dir, metric='Peak_Amplitude', output_subdir='cpp_analysis_results'):
+    cpp_result_dir = os.path.join(result_dir, output_subdir)
+    os.makedirs(cpp_result_dir, exist_ok=True)
+
+    utils.log_msg(f'        Performing Linear Mixed Model (LMM) with {metric} (CPP)...')
+
+    lm_model = mixedlm(
+        formula=f'{metric} ~ C(Condition)',
+        data=df,
+        groups=df['Subject']
+    ).fit()
+
+    lm_results = pd.DataFrame({
+        'Predictor': lm_model.params.index,
+        'Coef.': lm_model.params.values,
+        'Std.Err.': lm_model.bse.values,
+        'z': lm_model.tvalues.values,
+        'P>|z|': lm_model.pvalues.values
+    })
+    lm_results.to_csv(os.path.join(cpp_result_dir, f"{metric}_cpp_lmm_results.csv"), index=False)
+    utils.log_msg(f'        Results for {metric} saved to {output_subdir}/{metric}_cpp_lmm_results.csv')
+    return lm_model
+def cpp_iaf_analysis(df, result_dir, output_subdir='cpp_analysis_results'):   # <-- ADD THIS FUNCTION HERE
+    cpp_result_dir = os.path.join(result_dir, output_subdir)
+    os.makedirs(cpp_result_dir, exist_ok=True)
+
+    utils.log_msg('        Performing Linear Mixed Model: CPP_Slope ~ IAF...')
+
+    lm_model = mixedlm(
+        formula='CPP_Slope ~ IAF',
+        data=df,
+        groups=df['Subject']
+    ).fit()
+
+    lm_results = pd.DataFrame({
+        'Predictor': lm_model.params.index,
+        'Coef.': lm_model.params.values,
+        'Std.Err.': lm_model.bse.values,
+        'z': lm_model.tvalues.values,
+        'P>|z|': lm_model.pvalues.values
+    })
+    lm_results.to_csv(os.path.join(cpp_result_dir, 'CPP_Slope_IAF_lmm_results.csv'), index=False)
+    utils.log_msg(f'        Results saved to {output_subdir}/CPP_Slope_IAF_lmm_results.csv')
+    return lm_model
+
 
 def collect_evokeds_roi(epochs_list, conditions, electrodes, cond_col):
     """ 
@@ -734,7 +864,7 @@ def statistical_analysis(df, result_dir):
             utils.log_msg(f'        Performing Linear Mixed Model (LMM) with {metric}...')
             # Fit the LMM model
             lm_model = mixedlm(
-                formula=f'{metric} ~ C(Condition) * C(Electrode)',
+                formula=f'{metric} ~ C(Condition) * C(Electrode)', 
                 data=df,
                 groups=df['Subject']
             ).fit()
@@ -1632,7 +1762,7 @@ times = inputs['Analysis']['times']
 
 ## extract subject list
 subjects = utils.find_subjects(bidspath.root)
-subjects = subjects[:3]   # run only the first 3 participants
+#subjects = subjects[:3]   # run only the first 3 participants
 
 # statistics
 stat_model = inputs['Analysis']['stat_model']
@@ -1652,6 +1782,8 @@ global_master_csv = os.path.join(bidspath.root, "results", "master_fooof_summary
 cpp_electrodes = inputs["Analysis"]["cpp_electrodes"]
 cpp_slope_window = inputs["Analysis"]["cpp_slope_window"]
 compute_cpp = inputs["perform"]["compute_cpp"]
+exp = inputs["Analysis"]["conditions"]["exp"][0]
+cpp_stim_slope_window = inputs["Analysis"]["cpp_stim_slope_window"]
 
 # _______________________________________________________________________________
   
@@ -1769,6 +1901,7 @@ if __name__ == '__main__':
     ## Loading data and output paths
     bidspaths_epochs = utils.get_bidspath(inputs, 'epochs_list', subjects) # list of path-strings to epochs of each subject
     bidspaths_cpp_epochs = utils.get_bidspath(inputs, 'cpp_epochs_list', subjects)
+    bidspaths_cpp_epochs_stim = utils.get_bidspath(inputs, 'cpp_epochs_stim_list', subjects)
 
     # Compute Grand Average TFR
     if perform_tfr:
@@ -1805,14 +1938,35 @@ if __name__ == '__main__':
 
 
     if compute_cpp:
-        utils.log_msg(f'        *** CPP_ERP - extracting features ***')
-        cpp_erp_results = erp_analysis(bidspaths_epochs, subjects, condition_dict, cpp_electrodes, tmin, tmax, result_dir)
-        # utils.log_msg("Running CPP Analysis")
+        # response-locked (existing)
+        utils.log_msg(f'        *** CPP - extracting features (response-locked) ***')
         cpp_df = cpp_analysis(bidspaths_cpp_epochs, subjects, condition_dict, result_dir)
-        # extract ERP features and save to csv
-        # perform statistical analysis and save to csv
-        utils.log_msg(f'        *** CPP_ERP - performing statistical analysis ***')
-        statistical_analysis(cpp_erp_results, result_dir)
+        amp_result = compare_cpp_amplitude(cpp_df, "medium", "low", result_dir)
+        cpp_statistical_analysis(cpp_df, result_dir, metric='Peak_Amplitude', output_subdir='cpp_analysis_results')
+
+        # stimulus-locked (new)
+        utils.log_msg(f'        *** CPP - extracting features (stimulus-locked) ***')
+        stim_df = cpp_analysis(bidspaths_epochs, subjects, condition_dict, result_dir,
+                                slope_window=cpp_stim_slope_window,
+                                output_subdir="cpp_stimlocked_results")
+        stim_amp_result = compare_cpp_amplitude(stim_df, "medium", "low", result_dir)
+        cpp_statistical_analysis(stim_df, result_dir, metric='Peak_Amplitude', output_subdir='cpp_stimlocked_results')
+
+
+        # NEW: CPP slope ~ IAF                                         
+        utils.log_msg(f'        *** CPP - slope vs IAF analysis ***')
+        iaf_df = pd.read_csv(os.path.join(result_dir, 'SpectralParameterization', 'EEG_iaf.csv'))
+        iaf_df['Subject'] = iaf_df['participant'].str.replace('sub-', '', regex=False)
+        iaf_small = iaf_df[['Subject', 'thisN', 'alpha_cf_cog']].rename(columns={'alpha_cf_cog': 'IAF'})
+
+        cpp_iaf_df = cpp_df.merge(iaf_small, on=['Subject', 'thisN'], how='left')
+        cpp_iaf_clean = cpp_iaf_df[cpp_iaf_df['CPP_Slope_R2'] >= 0.3] #filtering out low-quality CPP slopes based on R2 threshold
+        cpp_iaf_clean.to_csv(os.path.join(result_dir, 'cpp_analysis_results', 'cpp_iaf_clean.csv'), index=False)   # <-- ADD THIS LINE
+
+
+        iaf_model = cpp_iaf_analysis(cpp_iaf_clean, result_dir)        
+
+
     timepoint_end = utils.log_msg(f'DONE:   EEG Analysis Module - Group Level')
     utils.log_save(log_df,f'{bidspath.root}' ,'log_dataframe.csv')
     utils.log_msg(f'        Time elapsed: {str(timepoint_end-timepoint_start)}\n\n')

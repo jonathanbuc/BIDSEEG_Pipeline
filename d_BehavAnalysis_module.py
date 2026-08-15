@@ -56,8 +56,7 @@ def behavdata_prep(sourcedata_dir, subject, log_df):
     ### find corresponding .csv file holding  response times from PsychoPy
     for dirpath_csv, _, filenames in os.walk(sourcedata_dir):
         for csv_fname in filenames:
-            #if subject in csv_fname and csv_fname.endswith('.csv'):#finds csv of the currently processed subject
-            if subject in csv_fname and 'RDKdeutsch' in csv_fname and csv_fname.endswith('.csv'):
+            if subject in csv_fname and csv_fname.endswith('.csv'):#finds csv of the currently processed subject
                 csv_dir = os.path.join(dirpath_csv, csv_fname)
 
                 # Load data

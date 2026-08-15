@@ -84,11 +84,11 @@ def epoching(raw, df, epoch_dict, tmin, tmax, log_df, baseline=None):
     if set(epoch_dict.keys()).intersection(eeg_data.annotations.description):
         events, _ = mne.events_from_annotations(eeg_data, event_id=epoch_dict, verbose=False)
         epochs = mne.Epochs(
-            eeg_data, events, tmin=tmin, tmax=tmax, baseline=baseline,
+            eeg_data, events, tmin=tmin, tmax=tmax, baseline=None,
             event_id=epoch_dict, preload=True, verbose=False, event_repeated='merge'
         )
 
-        utils.log_msg(f"        epochs computed for the following events: {list(epoch_dict.keys())} with window = [{tmin}, {tmax}] and baseline correction: {baseline}")
+        utils.log_msg(f"        epochs computed for the following events: {list(epoch_dict.keys())} with window = [{tmin}, {tmax}] and baseline correction: none")
 
         # all remaining stimuli are summarizes as cue (1)
         epochs.events[:, 2] = 1
@@ -617,7 +617,8 @@ if __name__ == '__main__':
         diagnostic_plots(epochs, bidspath_processing_subject)
         
         # perform cpp epoching 
-        cpp_epochs, log_df = epoching(raw_filt, df, cpp_epoch_dict, cpp_tmin, cpp_tmax, log_df, baseline=cpp_baseline)# >>> 
+        cpp_epochs, log_df = epoching(raw_filt, df, cpp_epoch_dict, cpp_tmin, cpp_tmax, log_df)
+        cpp_epochs_stim, log_df = epoching(raw_filt, df, epoch_dict, tmin, tmax, log_df, baseline=baseline)
 
         if epochs is None or not bool(epochs):  # If none, events for epoching do not exist in raw.annotations
             utils.log_msg(f'      X ERROR: None of the following events were found in raw.annotations: {list(epoch_dict.keys())}. Continuing with Subject {int(subject) + 1}')
@@ -692,6 +693,7 @@ if __name__ == '__main__':
         ## save continuous data
         utils.save_preprocessing_step(epochs, '04epochsCorr', bidspath_processing, subject)
         utils.save_preprocessing_step(cpp_epochs, '04cppEpochsCorr', bidspath_processing, subject)
+        utils.save_preprocessing_step(cpp_epochs_stim, '04cppEpochsCorr', bidspath_processing, subject)
         
         
         # _____________________________logging________________________________________________

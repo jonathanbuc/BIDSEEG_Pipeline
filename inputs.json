@@ -1,7 +1,7 @@
 {
     "basic": {
-        "sourcedata": "./data",
-        "subject_ID": "003",
+        "sourcedata": "./data/BIDShierPriors/sourcedata",
+        "subject_ID": "043",
         "session": "01",
         "task": "HierPrior",
         "current_step": "04epochsCorr",
@@ -57,10 +57,6 @@
         "baseline_correction": [
             -0.6,
             -0.1
-        ],
-        "cpp_baseline_correction": [
-            -0.35,
-            -0.25
         ],
         "notch": 50,
         "notch_width": 2,
@@ -118,6 +114,11 @@
             "coh_level": [
                 "medium",
                 "low"
+            ],
+            "exp": [
+                "base",
+                "lowlevel",
+                "highlevel"
             ]
         },
         "eeg_contrasts": {
@@ -148,7 +149,7 @@
         "tfr_method": "multitaper",
         "time_res": 2,
         "freq_res": 65,
-        "stat_model": "ANOVA",
+        "stat_model": "LMM",
         "metric": "Peak_Amplitude",
         "plot_roi": true,
         "times": [
@@ -217,14 +218,15 @@
             "Aperiodic_Exponent"
         ],
         "cpp_electrodes": [
-            "CP1",
-            "CP2",
-            "Cz",
             "Pz"
         ],
         "cpp_slope_window": [
-            -1.0,
-            0.5
+            -0.5,
+            0.0
+        ],
+        "cpp_stim_slope_window": [
+            -0.5,
+            1.5
         ],
         "hssm": {
             "model_type": "ddm",
