@@ -136,107 +136,139 @@ def behavdata_prep(sourcedata_dir, subject, log_df):
     return df, log_df
 
 #______________________________Signal Detection Theory Measures______________________________
+def _sdt_left_as_signal(df, eps=1e-6):
+    """SDT with fixed left=signal / right=noise coding.
+
+    Returns
+    -------
+    c, d_prime, hit_rate, fa_rate, n_hits, n_fas, n_misses, n_crs
+    """
+    df = df.dropna(subset=["response", "motion_direction"]).copy()
+    empty = (np.nan, np.nan, np.nan, np.nan, 0, 0, 0, 0)
+    if len(df) == 0:
+        return empty
+
+    signal = df[df["motion_direction"] == "left"]
+    noise = df[df["motion_direction"] == "right"]
+    if len(signal) == 0 or len(noise) == 0:
+        return empty
+
+    hits = signal["response"] == "left"
+    fas = noise["response"] == "left"
+    misses = signal["response"] == "right"
+    crs = noise["response"] == "right"
+
+    hit_rate = float(hits.mean())
+    fa_rate = float(fas.mean())
+    hr = np.clip(hit_rate, eps, 1 - eps)
+    far = np.clip(fa_rate, eps, 1 - eps)
+
+    d_prime = float(stats.norm.ppf(hr) - stats.norm.ppf(far))
+    c = float(-0.5 * (stats.norm.ppf(hr) + stats.norm.ppf(far)))
+    return (
+        c, d_prime, hit_rate, fa_rate,
+        int(hits.sum()), int(fas.sum()), int(misses.sum()), int(crs.sum()),
+    )
+
+
+def _round_or_nan(x, nd=4):
+    return round(x, nd) if np.isfinite(x) else np.nan
+
+
 def SDT(df, condition_dict):
     '''
-    Computes Signal Detection Theory measures, namely d_prime (stimulus sensitivity) and c criterion (decision bias).
-    "signal" is defined as leftwards moving dots. Therefore, c criterion is separately computed for trials with left prior (expecting negative c)
-    and trials with right prior (expecting positive c). Computation is equivalent for low- and high-level prior.
+    Computes Signal Detection Theory measures, namely d_prime (stimulus sensitivity)
+    and c criterion (decision bias).
+
+    "signal" is defined as leftwards moving dots / "noise" as rightwards moving dots
+    equivalently across base, lowlevel and highlevel.
+
+    For prior conditions, c is computed separately for left- and right-cued trials
+    (expecting c_left < 0, c_right > 0). Reported:
+        c      = c_left - c_right   (prior-induced criterion shift)
+        dprime = mean(d_left, d_right)
+
+    For base, a single c / d' is returned (c < 0 = left bias, c > 0 = right bias).
     '''
-
-    # extract condition column and conditions
     cond_col, conditions = list(condition_dict.items())[0]
-
-    # open SDT df
     sdt_df_list = []
-    # sdt_df_cond = pd.DataFrame()
-    sdt_dict = {}
 
     for cond in conditions:
-        # insert prior condition
-        sdt_dict[cond_col] = cond
-        # make subset condition df
+        sdt_dict = {cond_col: cond}
         df_cond = df[df[cond_col] == cond].copy()
+
+        if len(df_cond) == 0:
+            sdt_dict.update({
+                "accuracy": np.nan, "mean_rt": np.nan,
+                "c_left": np.nan, "c_right": np.nan, "c": np.nan,
+                "dprime_left": np.nan, "dprime_right": np.nan, "dprime": np.nan,
+                "hits": 0, "fas": 0, "misses": 0, "cr": 0,
+            })
+            sdt_df_list.append(pd.DataFrame([sdt_dict]))
+            continue
+
+        accuracy = round(float(df_cond["corr"].mean()), 3)
+        mean_rt = round(float(df_cond["rt"].mean()), 3)
+
         match cond:
-            case 'lowlevel' | 'highlevel':
-                signal_present = df_cond[df_cond['prior'] == df_cond['motion_direction']]
-                signal_absent = df_cond[df_cond['prior'] != df_cond['motion_direction']]
-                # Hits
-                hits = signal_present['prior'] == signal_present['response'] #.mean() #answering correctly and in congruency with prior.mean()
-                # False Alarms           
-                fas = signal_absent['prior'] == signal_absent['response'] #.mean() #answering wrongly and in congruency with prior.mean()
-                
-                # Hit rate
-                # hits = ((df_cond['prior'] == df_cond['response']) & (df_cond['response'] == df_cond['motion_direction']))#.mean() #answering correctly and in congruency with prior.mean()
-                # False Alarm rate           
-                # fas = ((df_cond['prior'] == df_cond['response']) & (df_cond['response'] != df_cond['motion_direction']))#.mean() #answering wrongly and in congruency with prior.mean()
-                
-                # Miss: incorrect response, *not* in line with prior
-                misses = ((df_cond['prior'] != df_cond['response']) & 
-                        (df_cond['response'] != df_cond['motion_direction']))
+            case "lowlevel" | "highlevel":
+                left = df_cond[df_cond["prior"] == "left"]
+                right = df_cond[df_cond["prior"] == "right"]
 
-                # Correct Rejection: correct response, *not* in line with prior
-                crs = ((df_cond['prior'] != df_cond['response']) & 
-                    (df_cond['response'] == df_cond['motion_direction']))
-                                
-            case 'base':
-                # make signal_present (left motion) and signal_absent (right motion) dfs
-                signal_present = df_cond[df_cond["motion_direction"] == "left"]
-                signal_absent = df_cond[df_cond["motion_direction"] == "right"]
+                c_L, d_L, _, _, h_L, fa_L, m_L, cr_L = _sdt_left_as_signal(left)
+                c_R, d_R, _, _, h_R, fa_R, m_R, cr_R = _sdt_left_as_signal(right)
 
-                # Hits
-                hits = (signal_present["response"] == "left")#.mean()# hit: answering left in leftward trials.mean()
-                # false alarms
-                fas = (signal_absent["response"] == "left")#.mean()# false alarm: answering left in rightward trials.mean()
+                c_shift = c_L - c_R if np.isfinite(c_L) and np.isfinite(c_R) else np.nan
+                d_avg = float(np.nanmean([d_L, d_R]))
 
-                # Misses
-                misses = (signal_present["response"] == "right")
-                # Correct Rejection
-                crs = (signal_absent["response"] == "right")
+                sdt_dict.update({
+                    "accuracy": accuracy,
+                    "mean_rt": mean_rt,
+                    "c_left": _round_or_nan(c_L),
+                    "c_right": _round_or_nan(c_R),
+                    "c": _round_or_nan(c_shift),
+                    "dprime_left": _round_or_nan(d_L),
+                    "dprime_right": _round_or_nan(d_R),
+                    "dprime": _round_or_nan(d_avg),
+                    "hits": h_L + h_R,
+                    "fas": fa_L + fa_R,
+                    "misses": m_L + m_R,
+                    "cr": cr_L + cr_R,
+                })
+                utils.log_msg(
+                    f"        {cond}: c_left={sdt_dict['c_left']}, c_right={sdt_dict['c_right']}, "
+                    f"c={sdt_dict['c']}, d prime: {sdt_dict['dprime']}; "
+                    f"accuracy: {accuracy:.3f}, mean RT: {mean_rt:.3f}"
+                )
 
-        # compute hit and false alarm rate
-        hit_rate = hits.mean()
-        fa_rate = fas.mean()
+            case "base":
+                c_b, d_b, _, _, h, fa, m, cr = _sdt_left_as_signal(df_cond)
+                sdt_dict.update({
+                    "accuracy": accuracy,
+                    "mean_rt": mean_rt,
+                    "c_left": np.nan,
+                    "c_right": np.nan,
+                    "c": _round_or_nan(c_b),
+                    "dprime_left": np.nan,
+                    "dprime_right": np.nan,
+                    "dprime": _round_or_nan(d_b),
+                    "hits": h,
+                    "fas": fa,
+                    "misses": m,
+                    "cr": cr,
+                })
+                utils.log_msg(
+                    f"        {cond}: c-criterion: {sdt_dict['c']:.2f}, "
+                    f"d prime: {sdt_dict['dprime']:.2f}; "
+                    f"accuracy: {accuracy:.3f}, mean RT: {mean_rt:.3f}"
+                )
 
-        # Apply correction for extreme values (avoid 0 or 1 probabilities)
-        eps = 1e-6  # Small correction factor
-        hit_rate = np.clip(hit_rate, eps, 1 - eps)
-        fa_rate = np.clip(fa_rate, eps, 1 - eps)
+            case _:
+                raise ValueError(f"Unknown condition for SDT: {cond}")
 
-        # Compute d' (d-prime)
-        d_prime = round(stats.norm.ppf(hit_rate) - stats.norm.ppf(fa_rate), 4)
+        sdt_df_list.append(pd.DataFrame([sdt_dict]))
 
-        # Compute criterion (c)
-        criterion = round(-0.5 * (stats.norm.ppf(hit_rate) + stats.norm.ppf(fa_rate)), 4)
-
-        # compute accuracy and mean RT
-        accuracy = df_cond['corr'].mean().round(3)
-        mean_rt = df_cond['rt'].mean().round(3)
-
-        # logg
-        utils.log_msg(f"        {cond}: c-criterion: {criterion:.2f}, d prime: {d_prime:.2f}; accuracy: {accuracy:.3f}, mean RT: {mean_rt:.3f}")
-        # print(f'length signal presence: {len(signal_present)}. length signal : {len(signal_absent)}')
-
-        # add SDT and basic behavioral measures to condition df
-        sdt_dict['accuracy'] = accuracy
-        sdt_dict['mean_rt'] = mean_rt
-        sdt_dict['c'] = criterion
-        sdt_dict['dprime'] = d_prime
-        sdt_dict['hits'] = sum(hits)
-        sdt_dict['fas'] = sum(fas)
-        sdt_dict['misses'] = sum(misses)
-        sdt_dict['cr'] = sum(crs)
-        # add hits/misses/false alarms/correct rejections to df
-        #convert to df
-        sdt_df = pd.DataFrame([sdt_dict])
-        sdt_df_list.append(sdt_df)
-
-    # concat and add subject
-    sdt_df = pd.concat(sdt_df_list, ignore_index=True, sort=False)
-
-    
-
-    return sdt_df
-
+    return pd.concat(sdt_df_list, ignore_index=True, sort=False)
 
 
 #______________________________Drift Diffusion Modelling______________________________
